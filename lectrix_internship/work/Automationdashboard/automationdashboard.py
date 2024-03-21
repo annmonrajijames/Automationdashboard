@@ -365,7 +365,7 @@ km_file = None
  
  
 # Path to the main folder containing subfolders
-main_folder_path = "/home/sanjith/Documents/Graphs _ creta/V2_Taal_GPS&Log_data"
+main_folder_path = "c:\\Users\\annmon.james\\lectrix_internship\\work\\Automationdashboard"
  
 # Iterate over subfolders
 for subfolder in os.listdir(main_folder_path):
