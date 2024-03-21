@@ -21,7 +21,7 @@ from docx import Document
 from docx.shared import Inches
  
 # Path to the folder containing the CSV files
-folder_path = "/home/sanjith/Documents/Graphs _ creta/Mixer"
+folder_path = "c:\Users\annmon.james\lectrix_internship\work\Automationdashboard"
  
 # List to store DataFrames from each CSV file
 dfs = []
