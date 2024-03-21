@@ -19,14 +19,11 @@ from pptx import Presentation
 from pptx.util import Inches
 from docx import Document
 from docx.shared import Inches
- 
 # Path to the folder containing the CSV files
-folder_path = "c:\\Users\\annmon.james\\lectrix_internship\\work\\Automationdashboard\\data"
+path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
  
 # List to store DataFrames from each CSV file
 dfs = []
- 
- 
 def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great-circle distance between two points
@@ -51,8 +48,6 @@ def haversine(lat1, lon1, lat2, lon2):
     distance = R * c
  
     return distance
- 
- 
 # Define a function to set current to zero if RPM is zero for 10 or more consecutive points
 def adjust_current(row):
     adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
@@ -65,11 +60,9 @@ def adjust_current(row):
         return 0
     else:
         return row['PackCurr_6']
- 
- 
 def plot_ghps(log_file):
  
-    data = pd.read_csv(log_file)
+    data = pd.read_csv(r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data\log_file.csv")
  
     # Apply the adjustment function to the DataFrame
  
@@ -125,13 +118,11 @@ def plot_ghps(log_file):
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.savefig('graph.png')  # Save the plot as an image
     plt.show()
- 
- 
 def analysis_Energy(log_file, km_file):
  
-    data = pd.read_csv(log_file)
+    data = pd.read_csv(r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data\log_file.csv")
  
-    data_KM = pd.read_csv(km_file)
+    data_KM = pd.read_csv(r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data\km_file.csv")
  
     total_duration = 0
     total_distance = 0
@@ -254,11 +245,7 @@ def analysis_Energy(log_file, km_file):
  
  
     return total_duration, total_distance, Wh_km, total_soc_consumed
- 
- 
- 
- 
- 
+folder_path = r"C:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
 def capture_analysis_output(log_file, km_file, folder_path):
     try:
         # Capture print statements
@@ -365,7 +352,7 @@ km_file = None
  
  
 # Path to the main folder containing subfolders
-main_folder_path = "c:\\Users\\annmon.james\\lectrix_internship\\work\\Automationdashboard"
+main_folder_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard"
  
 # Iterate over subfolders
 for subfolder in os.listdir(main_folder_path):
@@ -400,3 +387,4 @@ for subfolder in os.listdir(main_folder_path):
                 plot_ghps(log_file)
                 # total_duration, total_distance, Wh_km,SOC_consumed=analysis_Energy(log_file,km_file)
                 # capture_analysis_output(log_file, km_file, subfolder_path)
+ 
