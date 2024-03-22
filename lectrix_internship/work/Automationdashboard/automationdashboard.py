@@ -1,7 +1,7 @@
 import os
 from pptx import Presentation
 from pptx.util import Inches, Pt
-folder_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\presentation"
+folder_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
 # Define the analysis results (as an example)
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
