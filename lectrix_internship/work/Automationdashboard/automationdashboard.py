@@ -245,61 +245,52 @@ def analysis_Energy(log_file, km_file):
  
  
     return total_duration, total_distance, Wh_km, total_soc_consumed
-folder_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
-# Define the analysis results (as an example)
-if not os.path.exists(folder_path):
-    os.makedirs(folder_path)
-analysis_results = {
-    "Total time taken for the ride": "02:30",
-    "Actual Ampere-hours (Ah)": "-0.496635",
-    "Actual Watt-hours (Wh)": "-25.81896295027778",
-    "Starting SoC (Ah)": "33.91",
-    "Ending SoC (Ah)": "34.433",
-    "Total distance covered (in kilometers)": "120",
-    "WH/KM": "-40.360253303742816",
-    "Total SOC consumed": "1.0%",
-    "Mode": "Eco mode"
-}
-
-# Specify the path to the graph image
-graph_image_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\graph.png"
-def capture_analysis_output(folder_path, analysis_results, graph_image_path):
-    # Create a new PowerPoint presentation
-    prs = Presentation()
-
-    # Extract folder name from folder_path
-    folder_name = os.path.basename(folder_path)
-
-    # Add title slide
-    title_slide_layout = prs.slide_layouts[0]
-    slide = prs.slides.add_slide(title_slide_layout)
-    title = slide.shapes.title
-    subtitle = slide.placeholders[1]
-
-    title.text = f"Analysis Results from Folder - {folder_name}"
-    subtitle.text = "Automated Analysis Summary"
-
-    # Add analysis results slide
-    for key, value in analysis_results.items():
-        bullet_slide_layout = prs.slide_layouts[1]
-        slide = prs.slides.add_slide(bullet_slide_layout)
-        shapes = slide.shapes
-
-        title_shape = shapes.title
-        body_shape = shapes.placeholders[1]
-
-        title_shape.text = "Analysis Results"
-        tf = body_shape.text_frame
-        tf.text = f"{key}: {value}"
-
-    # Add graph image slide
-    blank_slide_layout = prs.slide_layouts[6]
-    slide = prs.slides.add_slide(blank_slide_layout)
-
-    slide.shapes.add_picture(graph_image_path, Inches(1), Inches(1), width=prs.slide_width - Inches(2))
-
-    # Save the presentation
-    output_file_name = os.path.join(folder_path, f"analysis_{folder_name}.pptx")
-    prs.save(output_file_name)
-
-capture_analysis_output(folder_path, analysis_results, graph_image_path)
+folder_path = r"C:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
+#folder_path = "/home/sanjith/Documents/Graphs _ creta/15-51_16-00"
+ 
+# Get the list of files in the folder
+files = os.listdir(folder_path)
+ 
+# Initialize variables to store file paths
+log_file = None
+km_file = None
+ 
+ 
+ 
+ 
+# Path to the main folder containing subfolders
+main_folder_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard"
+ 
+# Iterate over subfolders
+for subfolder in os.listdir(main_folder_path):
+    subfolder_path = os.path.join(main_folder_path, subfolder)
+    print(subfolder)
+    if os.path.isdir(subfolder_path):
+        log_file = None
+        km_file = None
+        # Find 'log' and 'km' files
+        l=0
+        for file in os.listdir(subfolder_path):
+            if file.startswith('log') and file.endswith('.csv'):
+                log_file = os.path.join(subfolder_path, file)
+                l = 1
+            elif file.startswith('km') and file.endswith('.csv'):
+                km_file = os.path.join(subfolder_path, file)
+                l =2
+ 
+ 
+# Read the CSV file into a pandas DataFrame
+ 
+            if (l ==2):
+                total_duration =0
+                total_distance =0
+                Wh_km =0
+                SOC_consumed=0
+ 
+ 
+                ### plot graphs
+ 
+ 
+                plot_ghps(log_file)
+                # total_duration, total_distance, Wh_km,SOC_consumed=analysis_Energy(log_file,km_file)
+                # capture_analysis_output(log_file, km_file, subfolder_path)
