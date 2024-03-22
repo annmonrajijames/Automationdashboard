@@ -246,6 +246,93 @@ def analysis_Energy(log_file, km_file):
  
     return total_duration, total_distance, Wh_km, total_soc_consumed
 folder_path = r"C:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
+
+def capture_analysis_output(log_file, km_file, folder_path):
+    try:
+        # Capture print statements
+        analysis_output = io.StringIO()
+        output_file = "analysis_results.docx"
+ 
+        with redirect_stdout(analysis_output):
+            total_duration, total_distance, Wh_km, total_soc_consumed = analysis_Energy(log_file, km_file)
+        analysis_output = analysis_output.getvalue()
+ 
+        # Extract folder name from folder_path
+        folder_name = os.path.basename(folder_path)
+ 
+        # Create a new PowerPoint presentation
+        prs = Presentation()
+ 
+        # Add title slide with 'Selawik' style
+        title_slide_layout = prs.slide_layouts[0]
+        slide = prs.slides.add_slide(title_slide_layout)
+        title = slide.shapes.title
+        title.text = f"Analysis Results from Folder - {folder_name}"
+        title.text_frame.paragraphs[0].font.bold = True
+        title.text_frame.paragraphs[0].font.size = Pt(36)  # Corrected to Pt
+        title.text_frame.paragraphs[0].font.name = 'Selawik'
+ 
+        rows = 10
+        cols = 2
+        table_slide_layout = prs.slide_layouts[5]
+        slide = prs.slides.add_slide(table_slide_layout)
+        shapes = slide.shapes
+        title_shape = shapes.title
+        title_shape.text = "Analysis Results:"
+       
+        # Add some space between title and table
+        title_shape.top = Inches(0.5)
+       
+        table = shapes.add_table(rows, cols, Inches(1), Inches(1.5), Inches(8), Inches(5)).table
+        table.columns[0].width = Inches(4)
+        table.columns[1].width = Inches(4)
+        table.cell(0, 0).text = "Metric"
+        table.cell(0, 1).text = "Value"
+        data = {
+            "Total time taken for the ride": total_duration,
+            "Actual Ampere-hours (Ah)": -0.496635,
+            "Actual Watt-hours (Wh)": -25.81896295027778,
+            "Starting SoC (Ah)": 33.91,
+            "Ending SoC (Ah)": 34.433,
+            "Total distance covered (in kilometers)": total_distance,
+            "WH/KM": -40.360253303742816,
+            "Total SOC consumed": "1.0%",
+            "Mode": "Eco mode"
+        }
+        row_index = 1
+        for key, value in data.items():
+            table.cell(row_index, 0).text = key
+            table.cell(row_index, 1).text = str(value)
+            row_index += 1
+ 
+ 
+        # Add image slide with title and properly scaled image
+        slide_layout = prs.slide_layouts[5]
+        slide = prs.slides.add_slide(slide_layout)
+ 
+        # Remove the unwanted title placeholder
+        for shape in slide.shapes:
+            if shape.is_placeholder:
+                slide.shapes._spTree.remove(shape._element)
+ 
+        # Add the title
+        title_shape = slide.shapes.add_textbox(Inches(1), Inches(0.5), prs.slide_width - Inches(2), Inches(1))
+        title_shape.text = "Graph Analysis"
+ 
+        # Add the image and adjust its position and size
+        graph_width = prs.slide_width - Inches(1)
+        graph_height = prs.slide_height - Inches(2)
+        left = (prs.slide_width - graph_width) / 2
+        top = (prs.slide_height - graph_height) / 2 + Inches(1)
+        pic = slide.shapes.add_picture('graph.png', left, top, width=graph_width, height=graph_height)
+ 
+        # Save the presentation
+        output_file_name = f"{folder_path}/analysis_{folder_name}.pptx"
+        prs.save(output_file_name)
+       
+    except Exception as e:
+        print("Error:", e)
+
 #folder_path = "/home/sanjith/Documents/Graphs _ creta/15-51_16-00"
  
 # Get the list of files in the folder
@@ -293,4 +380,4 @@ for subfolder in os.listdir(main_folder_path):
  
                 plot_ghps(log_file)
                 # total_duration, total_distance, Wh_km,SOC_consumed=analysis_Energy(log_file,km_file)
-                # capture_analysis_output(log_file, km_file, subfolder_path)
+                capture_analysis_output(log_file, km_file, subfolder_path)
