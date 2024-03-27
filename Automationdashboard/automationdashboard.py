@@ -20,7 +20,7 @@ from pptx.util import Inches
 from docx import Document
 from docx.shared import Inches
 # Path to the folder containing the CSV files
-path = r"C:\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER"
+path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
  
 # List to store DataFrames from each CSV file
 dfs = []
@@ -62,7 +62,7 @@ def adjust_current(row):
         return row['PackCurr_6']
 def plot_ghps(log_file):
  
-    data = pd.read_csv(r"C:\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\MAR_21\log_file.csv")
+    data = pd.read_csv(r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data\log_file.csv")
  
     # Apply the adjustment function to the DataFrame
  
@@ -118,12 +118,11 @@ def plot_ghps(log_file):
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.savefig('graph.png')  # Save the plot as an image
     plt.show()
-
 def analysis_Energy(log_file, km_file):
  
-    data = pd.read_csv(r"C:\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\MAR_21\log_file.csv")
+    data = pd.read_csv(r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data\log_file.csv")
  
-    data_KM = pd.read_csv(r"C:\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\MAR_21\km_file.csv")
+    data_KM = pd.read_csv(r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data\km_file.csv")
  
     total_duration = 0
     total_distance = 0
@@ -246,9 +245,10 @@ def analysis_Energy(log_file, km_file):
  
  
     return total_duration, total_distance, Wh_km, total_soc_consumed
-folder_path = r"C:\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\MAR_21"
+folder_path = r"C:\Users\annmon.james\lectrix_internship\work\Automationdashboard\data"
+
 def capture_analysis_output(log_file, km_file, folder_path):
-    #try:
+    try:
         # Capture print statements
         analysis_output = io.StringIO()
         output_file = "analysis_results.docx"
@@ -330,16 +330,9 @@ def capture_analysis_output(log_file, km_file, folder_path):
         output_file_name = f"{folder_path}/analysis_{folder_name}.pptx"
         prs.save(output_file_name)
        
-    #except Exception as e:
-        #print("Error:", e)
- 
- 
- 
- 
- 
- 
- 
- 
+    except Exception as e:
+        print("Error:", e)
+
 #folder_path = "/home/sanjith/Documents/Graphs _ creta/15-51_16-00"
  
 # Get the list of files in the folder
@@ -353,7 +346,7 @@ km_file = None
  
  
 # Path to the main folder containing subfolders
-main_folder_path = r"C:\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER"
+main_folder_path = r"c:\Users\annmon.james\lectrix_internship\work\Automationdashboard"
  
 # Iterate over subfolders
 for subfolder in os.listdir(main_folder_path):
@@ -383,7 +376,8 @@ for subfolder in os.listdir(main_folder_path):
  
  
                 ### plot graphs
-                plot_ghps(log_file)
-                total_duration, total_distance, Wh_km,SOC_consumed=analysis_Energy(log_file,km_file)
-                capture_analysis_output(log_file, km_file, subfolder_path)
  
+ 
+                plot_ghps(log_file)
+                # total_duration, total_distance, Wh_km,SOC_consumed=analysis_Energy(log_file,km_file)
+                capture_analysis_output(log_file, km_file, subfolder_path)
