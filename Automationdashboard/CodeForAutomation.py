@@ -9,12 +9,11 @@ import os
  
 from openai import OpenAI
  
-# OPENAI_API_KEY = ''
+#OPENAI_API_KEY = ''
  
 folder_path = r"C:\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
-
 files = os.listdir(folder_path)
  
 # Initialize variables to store file paths
@@ -39,7 +38,7 @@ def adjust_current(row):
         adjust_current.zero_count += 1
     else:
         adjust_current.zero_count = 0
-    
+   
     if adjust_current.zero_count >= 10:
         return 0
     else:
@@ -119,12 +118,12 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             analyzed_statements.append(
                 {"role": "user",
                  "content": f"The controller voltage {max_battery_voltage}V exceeded 70V, was actual suggesting potential overvoltage during high regenerative braking."})
-                
+               
             # Check if ChgFetStatus_9 has gone to zero and if negative current exceeds -60A
             if 'ChgFetStatus_9' in relevant_data and 'PackCurr_6' in relevant_data:
                 chg_fet_status = relevant_data['ChgFetStatus_9']
                 pack_dc_current = relevant_data['PackCurr_6']
-                
+               
                 analyzed_statements.append(
                     {"role": "user",
                     "content": f"Over ovltage error is occured due to ChgFetStatus_9 going to 0 means battery has disconnected."})
@@ -147,19 +146,19 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                         rpm_series = relevant_data['MotorSpeed_340920578']
                         pack_curr_series = relevant_data['PackCurr_6']
                         timestamp_series = relevant_data['localtime']
-                        
+                       
                         # Create a DataFrame with RPM values, 'PackCurr_6', and corresponding timestamps
                         df = pd.DataFrame({'MotorSpeed_340920578': rpm_series, 'PackCurr_6': pack_curr_series, 'Timestamp': timestamp_series})
-                        
+                       
                         # Find the timestamp when 'PackCurr_6' becomes more than 60
                         timestamp_pack_curr_exceed_60 = df.loc[df['PackCurr_6'] > 60, 'Timestamp'].iloc[0]
                         print(timestamp_pack_curr_exceed_60)
  
-                        
+                       
                         # Find t2, 1.5 seconds before t1
                         timestamp_t2 = timestamp_pack_curr_exceed_60 - pd.Timedelta(seconds=1.5)
                         print(timestamp_t2)
-                        
+                       
                         # Find motor speed at t1 and t2 only if DataFrame is not empty
                         if not df.empty:
                             # Find motor speed at t1 when current > 60A
@@ -204,13 +203,32 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                             if not mode_1_df.empty:
                                 first_occurrence = mode_1_df.iloc[0]
                                 exact_time_mode_1 = first_occurrence['Timestamp']
-                            
+                           
                                 print("Timestamp of mode change:", exact_time_mode_1)
+ 
+                             # Check if SOC is less than 30 at the time of mode change
+                            if 'SOC_8' in relevant_data:
+                                soc_data = relevant_data['SOC_8']
+                                soc_at_mode_change = soc_data[timestamp_series == exact_time_mode_1].iloc[0]
+                                if soc_at_mode_change < 30:
+                                    analyzed_statements.append({
+                                        "role": "user",
+                                        "content": f"The mode change at time ({exact_time_mode_1}) was due to SOC being less than 30%."
+                                    })
+ 
+                                    # Speak with GPT about the mode change reason
+                                    analyzed_statements.append({
+                                        "role": "gpt",
+                                        "content": f"Mode changed at time ({exact_time_mode_1}) due to low state of charge (SOC < 30%)."
+                                    })
+ 
+ 
+ 
 #############################
-                            analyzed_statements.append({
-    "role": "user",
-    "content": f"Mode change at time ({exact_time_mode_1}) could be the reason for the sudden reduction in speed and the resulting high current greater than 60A."
-})
+                            #analyzed_statements.append({
+    #"role": "user",
+    #"content": f"Mode change at time ({exact_time_mode_1}) could be the reason for the sudden reduction in speed and the resulting high current greater than 60A."
+#})
 #############################                    
  
  
@@ -229,7 +247,7 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                                 first_occurrence = less_than_minus_60_df.iloc[0]
                                 timestamp = first_occurrence['Timestamp']
                                 print("Timestamp when 'PackCurr_6' goes below -60:", timestamp)
-                            
+                           
                                                     # Assuming relevant_data['MotorSpeed_340920578'] contains the motor speed data
                             motor_speed_series = relevant_data['MotorSpeed_340920578']
                             timestamp_series = relevant_data['localtime']  # Assuming relevant_data['localtime'] contains the timestamps
@@ -295,7 +313,7 @@ def continuous_dc_exceeded_limit(max_pack_dc_current, data):
 def analyze_fault(csv_file, fault_name):
     # Load CSV data into a DataFrame
     data = pd.read_csv(csv_file)
-    
+   
     # Convert 'localtime' to datetime
     data['localtime'] = pd.to_datetime(data['localtime'])
  
