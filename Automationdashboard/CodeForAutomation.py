@@ -9,30 +9,23 @@ import os
  
 from openai import OpenAI
  
-# OPENAI_API_KEY = 'REPLACE THIS WITH YOUR KEY'
+# OPENAI_API_KEY = 'Enter OpenAI key'
  
-folder_path = "C:\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"c:\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
  
 # Initialize variables to store file paths
 log_file = None
-km_file = None
  
- 
- 
+# Find files starting with 'log' and 'km'
 for file in files:
     if file.startswith('log') and file.endswith('.csv'):
         log_file = os.path.join(folder_path, file)
-    elif file.startswith('km') and file.endswith('.csv'):
-        km_file = os.path.join(folder_path, file)
- 
  
 # Read the CSV file into a pandas DataFrame
 data = pd.read_csv(log_file)
-km_data = pd.read_csv(km_file)
- 
  
 # Convert 'localtime' column to datetime format and set it as index
 data['localtime'] = pd.to_datetime(data['localtime'])
@@ -52,7 +45,7 @@ def adjust_current(row):
         return row['PackCurr_6']
  
 def generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,
-                    current_speed, throttle_percentage, relevant_data, max_battery_voltage,km_data):
+                    current_speed, throttle_percentage, relevant_data, max_battery_voltage):
     error_cause = ""
     if max_pack_dc_current < -130:
         error_cause = "battery overcurrent"
@@ -67,7 +60,7 @@ def generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_
             {"role": "system", "content": "Please provide a summary explaining why the fault occurred along with occurrence time and cause."},
             {"role": "system", "content": f"The fault '{fault_name}' was triggered due to {error_cause} at {fault_timestamp}."},
             {"role": "user", "content": f"Speed at fault occurrence: {current_speed * 0.016} km/h, Throttle percentage: {throttle_percentage}."},
-            {"role": "user", "content": f"{gpt_analyze_data(max_pack_dc_current, max_ac_current,min_pack_dc_current, current_speed, throttle_percentage, relevant_data, fault_name,max_battery_voltage,fault_timestamp,km_data)}"}
+            {"role": "user", "content": f"{gpt_analyze_data(max_pack_dc_current, max_ac_current,min_pack_dc_current, current_speed, throttle_percentage, relevant_data, fault_name,max_battery_voltage)}"}
  
         ]
     )
@@ -81,85 +74,54 @@ def generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_
     return
  
 def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, current_speed, throttle_percentage,
-                     relevant_data, fault_name, max_battery_voltage,fault_timestamp,km_data):
+                     relevant_data, fault_name, max_battery_voltage):
     # Placeholder for GPT-analyzed statements
     analyzed_statements = []
  
     print(fault_name)
  
+    ###################
+    if fault_name == 'Controller_Undervoltage_408094978':
+    # Define the threshold voltage for undervoltage
+        undervoltage_threshold = 48  # Adjust the threshold as needed
+
+    # Find the voltage when the error occurred and multiply by 10
+        voltage_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'BatteryVoltage_340920578'].iloc[0] * 10
+        print("Voltage at error:", voltage_at_error)
+
+        # Check if the maximum battery voltage is less than the threshold
+        if voltage_at_error < undervoltage_threshold:
+            analyzed_statements.append({
+                "role": "system",
+                "content": f"The maximum battery voltage ({voltage_at_error}V) is below the undervoltage threshold."
+            })
+
+            # Check for Discharge FET status and high pack current if voltage is low
+            if 'DchgFetStatus_9' in relevant_data:
+                dchg_fet_status = relevant_data['DchgFetStatus_9'].iloc[0]  # Assuming it's a binary status (1 for on, 0 for off)
+
+                if dchg_fet_status == 1:  # Discharge FET is low
+                    analyzed_statements.append(
+                    # Check if the pack current is too high when Discharge FET is low
+                    {
+                    "role": "system",
+                    "content": "The Discharge FET is low, which is causing the voltage to be low."
+                    })
+
+                    if max_pack_dc_current < -120:
+                        analyzed_statements.append({
+                            "role": "system",
+                            "content": f"The DC current exceeded the max current allowed by the battery i.e. 120A, the current is {max_pack_dc_current}. Also, this High current caused the Discharge FET to become low, resulting in low voltage."
+                        })
+
+    ###################
+            
     # Generate statements based on data analysis
     if fault_name == 'ChgPeakProt_9':
         if min_pack_dc_current > 80:
             analyzed_statements.append(
                 {"role": "system",
                  "content": f"The DC Regen current exceeded the limit 60A form battery, the current limit is now {min_pack_dc_current}A."})
- 
-    # Add Motor Over Temperature analysis
-    if fault_name == 'Motor_Over_Temeprature_408094978':
-        if max(relevant_data['Motor_Temperature_408094979']) > 130:
-            analyzed_statements.append(
-                {"role": "system",
-                "content": f"The motor temperature is {max(relevant_data['Motor_Temperature_408094979'])}°C exceeding 130°C, indicating potential motor overtemperature."})
- 
-            # Initialize variables to store timestamps
-            t1 = fault_timestamp  # Timestamp when the error occurred
-            t2 = None  # Timestamp when motor temperature was less than 90°C before the error
- 
-       
-            # If t1 is found, find t2
-            if t1:
-                for index, row in relevant_data[::-1].iterrows():
-                    if row['Motor_Temperature_408094979'] < 90 and row['localtime'] < t1:
-                        t2 = row['localtime']
-                        break  #
- 
-            # Print timestamps if found
-            if t1 and t2:
- 
-            # Calculate the rate of change of temperature of the motor between t1 and t2
-                # Find the temperature at t1 and t2
-                temp_t1 = relevant_data[relevant_data['localtime'] == t1]['Motor_Temperature_408094979'].iloc[0]
-                temp_t2 = relevant_data[relevant_data['localtime'] == t2]['Motor_Temperature_408094979'].iloc[0]
- 
-                # Find the time difference between t1 and t2 in seconds
-                time_diff_seconds = (t1 - t2).total_seconds()
- 
-                # Calculate the rate of change of temperature
-                rate_of_change = (temp_t1 - temp_t2) / (time_diff_seconds/60)
- 
-                analyzed_statements.append(
-            {"role": "system",
-            "content": f"the motor temperature rate of change was very high, {rate_of_change}C/m. thats why the temperature was high "})
-           
-                if rate_of_change > 8:
-                                        # Initialize variables to store statistics
-                    ac_current_values = []
-                    dc_current_values = []
- 
-                    # Iterate through relevant_data between t1 and t2
-                    for index, row in relevant_data.iterrows():
-                        if t2 <= row['localtime'] <= t1:
-                            ac_current_values.append(row['AC_Current_340920579'])
-                            dc_current_values.append(row['PackCurr_6'])
- 
-                    # Calculate peak and average AC current
-                    peak_ac_current = max(ac_current_values)
-                    average_ac_current = sum(ac_current_values) / len(ac_current_values) if ac_current_values else 0
- 
-                    # Calculate peak and average DC current
-                    peak_dc_current = min(dc_current_values)
-                    average_dc_current = np.nanmean(dc_current_values)
-                    # Append analyzed statements
-                    analyzed_statements.append(
-                        {"role": "system",
-                        "content": f"During the period of temerature elevation the peak AC current was {peak_ac_current}A and the average AC current was {average_ac_current}A."})
-                    analyzed_statements.append(
-                        {"role": "system",
-                        "content": f"During the period of temerature elevation the peak DC current was {peak_dc_current}A and the average DC current was {average_dc_current}A."})
-                    analyzed_statements.append(
-                        {"role": "system",
-                        "content": f"If the currents are more then this might be possible that current consumptions are reason for temperature increase. this might happen due to vehcile climbing inclination/or some abstruction in wheel"})
-                   
  
     if fault_name == 'Overcurrent_Fault_408094978':
         if max_ac_current > 220:
@@ -186,9 +148,7 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             analyzed_statements.append(
                 {"role": "system",
                  "content": f"The DC current exceeded the the max current allowed by the battery i.e. 120A, the current is {max_pack_dc_current}"})
-   
-   
-   
+#############################################
     if fault_name == 'DriveError_Controller_OverVoltag_408094978':
         if max_battery_voltage > 70:
             analyzed_statements.append(
@@ -211,9 +171,12 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                         {"role": "user",
                         "content": f"ChgFetStatus_9 went to zero because negative current was {pack_dc_current*-1} exceeding -60A,  suggesting potential Overcurrent during high regenerative braking."})
  
+###########################################################################################################################
                     prev_mode_value = None
                     timestamp = None
-           
+                   
+                   
+                   
                     # Additional condition to check the rate of change of RPM
                     if 'MotorSpeed_340920578' in relevant_data and 'PackCurr_6' in relevant_data:
                         rpm_series = relevant_data['MotorSpeed_340920578']
@@ -244,24 +207,14 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
  
                             # Find motor speed at t2, 1.5 seconds before t1
                             nearest_timestamp_t2 = df.loc[(df['Timestamp'] <= timestamp_t2), 'Timestamp'].max()
-                           # print(nearest_timestamp_t2)
+                            print(nearest_timestamp_t2)
  
                             motor_speed_t2 = df.loc[df['Timestamp'] == nearest_timestamp_t2, 'MotorSpeed_340920578']    
  
                             if not motor_speed_t2.empty:
                                 motor_speed_t2 = motor_speed_t2.iloc[0]
                                 print("Motor speed at t2 (1.5 seconds before t1):", motor_speed_t2)
-                                print("cahnge in RPM", motor_speed_t2-motor_speed_t1)
  
- 
- 
-                                                        # Calculate the rate of change of RPM (RPM/s)
- 
-                            rate_of_change_rpm = (motor_speed_t2-motor_speed_t1) / 1.5
-                            analyzed_statements.append({
-                "role": "user",
-                "content": f"The rate of decrease of motor speed RPM is {rate_of_change_rpm}, if exceeds 100 RPMs/SEC, potentially causes high regen current. If not, Rate of cange of RPM is not the cause"
-            })
  
                     # Check if there's a change in Mode_Ack_408094978
                     if 'Mode_Ack_408094978' in relevant_data:
@@ -288,10 +241,31 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                                 exact_time_mode_1 = first_occurrence['Timestamp']
                            
                                 print("Timestamp of mode change:", exact_time_mode_1)
-                            analyzed_statements.append({
-    "role": "user",
-    "content": f"There is a sudden change in mode at ({exact_time_mode_1}) this may cause a high rate of change of motor RPM"
-})                    
+ 
+                             # Check if SOC is less than 30 at the time of mode change
+                            if 'SOC_8' in relevant_data:
+                                soc_data = relevant_data['SOC_8']
+                                soc_at_mode_change = soc_data[timestamp_series == exact_time_mode_1].iloc[0]
+                                if soc_at_mode_change < 30:
+                                    analyzed_statements.append({
+                                        "role": "user",
+                                        "content": f"The mode change at time ({exact_time_mode_1}) was due to SOC being less than 30%."
+                                    })
+ 
+                                    # Speak with GPT about the mode change reason
+                                    analyzed_statements.append({
+                                        "role": "gpt",
+                                        "content": f"Mode changed at time ({exact_time_mode_1}) due to low state of charge (SOC < 30%)."
+                                    })
+ 
+ 
+ 
+#############################
+                            #analyzed_statements.append({
+    #"role": "user",
+    #"content": f"Mode change at time ({exact_time_mode_1}) could be the reason for the sudden reduction in speed and the resulting high current greater than 60A."
+#})
+#############################                    
  
  
                                                 # Assuming relevant_data['PackCurr_6'] contains the data
@@ -331,19 +305,19 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                             print("Time taken for motor speed drop (seconds):", time_difference_seconds)
                             print("Time taken for motor speed drop (milliseconds):", time_difference_milliseconds)
  
- 
+#################################
                             # Calculate the rate of change of RPM (RPM/s)
                             time_difference_seconds = (timestamp_pack_curr_exceed_60 - timestamp_t2).total_seconds()
                             rate_of_change_rpm = motor_speed_drop / time_difference_seconds
  
                             print("Rate of change of RPM:", rate_of_change_rpm)
  
-            #                 if motor_speed_drop > 150:
-            #                     analyzed_statements.append({
-            #     "role": "user",
-            #     "content": f"The rate of change of motor speed (RPM) ({rate_of_change_rpm}) exceeds 150 RPM, potentially causing high current to the battery."
-            # })
- 
+                            if motor_speed_drop > 150:
+                                analyzed_statements.append({
+                "role": "user",
+                "content": f"The rate of change of motor speed (RPM) ({rate_of_change_rpm}) exceeds 150 RPM, potentially causing high current to the battery."
+            })
+################################
  
     print("here",analyzed_statements)
     return analyzed_statements
@@ -372,11 +346,9 @@ def continuous_dc_exceeded_limit(max_pack_dc_current, data):
     return False
  
  
-def analyze_fault(csv_file, fault_name,km_file):
+def analyze_fault(csv_file, fault_name):
     # Load CSV data into a DataFrame
     data = pd.read_csv(csv_file)
-    km_data = pd.read_csv(km_file)
- 
    
     # Convert 'localtime' to datetime
     data['localtime'] = pd.to_datetime(data['localtime'])
@@ -425,7 +397,7 @@ def analyze_fault(csv_file, fault_name,km_file):
     throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
  
  
-    generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage,km_data)
+    generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
  
     print("Occurrence Time:", fault_timestamp)
     print("Maximum AC Current before fault:", max_ac_current, "A")
@@ -469,11 +441,6 @@ def analyze_fault(csv_file, fault_name,km_file):
     line10, = ax1.plot(relevant_data['localtime'], relevant_data['Mode_Ack_408094978'] *10, color='green', label='Mode_Ack_408094978 ')
  
  
-    # Add 'Motor_Temperature_408094979' to the left side y-axis
-    line11, = ax1.plot(relevant_data['localtime'], relevant_data['Motor_Temperature_408094979'], color='yellow', label='Motor Temperature')
- 
-    # Add 'MCU_Temperature_408094979' to the left side y-axis
-    line12, = ax1.plot(relevant_data['localtime'], relevant_data['MCU_Temperature_408094979'], color='lime', label='MCU Temperature')
  
     # Hide the y-axis label for 'AC_Current_340920579'
     ax1.get_yaxis().get_label().set_visible(False)
@@ -501,8 +468,8 @@ def analyze_fault(csv_file, fault_name,km_file):
  
     # Create checkboxes
     rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578', 'SOC_8', 'Mode_Ack_408094978', 'Motor_Temperature_408094979', 'MCU_Temperature_408094979')
-    lines = [line1, line3, line2, line4, line5, line6, line7, line8, line9, line10, line11, line12]
+    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978')
+    lines = [line1, line3, line2, line4, line5, line6, line7, line8]
     visibility = [line.get_visible() for line in lines]
     check = CheckButtons(rax, labels, visibility)
  
@@ -515,12 +482,7 @@ def analyze_fault(csv_file, fault_name,km_file):
  
     plt.show()
  
- 
- 
 client = OpenAI()
  
 # Call the function for 'DriveError_Controller_OverVoltag_408094978'
-#analyze_fault(log_file, 'DriveError_Controller_OverVoltag_408094978')
-#analyze_fault(log_file, 'Motor_Over_Temeprature_408094978',km_file)
- 
-analyze_fault(log_file, 'Overcurrent_Fault_408094978',km_file)
+analyze_fault(log_file, 'Controller_Undervoltage_408094978')
