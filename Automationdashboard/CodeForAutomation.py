@@ -11,7 +11,7 @@ from openai import OpenAI
  
 # OPENAI_API_KEY = 'Enter OpenAI key'
  
-folder_path = r"c:\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -439,6 +439,8 @@ def analyze_fault(csv_file, fault_name):
     line9, = ax1.plot(relevant_data['localtime'], relevant_data['SOC_8'] , color='magenta', label='SOC_8 ')
  
     line10, = ax1.plot(relevant_data['localtime'], relevant_data['Mode_Ack_408094978'] *10, color='green', label='Mode_Ack_408094978 ')
+
+    line11, = ax1.plot(relevant_data['localtime'], relevant_data['Controller_Over_Temeprature_408094978'] *10, color='green', label='Controller_Over_Temperature_408094978 ')
  
  
  
@@ -468,8 +470,8 @@ def analyze_fault(csv_file, fault_name):
  
     # Create checkboxes
     rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978')
-    lines = [line1, line3, line2, line4, line5, line6, line7, line8]
+    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','Controller_Over_Temperature_408094978')
+    lines = [line1, line3, line2, line4, line5, line6, line7, line8, line9, line10,line11]
     visibility = [line.get_visible() for line in lines]
     check = CheckButtons(rax, labels, visibility)
  
@@ -485,4 +487,4 @@ def analyze_fault(csv_file, fault_name):
 client = OpenAI()
  
 # Call the function for 'DriveError_Controller_OverVoltag_408094978'
-analyze_fault(log_file, 'Controller_Undervoltage_408094978')
+analyze_fault(log_file, 'Controller_Over_Temeprature_408094978')
