@@ -9,7 +9,7 @@ import os
  
 from openai import OpenAI
  
-# OPENAI_API_KEY = 'Enter OpenAI key'
+#OPENAI_API_KEY = 'Enter OpenAPI key'
  
 folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
  
