@@ -9,7 +9,7 @@ import os
  
 from openai import OpenAI
  
-#OPENAI_API_KEY = 'ENTER API KEY'
+# OPENAI_API_KEY = 'Enter Open AI Key'
  
 folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
  
@@ -105,11 +105,61 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             "role": "system",
             "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, contributing to the Controller Over Temperature condition."
         })
-    else:
-        analyzed_statements.append({
-            "role": "system",
-            "content": f"The PCB temperature ({pcb_temp_at_error}°C) did not exceed the overtemperature threshold of {pcb_temp_threshold}°C, indicating other factors may have contributed to the Controller Over Temperature condition."
-        })
+                # Initialize variable to store minimum MCU_Temperature_408094979 value at the time of error
+        min_MCU_Temperature_at_error = float('inf')
+
+        # Iterate over relevant_data to find minimum MCU_Temperature_408094979 at error
+        for index, row in relevant_data.iterrows():
+            if row[fault_name] == 1 and row['MCU_Temperature_408094979'] < min_MCU_Temperature_at_error:
+                min_MCU_Temperature_at_error = row['MCU_Temperature_408094979']
+
+        # Check for no faults found condition
+        if min_MCU_Temperature_at_error == float('inf'):
+            print("No faults found for", fault_name)
+        else:
+            # Print the minimum MCU_Temperature_408094979 at error
+            print("Minimum MCU_Temperature_408094979 at error:", min_MCU_Temperature_at_error)
+        mcu_temp_threshold = min_MCU_Temperature_at_error # 83 from csv file
+                # Find the MCU temperature when the error occurred
+        mcu_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'MCU_Temperature_408094979'].iloc[0]
+        print("MCU Temperature at error:", mcu_temp_at_error)
+
+        # Check if the MCU temperature exceeds the defined overtemperature threshold
+        if mcu_temp_at_error > mcu_temp_threshold:
+            analyzed_statements.append({
+                "role": "system",
+                "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, contributing to the Controller Over Temperature condition."
+            })
+            # Initialize variable to store minimum Motor_Temperature_408094979 value at the time of error
+            min_Motor_Temperature_at_error = float('inf')
+
+            # Iterate over relevant_data to find minimum Motor_Temperature_408094979 at error
+            for index, row in relevant_data.iterrows():
+                if row[fault_name] == 1 and row['Motor_Temperature_408094979'] < min_Motor_Temperature_at_error:
+                    min_Motor_Temperature_at_error = row['Motor_Temperature_408094979']
+
+            # Check for no faults found condition
+            if min_Motor_Temperature_at_error == float('inf'):
+                print("No faults found for", fault_name)
+            else:
+                # Print the minimum Motor_Temperature_408094979 at error
+                print("Minimum Motor_Temperature_408094979 at error:", min_Motor_Temperature_at_error)
+            motor_temp_threshold =min_Motor_Temperature_at_error #I got 136 from csv
+                # Find the motor temperature when the error occurred
+            motor_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'Motor_Temperature_408094979'].iloc[0]
+            print("Motor Temperature at error:", motor_temp_at_error)
+
+            # Check if the motor temperature exceeds the defined overtemperature threshold
+            if motor_temp_at_error > motor_temp_threshold:
+                analyzed_statements.append({
+                    "role": "system",
+                    "content": f"The motor temperature ({motor_temp_at_error}°C) exceeded the overtemperature threshold of {motor_temp_threshold}°C, contributing to the Controller Over Temperature condition."
+                })
+            else:
+                analyzed_statements.append({
+                    "role": "system",
+                    "content": f"The motor temperature ({motor_temp_at_error}°C) did not exceed the overtemperature threshold of {motor_temp_threshold}°C, indicating other factors may have contributed to the Controller Over Temperature condition."
+                })
     ###################
     if fault_name == 'Controller_Undervoltage_408094978':
     # Define the threshold voltage for undervoltage
@@ -472,10 +522,11 @@ def analyze_fault(csv_file, fault_name):
  
     line10, = ax1.plot(relevant_data['localtime'], relevant_data['Mode_Ack_408094978'] *10, color='green', label='Mode_Ack_408094978 ')
 
-    line11, = ax1.plot(relevant_data['localtime'], relevant_data['Controller_Over_Temeprature_408094978'] *10, color='green', label='Controller_Over_Temperature_408094978 ')
- 
- 
- 
+    line11, = ax1.plot(relevant_data['localtime'], relevant_data['Controller_Over_Temeprature_408094978'] , color='green', label='Controller_Over_Temperature_408094978 ')
+    line12, = ax1.plot(relevant_data['localtime'], relevant_data['PcbTemp_12'] , color='green', label='PcbTemp_12')
+    line13, = ax1.plot(relevant_data['localtime'], relevant_data['MCU_Temperature_408094979'] , color='green', label='MCU_Temperature_408094979')
+    line14, = ax1.plot(relevant_data['localtime'], relevant_data['Motor_Temperature_408094979'] , color='green', label='Motor_Temperature_408094979')
+    
     # Hide the y-axis label for 'AC_Current_340920579'
     ax1.get_yaxis().get_label().set_visible(False)
  
@@ -502,8 +553,8 @@ def analyze_fault(csv_file, fault_name):
  
     # Create checkboxes
     rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','Controller_Over_Temperature_408094978')
-    lines = [line1, line3, line2, line4, line5, line6, line7, line8, line9, line10,line11]
+    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','Controller_Over_Temperature_408094978','PcbTemp_12','MCU_Temperature_408094979','Motor_Temperature_408094979')
+    lines = [line1, line3, line2, line4, line5, line6, line7, line8, line9, line10,line11, line12,line13,line14]
     visibility = [line.get_visible() for line in lines]
     check = CheckButtons(rax, labels, visibility)
  
