@@ -9,7 +9,7 @@ import os
  
 from openai import OpenAI
  
-# OPENAI_API_KEY = 'Enter OpenAI key'
+#OPENAI_API_KEY = 'ENTER API KEY'
  
 folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
  
@@ -77,9 +77,39 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                      relevant_data, fault_name, max_battery_voltage):
     # Placeholder for GPT-analyzed statements
     analyzed_statements = []
- 
+    
     print(fault_name)
- 
+    if fault_name == 'Controller_Over_Temeprature_408094978':
+        # Initialize variable to store minimum PcbTemp_12 value at the time of error
+        min_PcbTemp_12_at_error = float('inf')
+
+        # Iterate over relevant_data to find minimum PcbTemp_12 at error
+        for index, row in relevant_data.iterrows():
+            if row[fault_name] == 1 and row['PcbTemp_12'] < min_PcbTemp_12_at_error:
+                min_PcbTemp_12_at_error = row['PcbTemp_12']
+
+        # Check for no faults found condition
+        if min_PcbTemp_12_at_error == float('inf'):
+            print("No faults found for", fault_name)
+        else:
+            # Print the minimum PcbTemp_12 at error
+            print("Minimum PcbTemp_12 at error:", min_PcbTemp_12_at_error)
+        pcb_temp_threshold = min_PcbTemp_12_at_error # I got 61 from csv
+            # Find the PCB temperature when the error occurred
+    pcb_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'PcbTemp_12'].iloc[0]
+    print("PCB Temperature at error:", pcb_temp_at_error)
+
+    # Check if the PCB temperature exceeds the defined overtemperature threshold
+    if pcb_temp_at_error > pcb_temp_threshold:
+        analyzed_statements.append({
+            "role": "system",
+            "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, contributing to the Controller Over Temperature condition."
+        })
+    else:
+        analyzed_statements.append({
+            "role": "system",
+            "content": f"The PCB temperature ({pcb_temp_at_error}°C) did not exceed the overtemperature threshold of {pcb_temp_threshold}°C, indicating other factors may have contributed to the Controller Over Temperature condition."
+        })
     ###################
     if fault_name == 'Controller_Undervoltage_408094978':
     # Define the threshold voltage for undervoltage
@@ -377,7 +407,9 @@ def analyze_fault(csv_file, fault_name):
     start_time = fault_timestamp - pd.Timedelta(minutes=5)
     # Calculate end time (2 minutes after the fault)
     end_time = fault_timestamp + pd.Timedelta(minutes=2)
- 
+    print("Fault timestamp=", fault_timestamp)
+    print("5 minutes before fault time=",start_time)
+    print("2 minutes after fault time",end_time)
     # Filter data for 5 minutes before and after the fault
     relevant_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
  
