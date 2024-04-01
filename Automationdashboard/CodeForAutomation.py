@@ -9,7 +9,7 @@ import os
  
 from openai import OpenAI
  
-# OPENAI_API_KEY = 'Enter Open AI Key'
+#OPENAI_API_KEY = 'Enter OpenAPI key'
  
 folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
  
@@ -100,10 +100,10 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
     print("PCB Temperature at error:", pcb_temp_at_error)
 
     # Check if the PCB temperature exceeds the defined overtemperature threshold
-    if pcb_temp_at_error > pcb_temp_threshold:
+    if pcb_temp_at_error >= pcb_temp_threshold:
         analyzed_statements.append({
             "role": "system",
-            "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, contributing to the Controller Over Temperature condition."
+            "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, which may be the cause of Controller Over Temperature condition."
         })
                 # Initialize variable to store minimum MCU_Temperature_408094979 value at the time of error
         min_MCU_Temperature_at_error = float('inf')
@@ -125,10 +125,10 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
         print("MCU Temperature at error:", mcu_temp_at_error)
 
         # Check if the MCU temperature exceeds the defined overtemperature threshold
-        if mcu_temp_at_error > mcu_temp_threshold:
+        if mcu_temp_at_error >= mcu_temp_threshold:
             analyzed_statements.append({
                 "role": "system",
-                "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, contributing to the Controller Over Temperature condition."
+                "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, which may be the cause of PCB over temperature condition."
             })
             # Initialize variable to store minimum Motor_Temperature_408094979 value at the time of error
             min_Motor_Temperature_at_error = float('inf')
@@ -150,10 +150,10 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             print("Motor Temperature at error:", motor_temp_at_error)
 
             # Check if the motor temperature exceeds the defined overtemperature threshold
-            if motor_temp_at_error > motor_temp_threshold:
+            if motor_temp_at_error >= motor_temp_threshold:
                 analyzed_statements.append({
                     "role": "system",
-                    "content": f"The motor temperature ({motor_temp_at_error}°C) exceeded the overtemperature threshold of {motor_temp_threshold}°C, contributing to the Controller Over Temperature condition."
+                    "content": f"The motor temperature ({motor_temp_at_error}°C) exceeded the overtemperature threshold of {motor_temp_threshold}°C, which may be the cause of MCU over temperature"
                 })
             else:
                 analyzed_statements.append({
