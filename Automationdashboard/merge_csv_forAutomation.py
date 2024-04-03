@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.spatial import KDTree
-import numpy as np  # Import numpy for array operations
+import numpy as np
 
 # Load the CSV files
 log1_df = pd.read_csv(r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard\log 1.csv")
@@ -25,6 +25,13 @@ log1_df['km2_index'] = indices
 
 # Merge the two dataframes based on the matched indices
 merged_df = pd.merge(log1_df, km2_df, left_on='km2_index', right_index=True, suffixes=('_log1', '_km2'))
+
+# Rename columns back to their original names from log 1.csv
+merged_df.rename(columns={
+    'id_log1': 'id',
+    'timestamp_log1': 'timestamp',
+    'localtime_log1': 'localtime'
+}, inplace=True)
 
 # Drop the auxiliary column used for merging
 merged_df.drop(columns=['km2_index'], inplace=True)
