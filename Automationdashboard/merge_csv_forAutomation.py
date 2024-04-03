@@ -1,48 +1,36 @@
 import pandas as pd
+from scipy.spatial import KDTree
+import numpy as np  # Import numpy for array operations
 
 # Load the CSV files
-km2_df = pd.read_csv('c:\Git_Projects\Automationdashboard\Automationdashboard/km 2.csv')
-log1_df = pd.read_csv('c:\Git_Projects\Automationdashboard\Automationdashboard/log 1.csv')
+log1_df = pd.read_csv(r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard\log 1.csv")
+km2_df = pd.read_csv(r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard\km 2.csv")
 
-# Convert timestamps to datetime for easier handling
-km2_df['timestamp_dt'] = pd.to_datetime(km2_df['timestamp'], unit='ms')
-log1_df['timestamp_dt'] = pd.to_datetime(log1_df['timestamp'], unit='ms')
+# Convert "localtime" columns to datetime format for both DataFrames, specifying day-first parsing
+log1_df['localtime'] = pd.to_datetime(log1_df['localtime'], dayfirst=True)
+km2_df['localtime'] = pd.to_datetime(km2_df['localtime'], dayfirst=True)
 
-# Set the index to the timestamp for both dataframes for alignment
-km2_df.set_index('timestamp_dt', inplace=True)
-log1_df.set_index('timestamp_dt', inplace=True)
+# Convert the "localtime" to numeric timestamps for KDTree, using astype instead of view
+log1_timestamps = log1_df['localtime'].astype('int64').to_numpy()
+km2_timestamps = km2_df['localtime'].astype('int64').to_numpy()
 
-# Create a unified index from both dataframes to ensure no timestamp is missed
-combined_index = km2_df.index.union(log1_df.index)
+# Build a KDTree for efficient nearest neighbor search, converting to a 2D array for KDTree
+km2_tree = KDTree(km2_timestamps.reshape(-1, 1))
 
-# Reindex both dataframes to this combined index with the nearest method to align on the closest timestamp
-km2_df_reindexed = km2_df.reindex(combined_index, method='nearest')
-log1_df_reindexed = log1_df.reindex(combined_index, method='nearest')
+# Find the closest timestamp in km2 for each entry in log1, converting log1_timestamps to a 2D array
+distances, indices = km2_tree.query(log1_timestamps.reshape(-1, 1))
 
-# Prepare for merging based on localtime by first calculating mismatches (optional for understanding discrepancies)
-comparison_df = pd.DataFrame({
-    'km2_localtime': km2_df_reindexed['localtime'],
-    'log1_localtime': log1_df_reindexed['localtime'],
-    'matches': km2_df_reindexed['localtime'] == log1_df_reindexed['localtime']
-})
-mismatches_df = comparison_df[~comparison_df['matches']]
+# Use the found indices to match entries from km2_df to log1_df
+log1_df['km2_index'] = indices
 
-# Convert 'localtime' to datetime in mismatches_df for variation calculation (optional analysis)
-mismatches_df['km2_localtime_dt'] = pd.to_datetime(mismatches_df['km2_localtime'], format='%d/%m/%Y %H:%M:%S.%f')
-mismatches_df['log1_localtime_dt'] = pd.to_datetime(mismatches_df['log1_localtime'], format='%d/%m/%Y %H:%M:%S.%f')
-mismatches_df['time_difference'] = (mismatches_df['km2_localtime_dt'] - mismatches_df['log1_localtime_dt']).dt.total_seconds().abs()
-average_variation = mismatches_df['time_difference'].mean()
+# Merge the two dataframes based on the matched indices
+merged_df = pd.merge(log1_df, km2_df, left_on='km2_index', right_index=True, suffixes=('_log1', '_km2'))
 
-# Overwrite localtime in km2_df_reindexed with the localtime from log1_df_reindexed
-km2_df_reindexed['localtime'] = log1_df_reindexed['localtime']
+# Drop the auxiliary column used for merging
+merged_df.drop(columns=['km2_index'], inplace=True)
 
-# Combine both dataframes with a suffix for log1_df_reindexed columns to avoid conflicts
-merged_df = km2_df_reindexed.combine_first(log1_df_reindexed.add_suffix('_log1'))
+# Save the merged dataframe to a new CSV file
+merged_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard\merged.csv"
+merged_df.to_csv(merged_path, index=False)
 
-# Reset index to include the timestamp in the data and save to CSV
-merged_df.reset_index(inplace=True)
-merged_csv_path = 'c:\Git_Projects\Automationdashboard\Automationdashboard/merged_km_log.csv'
-merged_df.to_csv(merged_csv_path, index=False)
-
-# Output the path to the new merged CSV file
-print(merged_csv_path)
+print(f"Merged file saved to {merged_path}")
