@@ -11,7 +11,7 @@ from openai import OpenAI
  
 #OPENAI_API_KEY = 'Enter OpenAPI key'
  
-folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"C:\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -53,32 +53,32 @@ def generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_
         error_cause = "motor overcurrent"
     elif max_battery_voltage > 69:
         error_cause = "battery overvoltage"
+    gpt_analyze_data(max_pack_dc_current, max_ac_current,min_pack_dc_current, current_speed, throttle_percentage, relevant_data, fault_name,max_battery_voltage)
+    # completion = client.chat.completions.create(
+    #     model="gpt-3.5-turbo",
+    #     messages=[
+    #         {"role": "system", "content": "Please provide a summary explaining why the fault occurred along with occurrence time and cause."},
+    #         {"role": "system", "content": f"The fault '{fault_name}' was triggered due to {error_cause} at {fault_timestamp}."},
+    #         {"role": "user", "content": f"Speed at fault occurrence: {current_speed * 0.016} km/h, Throttle percentage: {throttle_percentage}."},
+    #         {"role": "user", "content": f"{gpt_analyze_data(max_pack_dc_current, max_ac_current,min_pack_dc_current, current_speed, throttle_percentage, relevant_data, fault_name,max_battery_voltage)}"}
  
-    completion = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Please provide a summary explaining why the fault occurred along with occurrence time and cause."},
-            {"role": "system", "content": f"The fault '{fault_name}' was triggered due to {error_cause} at {fault_timestamp}."},
-            {"role": "user", "content": f"Speed at fault occurrence: {current_speed * 0.016} km/h, Throttle percentage: {throttle_percentage}."},
-            {"role": "user", "content": f"{gpt_analyze_data(max_pack_dc_current, max_ac_current,min_pack_dc_current, current_speed, throttle_percentage, relevant_data, fault_name,max_battery_voltage)}"}
+    #     ]
+    # )
  
-        ]
-    )
+    # generated_messages = completion.choices[0].message.content.split('\n')
  
-    generated_messages = completion.choices[0].message.content.split('\n')
+    # # Print out the generated messages for debugging
+    # print("Generated Messages:", generated_messages)
  
-    # Print out the generated messages for debugging
-    print("Generated Messages:", generated_messages)
- 
-    # Extract content from dictionaries and join into a single string
-    return
+    # # Extract content from dictionaries and join into a single string
+    # return
  
 def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, current_speed, throttle_percentage,
                      relevant_data, fault_name, max_battery_voltage):
     # Placeholder for GPT-analyzed statements
     analyzed_statements = []
     
-    print(fault_name)
+    print("Fault name=", fault_name)
     if fault_name == 'Controller_Over_Temeprature_408094978':
         # Initialize variable to store minimum PcbTemp_12 value at the time of error
         min_PcbTemp_12_at_error = float('inf')
