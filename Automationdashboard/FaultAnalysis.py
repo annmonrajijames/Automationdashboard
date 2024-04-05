@@ -1,16 +1,22 @@
 import pandas as pd
-path=r'C:\Work\Git_Projects\Automationdashboard\Automationdashboard\log 1.csv'
-log_data = pd.read_csv(path, parse_dates=['localtime'])
-error_indices = log_data['Controller_Over_Temeprature_408094978'] == 1  # Adjust condition as needed
-window = pd.Timedelta(minutes=5)  # Example window size
-for error_time in log_data[error_indices]['localtime']:
-    window_data = log_data[(log_data['localtime'] >= error_time - window) & 
-                           (log_data['localtime'] <= error_time + window)]
-    # Analyze window_data for correlated metrics
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# Example plot
-plt.figure(figsize=(10, 6))
-sns.lineplot(data=window_data, x='localtime', y='PcbTemp_12')
-plt.show()
+# Load the CSV file
+file_path = r"D:\Git_Projects\Automationdashboard\Automationdashboard/log 1.csv"  # Update this to your actual file path
+data = pd.read_csv(file_path)
+
+# Define the column of interest
+column_of_interest = 'Controller_Over_Temperature_408094978'
+
+# Check if the column exists in the dataset
+if column_of_interest in data.columns:
+    # Select only numeric columns for the correlation calculation
+    numeric_cols = data.select_dtypes(include=[float, int]).columns
+    correlation_matrix = data[numeric_cols].corr()
+    
+    # Extract correlations with the specific column
+    correlations = correlation_matrix[column_of_interest].sort_values(key=abs, ascending=False)
+    
+    # Display the top correlated columns
+    print(correlations.head(40))
+else:
+    print(f"The column '{column_of_interest}' was not found in the dataset.")
