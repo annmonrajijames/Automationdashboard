@@ -4,7 +4,7 @@ import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
 from matplotlib.widgets import CheckButtons  # Import CheckButtons
 import numpy as np  # Import numpy for handling NaN values
- 
+import numpy as np 
 import os
  
 from openai import OpenAI
@@ -447,8 +447,34 @@ def analyze_fault(csv_file, fault_name):
     # Capture current speed and throttle percentage at fault occurrence
     current_speed = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'MotorSpeed_340920578'].values[0]
     throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
- 
- 
+    relevant_data_beforefault = data[(data['localtime'] >= start_time) & (data['localtime'] <= fault_timestamp)]
+
+    # Check if "AC_Current_340920579" exists in the data
+    if "AC_Current_340920579" in relevant_data_beforefault.columns:
+        # Calculate the average value of "AC_Current_340920579" in this period
+        average_ac_current_before_fault = relevant_data_beforefault['AC_Current_340920579'].mean()
+
+        # Print the average value
+        print("Average AC_Current_340920579 between 'fault' and '5 minutes before fault':", average_ac_current_before_fault)
+    else:
+        print("Column 'AC_Current_340920579' not found in the dataset.")      
+    # Ensure the data is sorted by 'localtime'
+    data.sort_values(by='localtime', inplace=True)
+
+    # Find the MCU temperature at the start time and fault timestamp
+    mcu_temp_start = data.loc[data['localtime'] >= start_time, 'MCU_Temperature_408094979'].iloc[0]
+    mcu_temp_fault = data.loc[data['localtime'] <= fault_timestamp, 'MCU_Temperature_408094979'].iloc[-1]
+
+    # Calculate the difference in MCU temperature
+    temp_difference = mcu_temp_fault - mcu_temp_start
+
+    # Calculate the time difference in seconds
+    time_difference_seconds = (fault_timestamp - start_time).total_seconds()
+
+    # Calculate the rate of change of MCU temperature
+    rate_of_change = temp_difference / time_difference_seconds
+
+    print(f"The rate of change of MCU_Temperature_408094979 between the 'fault time' and '5 minutes before fault' is {rate_of_change} degrees Celsius per second.")    
     generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
  
     print("Occurrence Time:", fault_timestamp)
