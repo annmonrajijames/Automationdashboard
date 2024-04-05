@@ -4,14 +4,14 @@ import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
 from matplotlib.widgets import CheckButtons  # Import CheckButtons
 import numpy as np  # Import numpy for handling NaN values
- 
+
 import os
  
 from openai import OpenAI
  
 #OPENAI_API_KEY = 'Enter OpenAPI key'
  
-folder_path = r"C:\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"D:\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -454,7 +454,7 @@ def analyze_fault(csv_file, fault_name):
     fault_timestamp = fault_data.iloc[0]['localtime']
  
     # Calculate start time (5 minutes before the fault)
-    start_time = fault_timestamp - pd.Timedelta(minutes=5)
+    start_time = fault_timestamp - pd.Timedelta(minutes=10)
     # Calculate end time (2 minutes after the fault)
     end_time = fault_timestamp + pd.Timedelta(minutes=2)
     print("Fault timestamp=", fault_timestamp)
@@ -498,8 +498,8 @@ def analyze_fault(csv_file, fault_name):
     # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
     ax2 = ax1.twinx()
     line2, = ax2.plot(relevant_data['localtime'], relevant_data['MotorSpeed_340920578'], color='green', label='Motor Speed')
-    ax2.set_ylabel('Motor Speed (RPM)', color='green')
- 
+    ax2.set_ylabel('Motor Speed (RPM), Altitude', color='green')
+    line15, = ax2.plot(relevant_data['localtime'], relevant_data['altitude'], color='green', label='Altitude')
     # Add 'AC_Current_340920579' to primary y-axis
     line3, = ax1.plot(relevant_data['localtime'], relevant_data['AC_Current_340920579'], color='red', label='AC Current')
  
@@ -553,8 +553,8 @@ def analyze_fault(csv_file, fault_name):
  
     # Create checkboxes
     rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','Controller_Over_Temperature_408094978','PcbTemp_12','MCU_Temperature_408094979','Motor_Temperature_408094979')
-    lines = [line1, line3, line2, line4, line5, line6, line7, line8, line9, line10,line11, line12,line13,line14]
+    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','Controller_Over_Temperature_408094978','PcbTemp_12','MCU_Temperature_408094979','Motor_Temperature_408094979','altitude')
+    lines = [line1, line3, line2, line4, line5, line6, line7, line8, line9, line10,line11, line12,line13,line14,line15]
     visibility = [line.get_visible() for line in lines]
     check = CheckButtons(rax, labels, visibility)
  
@@ -567,7 +567,7 @@ def analyze_fault(csv_file, fault_name):
  
     plt.show()
  
-client = OpenAI()
+#client = OpenAI()
  
 # Call the function for 'DriveError_Controller_OverVoltag_408094978'
 analyze_fault(log_file, 'Controller_Over_Temeprature_408094978')
