@@ -11,7 +11,7 @@ from openai import OpenAI
  
 #OPENAI_API_KEY = 'Enter OpenAPI key'
  
-folder_path = r"C:\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"D:\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -130,36 +130,6 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                 "role": "system",
                 "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, which may be the cause of PCB over temperature condition."
             })
-            # Initialize variable to store minimum Motor_Temperature_408094979 value at the time of error
-            min_Motor_Temperature_at_error = float('inf')
-
-            # Iterate over relevant_data to find minimum Motor_Temperature_408094979 at error
-            for index, row in relevant_data.iterrows():
-                if row[fault_name] == 1 and row['Motor_Temperature_408094979'] < min_Motor_Temperature_at_error:
-                    min_Motor_Temperature_at_error = row['Motor_Temperature_408094979']
-
-            # Check for no faults found condition
-            if min_Motor_Temperature_at_error == float('inf'):
-                print("No faults found for", fault_name)
-            else:
-                # Print the minimum Motor_Temperature_408094979 at error
-                print("Minimum Motor_Temperature_408094979 at error:", min_Motor_Temperature_at_error)
-            motor_temp_threshold =min_Motor_Temperature_at_error #I got 136 from csv
-                # Find the motor temperature when the error occurred
-            motor_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'Motor_Temperature_408094979'].iloc[0]
-            print("Motor Temperature at error:", motor_temp_at_error)
-
-            # Check if the motor temperature exceeds the defined overtemperature threshold
-            if motor_temp_at_error >= motor_temp_threshold:
-                analyzed_statements.append({
-                    "role": "system",
-                    "content": f"The motor temperature ({motor_temp_at_error}°C) exceeded the overtemperature threshold of {motor_temp_threshold}°C, which may be the cause of MCU over temperature"
-                })
-            else:
-                analyzed_statements.append({
-                    "role": "system",
-                    "content": f"The motor temperature ({motor_temp_at_error}°C) did not exceed the overtemperature threshold of {motor_temp_threshold}°C, indicating other factors may have contributed to the Controller Over Temperature condition."
-                })
     ###################
     if fault_name == 'Controller_Undervoltage_408094978':
     # Define the threshold voltage for undervoltage
@@ -567,7 +537,7 @@ def analyze_fault(csv_file, fault_name):
  
     plt.show()
  
-client = OpenAI()
+#client = OpenAI()
  
 # Call the function for 'DriveError_Controller_OverVoltag_408094978'
 analyze_fault(log_file, 'Controller_Over_Temeprature_408094978')
