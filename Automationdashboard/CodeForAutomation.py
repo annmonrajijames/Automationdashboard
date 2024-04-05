@@ -96,40 +96,40 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             print("Minimum PcbTemp_12 at error:", min_PcbTemp_12_at_error)
         pcb_temp_threshold = min_PcbTemp_12_at_error # I got 61 from csv
             # Find the PCB temperature when the error occurred
-    pcb_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'PcbTemp_12'].iloc[0]
-    print("PCB Temperature at error:", pcb_temp_at_error)
+        pcb_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'PcbTemp_12'].iloc[0]
+        print("PCB Temperature at error:", pcb_temp_at_error)
 
-    # Check if the PCB temperature exceeds the defined overtemperature threshold
-    if pcb_temp_at_error >= pcb_temp_threshold:
-        analyzed_statements.append({
-            "role": "system",
-            "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, which may be the cause of Controller Over Temperature condition."
-        })
-                # Initialize variable to store minimum MCU_Temperature_408094979 value at the time of error
-        min_MCU_Temperature_at_error = float('inf')
-
-        # Iterate over relevant_data to find minimum MCU_Temperature_408094979 at error
-        for index, row in relevant_data.iterrows():
-            if row[fault_name] == 1 and row['MCU_Temperature_408094979'] < min_MCU_Temperature_at_error:
-                min_MCU_Temperature_at_error = row['MCU_Temperature_408094979']
-
-        # Check for no faults found condition
-        if min_MCU_Temperature_at_error == float('inf'):
-            print("No faults found for", fault_name)
-        else:
-            # Print the minimum MCU_Temperature_408094979 at error
-            print("Minimum MCU_Temperature_408094979 at error:", min_MCU_Temperature_at_error)
-        mcu_temp_threshold = min_MCU_Temperature_at_error # 83 from csv file
-                # Find the MCU temperature when the error occurred
-        mcu_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'MCU_Temperature_408094979'].iloc[0]
-        print("MCU Temperature at error:", mcu_temp_at_error)
-
-        # Check if the MCU temperature exceeds the defined overtemperature threshold
-        if mcu_temp_at_error >= mcu_temp_threshold:
+        # Check if the PCB temperature exceeds the defined overtemperature threshold
+        if pcb_temp_at_error >= pcb_temp_threshold:
             analyzed_statements.append({
                 "role": "system",
-                "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, which may be the cause of PCB over temperature condition."
+                "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, which may be the cause of Controller Over Temperature condition."
             })
+                    # Initialize variable to store minimum MCU_Temperature_408094979 value at the time of error
+            min_MCU_Temperature_at_error = float('inf')
+
+            # Iterate over relevant_data to find minimum MCU_Temperature_408094979 at error
+            for index, row in relevant_data.iterrows():
+                if row[fault_name] == 1 and row['MCU_Temperature_408094979'] < min_MCU_Temperature_at_error:
+                    min_MCU_Temperature_at_error = row['MCU_Temperature_408094979']
+
+            # Check for no faults found condition
+            if min_MCU_Temperature_at_error == float('inf'):
+                print("No faults found for", fault_name)
+            else:
+                # Print the minimum MCU_Temperature_408094979 at error
+                print("Minimum MCU_Temperature_408094979 at error:", min_MCU_Temperature_at_error)
+            mcu_temp_threshold = min_MCU_Temperature_at_error # 83 from csv file
+                    # Find the MCU temperature when the error occurred
+            mcu_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'MCU_Temperature_408094979'].iloc[0]
+            print("MCU Temperature at error:", mcu_temp_at_error)
+
+            # Check if the MCU temperature exceeds the defined overtemperature threshold
+            if mcu_temp_at_error >= mcu_temp_threshold:
+                analyzed_statements.append({
+                    "role": "system",
+                    "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, which may be the cause of PCB over temperature condition."
+                })
     ###################
     if fault_name == 'Controller_Undervoltage_408094978':
     # Define the threshold voltage for undervoltage
