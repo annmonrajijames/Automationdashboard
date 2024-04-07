@@ -11,7 +11,7 @@ from openai import OpenAI
  
 #OPENAI_API_KEY = 'Enter OpenAPI key'
  
-folder_path = r"D:\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -458,19 +458,38 @@ def analyze_fault(csv_file, fault_name):
         print("Average AC_Current_340920579 between 'fault' and '5 minutes before fault':", average_ac_current_before_fault)
     else:
         print("Column 'AC_Current_340920579' not found in the dataset.")      
-    # Calculate the slopes
-    relevant_data_beforefault['time_diff'] = relevant_data_beforefault['localtime'].diff().dt.total_seconds()
-    relevant_data_beforefault['temp_diff'] = relevant_data_beforefault['MCU_Temperature_408094979'].diff()
-    relevant_data_beforefault['slope'] = relevant_data_beforefault['temp_diff'] / relevant_data_beforefault['time_diff']
 
-    # Find the row with the highest slope
-    max_slope_row = relevant_data_beforefault.loc[relevant_data_beforefault['slope'].idxmax()]
-    highest_slope = max_slope_row['slope']
-    time_interval = max_slope_row['time_diff']
-    localtime_occurrence = max_slope_row['localtime']
-    print(f"Highest slope for MCU temp: {highest_slope} degrees Celsius per second")
-    print(f"Time interval of highest slope: {time_interval} seconds")
-    print(f"Local time when it occurred: {localtime_occurrence}")
+    # Make sure the dataframe is sorted by 'localtime'
+    relevant_data_beforefault.sort_values(by='localtime', inplace=True)
+
+    # Calculate the difference in MCU temperature over 5 seconds
+    # We'll shift the temperature column by 5 rows to get the temperature 5 seconds ago and subtract it from the current temperature
+    relevant_data_beforefault['temp_diff_5s'] = relevant_data_beforefault['MCU_Temperature_408094979'].diff(periods=5)
+
+    # Calculate the time difference (which is a constant 5 seconds in this case)
+    time_diff_5s = 5  # seconds
+
+    # Calculate the rate of temperature increase over 5 seconds
+    relevant_data_beforefault['rate_of_increase'] = relevant_data_beforefault['temp_diff_5s'] / time_diff_5s
+
+    # Find the maximum rate of increase
+    max_rate_of_increase = relevant_data_beforefault['rate_of_increase'].max()
+
+    # Find the row with the maximum rate of increase
+    max_rate_of_increase_row = relevant_data_beforefault.loc[relevant_data_beforefault['rate_of_increase'] == max_rate_of_increase]
+    
+    # To find the starting and ending times of the max rate of increase,
+    # we need to identify the row where the max rate occurs and then calculate the starting time (5 seconds before).
+
+    # The ending time is the time in the row of the max rate of increase
+    ending_time_max_increase = max_rate_of_increase_row.iloc[0]['localtime']
+
+    # The starting time is 5 seconds before the ending time
+    starting_time_max_increase = ending_time_max_increase - pd.Timedelta(seconds=5)
+    print("Maximum rate of increase (for 5 seconds interval)=",max_rate_of_increase)
+    print("Below is the time point of that 5 second interval")
+    print("Start time =",starting_time_max_increase, "End time=",ending_time_max_increase)
+
     generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
  
     print("Occurrence Time:", fault_timestamp)
