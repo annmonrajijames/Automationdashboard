@@ -64,7 +64,7 @@ def generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_
     #         {"role": "user", "content": f"Speed at fault occurrence: {current_speed * 0.016} km/h, Throttle percentage: {throttle_percentage}."},
     #         {"role": "user", "content": f"{gpt_analyze_data(max_pack_dc_current, max_ac_current,min_pack_dc_current, current_speed, throttle_percentage, relevant_data, fault_name,max_battery_voltage)}"}
  
-    #     ]
+    #     ] 
     # )
  
     # generated_messages = completion.choices[0].message.content.split('\n')
