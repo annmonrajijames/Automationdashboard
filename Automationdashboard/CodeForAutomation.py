@@ -453,33 +453,34 @@ def analyze_fault(csv_file, fault_name):
     # Using .loc to explicitly modify the DataFrame to avoid potential recursion issues
     NoZero_relevant_data_beforefault_copy.loc[NoZero_relevant_data_beforefault_copy['MCU_Temperature_408094979'] == 0, 'MCU_Temperature_408094979'] = pd.NA
     # Filter the data within the specified time range
-    filtered_data = NoZero_relevant_data_beforefault_copy[(NoZero_relevant_data_beforefault_copy['localtime'] >= start_time) & (NoZero_relevant_data_beforefault_copy['localtime'] <= fault_timestamp)]
+    NoZero_relevant_data_beforefault_copy = NoZero_relevant_data_beforefault_copy[(NoZero_relevant_data_beforefault_copy['localtime'] >= start_time) & (NoZero_relevant_data_beforefault_copy['localtime'] <= fault_timestamp)]
 
     # Sort the data by 'localtime' for sequential processing
-    filtered_data = filtered_data.sort_values('localtime')
+    NoZero_relevant_data_beforefault_copy = NoZero_relevant_data_beforefault_copy.sort_values('localtime')
 
     # Calculate the difference in 'MCU_Temperature_408094979' over each 5-second window
-    filtered_data['temp_increase'] = filtered_data['MCU_Temperature_408094979'].diff()
-    b=5 # Set the interval 
+    NoZero_relevant_data_beforefault_copy['temp_increase'] = NoZero_relevant_data_beforefault_copy['MCU_Temperature_408094979'].diff()
+    interval_size=5 # Set the interval 
     # Define each 5-second window starting from the beginning of the specified range
-    filtered_data['time_window'] = (filtered_data['localtime'] - start_time).dt.total_seconds() // b
+    NoZero_relevant_data_beforefault_copy['time_window'] = (NoZero_relevant_data_beforefault_copy['localtime'] - start_time).dt.total_seconds() // interval_size
 
     # Sum up the temperature increase for each window
-    windowed_temp_increase = filtered_data.groupby('time_window')['temp_increase'].sum()
+    windowed_temp_increase = NoZero_relevant_data_beforefault_copy.groupby('time_window')['temp_increase'].sum()
 
     # Find the window with the highest temperature increase
     highest_temp_increase_window = windowed_temp_increase.idxmax()
     highest_temp_increase_value = windowed_temp_increase.max()
 
     # Calculate the start and end times of the window with the highest temperature increase
-    window_start_time = start_time + pd.to_timedelta(highest_temp_increase_window * b, unit='s')
-    window_end_time = window_start_time + pd.to_timedelta(b, unit='s')
+    window_start_time = start_time + pd.to_timedelta(highest_temp_increase_window * interval_size, unit='s')
+    window_end_time = window_start_time + pd.to_timedelta(interval_size, unit='s')
 
     # Print the results
+    print(f"Window size: {interval_size} seconds")
     print(f"Window with the highest temperature increase: {highest_temp_increase_window}")
-    print(f"Temperature increase: {highest_temp_increase_value} degrees")
-    print(f"Starting time of the window: {window_start_time}")
-    print(f"Ending time of the window: {window_end_time}")    
+    print(f"Temperature increase of that window: {highest_temp_increase_value} degrees")
+    print(f"Starting time of that window: {window_start_time}")
+    print(f"Ending time of that window: {window_end_time}")    
         # Check if "AC_Current_340920579" exists in the data
     if "AC_Current_340920579" in relevant_data_beforefault.columns:
         # Calculate the average value of "AC_Current_340920579" in this period
