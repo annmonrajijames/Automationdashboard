@@ -452,9 +452,35 @@ def analyze_fault(csv_file, fault_name):
     NoZero_relevant_data_beforefault_copy = relevant_data_beforefault.copy()
     # Using .loc to explicitly modify the DataFrame to avoid potential recursion issues
     NoZero_relevant_data_beforefault_copy.loc[NoZero_relevant_data_beforefault_copy['MCU_Temperature_408094979'] == 0, 'MCU_Temperature_408094979'] = pd.NA
-    save_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard/relevant_data_beforefault_modified.csv"
-    NoZero_relevant_data_beforefault_copy.to_csv(save_path, index=False)
-    # Check if "AC_Current_340920579" exists in the data
+    # Filter the data within the specified time range
+    filtered_data = NoZero_relevant_data_beforefault_copy[(NoZero_relevant_data_beforefault_copy['localtime'] >= start_time) & (NoZero_relevant_data_beforefault_copy['localtime'] <= fault_timestamp)]
+
+    # Sort the data by 'localtime' for sequential processing
+    filtered_data = filtered_data.sort_values('localtime')
+
+    # Calculate the difference in 'MCU_Temperature_408094979' over each 5-second window
+    filtered_data['temp_increase'] = filtered_data['MCU_Temperature_408094979'].diff()
+    b=5 # Set the interval 
+    # Define each 5-second window starting from the beginning of the specified range
+    filtered_data['time_window'] = (filtered_data['localtime'] - start_time).dt.total_seconds() // b
+
+    # Sum up the temperature increase for each window
+    windowed_temp_increase = filtered_data.groupby('time_window')['temp_increase'].sum()
+
+    # Find the window with the highest temperature increase
+    highest_temp_increase_window = windowed_temp_increase.idxmax()
+    highest_temp_increase_value = windowed_temp_increase.max()
+
+    # Calculate the start and end times of the window with the highest temperature increase
+    window_start_time = start_time + pd.to_timedelta(highest_temp_increase_window * b, unit='s')
+    window_end_time = window_start_time + pd.to_timedelta(b, unit='s')
+
+    # Print the results
+    print(f"Window with the highest temperature increase: {highest_temp_increase_window}")
+    print(f"Temperature increase: {highest_temp_increase_value} degrees")
+    print(f"Starting time of the window: {window_start_time}")
+    print(f"Ending time of the window: {window_end_time}")    
+        # Check if "AC_Current_340920579" exists in the data
     if "AC_Current_340920579" in relevant_data_beforefault.columns:
         # Calculate the average value of "AC_Current_340920579" in this period
         average_ac_current_before_fault = relevant_data_beforefault['AC_Current_340920579'].mean()
@@ -463,37 +489,6 @@ def analyze_fault(csv_file, fault_name):
         print("Average AC_Current_340920579 between 'fault' and '5 minutes before fault':", average_ac_current_before_fault)
     else:
         print("Column 'AC_Current_340920579' not found in the dataset.")      
-
-    # Make sure the dataframe is sorted by 'localtime'
-    relevant_data_beforefault.sort_values(by='localtime', inplace=True)
-
-    # Calculate the difference in MCU temperature over 5 seconds
-    # We'll shift the temperature column by 5 rows to get the temperature 5 seconds ago and subtract it from the current temperature
-    relevant_data_beforefault['temp_diff_5s'] = relevant_data_beforefault['MCU_Temperature_408094979'].diff(periods=5)
-
-    # Calculate the time difference (which is a constant 5 seconds in this case)
-    time_diff_5s = 5  # seconds
-
-    # Calculate the rate of temperature increase over 5 seconds
-    relevant_data_beforefault['rate_of_increase'] = relevant_data_beforefault['temp_diff_5s'] / time_diff_5s
-
-    # Find the maximum rate of increase
-    max_rate_of_increase = relevant_data_beforefault['rate_of_increase'].max()
-
-    # Find the row with the maximum rate of increase
-    max_rate_of_increase_row = relevant_data_beforefault.loc[relevant_data_beforefault['rate_of_increase'] == max_rate_of_increase]
-    
-    # To find the starting and ending times of the max rate of increase,
-    # we need to identify the row where the max rate occurs and then calculate the starting time (5 seconds before).
-
-    # The ending time is the time in the row of the max rate of increase
-    ending_time_max_increase = max_rate_of_increase_row.iloc[0]['localtime']
-
-    # The starting time is 5 seconds before the ending time
-    starting_time_max_increase = ending_time_max_increase - pd.Timedelta(seconds=5)
-    print("Maximum rate of increase (for 5 seconds interval)=",max_rate_of_increase)
-    print("Below is the time point of that 5 second interval")
-    print("Start time =",starting_time_max_increase, "End time=",ending_time_max_increase)
 
     generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
  
