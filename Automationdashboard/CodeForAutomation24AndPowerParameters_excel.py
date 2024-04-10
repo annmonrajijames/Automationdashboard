@@ -775,7 +775,7 @@ km_file = None
  
 
 
-main_folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
+main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
 
 def mergeExcel(main_folder_path):
     def prepare_sheet_in_memory(file_path):
@@ -873,7 +873,7 @@ for subfolder in os.listdir(main_folder_path):
             mode_values = 0
 
             # Plot graphs
-            plot_ghps(data)
+            # plot_ghps(data)
             total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file, km_file, data, data_KM)
             capture_analysis_output(log_file, km_file, subfolder_path)
         else:
