@@ -11,7 +11,7 @@ from openai import OpenAI
  
 #OPENAI_API_KEY = 'Enter OpenAPI key'
  
-folder_path = r"D:\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -395,68 +395,7 @@ def continuous_dc_exceeded_limit(max_pack_dc_current, data):
  
     return False
  
- 
-def analyze_fault(csv_file, fault_name):
-    # Load CSV data into a DataFrame
-    data = pd.read_csv(csv_file)
-   
-    # Convert 'localtime' to datetime
-    data['localtime'] = pd.to_datetime(data['localtime'])
- 
-    # Check if the column exists in the DataFrame
-    if fault_name not in data.columns:
-        print(f"Column '{fault_name}' not found in the DataFrame.")
-        return
- 
-    # Filter rows where fault occurred
-    fault_data = data[data[fault_name] == 1]
- 
-    if fault_data.empty:
-        print(f"No {fault_name} data found.")
-        return
-    else:
-        print(f"{fault_name} data found.")
- 
-    # Sort fault data by 'localtime' in ascending order
-    fault_data.sort_values(by='localtime', inplace=True)
- 
-    # Extract timestamp of the first occurrence of the fault
-    fault_timestamp = fault_data.iloc[0]['localtime']
- 
-    # Calculate start time (5 minutes before the fault)
-    start_time = fault_timestamp - pd.Timedelta(minutes=5)
-    # Calculate end time (2 minutes after the fault)
-    end_time = fault_timestamp + pd.Timedelta(minutes=2)
-    print("Fault timestamp=", fault_timestamp)
-    print("5 minutes before fault time=",start_time)
-    print("2 minutes after fault time",end_time)
-    # Filter data for 5 minutes before and after the fault
-    relevant_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
- 
-    print(relevant_data['localtime'])
- 
-    # Find the maximum AC and DC currents before the fault occurrence
-    max_ac_current = relevant_data['AC_Current_340920579'].max()
-    max_dc_current = relevant_data['BatteryCurrent_340920578'].max()
-    max_pack_dc_current = relevant_data['PackCurr_6'].min()
-    min_pack_dc_current = relevant_data['PackCurr_6'].max()
- 
-    # Find maximum battery voltage
-    max_battery_voltage = (relevant_data['BatteryVoltage_340920578'].max())*10
- 
-    # Capture current speed and throttle percentage at fault occurrence
-    current_speed = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'MotorSpeed_340920578'].values[0]
-    throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
- 
- 
-    generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
- 
-    print("Occurrence Time:", fault_timestamp)
-    print("Maximum AC Current before fault:", max_ac_current, "A")
-    print("Maximum DC Current before fault from MCU:", max_dc_current, "A")
-    print("Maximum DC Current before fault from Battery:", max_pack_dc_current, "A")
-    print("Maximum Battery Voltage:", max_battery_voltage, "V")
- 
+def plot_fault_data(relevant_data, fault_timestamp):
     # Create a figure and axes for plotting
     fig, ax1 = plt.subplots(figsize=(10, 6))
  
@@ -536,6 +475,68 @@ def analyze_fault(csv_file, fault_name):
     check.on_clicked(func)
  
     plt.show()
+def analyze_fault(csv_file, fault_name):
+    # Load CSV data into a DataFrame
+    data = pd.read_csv(csv_file)
+   
+    # Convert 'localtime' to datetime
+    data['localtime'] = pd.to_datetime(data['localtime'])
+ 
+    # Check if the column exists in the DataFrame
+    if fault_name not in data.columns:
+        print(f"Column '{fault_name}' not found in the DataFrame.")
+        return
+ 
+    # Filter rows where fault occurred
+    fault_data = data[data[fault_name] == 1]
+ 
+    if fault_data.empty:
+        print(f"No {fault_name} data found.")
+        return
+    else:
+        print(f"{fault_name} data found.")
+ 
+    # Sort fault data by 'localtime' in ascending order
+    fault_data.sort_values(by='localtime', inplace=True)
+ 
+    # Extract timestamp of the first occurrence of the fault
+    fault_timestamp = fault_data.iloc[0]['localtime']
+ 
+    # Calculate start time (5 minutes before the fault)
+    start_time = fault_timestamp - pd.Timedelta(minutes=5)
+    # Calculate end time (2 minutes after the fault)
+    end_time = fault_timestamp + pd.Timedelta(minutes=2)
+    print("Fault timestamp=", fault_timestamp)
+    print("5 minutes before fault time=",start_time)
+    print("2 minutes after fault time",end_time)
+    # Filter data for 5 minutes before and after the fault
+    relevant_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
+ 
+    print(relevant_data['localtime'])
+ 
+    # Find the maximum AC and DC currents before the fault occurrence
+    max_ac_current = relevant_data['AC_Current_340920579'].max()
+    max_dc_current = relevant_data['BatteryCurrent_340920578'].max()
+    max_pack_dc_current = relevant_data['PackCurr_6'].min()
+    min_pack_dc_current = relevant_data['PackCurr_6'].max()
+ 
+    # Find maximum battery voltage
+    max_battery_voltage = (relevant_data['BatteryVoltage_340920578'].max())*10
+ 
+    # Capture current speed and throttle percentage at fault occurrence
+    current_speed = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'MotorSpeed_340920578'].values[0]
+    throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
+ 
+ 
+    generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
+ 
+    print("Occurrence Time:", fault_timestamp)
+    print("Maximum AC Current before fault:", max_ac_current, "A")
+    print("Maximum DC Current before fault from MCU:", max_dc_current, "A")
+    print("Maximum DC Current before fault from Battery:", max_pack_dc_current, "A")
+    print("Maximum Battery Voltage:", max_battery_voltage, "V")
+    plot_fault_data(relevant_data, fault_timestamp) # Only does for relevant_data; The cropped data (between fault and 5 minutes before fault)
+
  
 #client = OpenAI()
  
