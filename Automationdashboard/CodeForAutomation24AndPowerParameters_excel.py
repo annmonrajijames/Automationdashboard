@@ -83,13 +83,16 @@ def plot_ghps(data):
     ax2.set_ylabel('Motor Speed (RPM)', color='green')
  
     # Add 'AC_Current_340920579' to primary y-axis
-    line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='red', label='AC Current')
+    line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='lightgray', label='AC Current')
  
     # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-    line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='orange', label='AC Voltage (x10)')
+    line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='lightgray', label='AC Voltage (x10)')
  
     # Add 'Throttle_408094978' to the left side y-axis
     line5, = ax1.plot(data.index, data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
+
+        # Add 'Throttle_408094978' to the left side y-axis
+    line6, = ax1.plot(data.index, data['SOC_8'], color='red', label='SOC (%)')
  
     # Hide the y-axis label for 'AC_Current_340920579'
     ax1.get_yaxis().get_label().set_visible(False)
@@ -183,7 +186,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     start_time = data['localtime'].min()
     end_time = data['localtime'].max()
  
-    # Calculate the total time taken for the ride
+    # Calculate the total time taken for the ride``
     total_duration = end_time - start_time
     total_hours = total_duration.seconds // 3600
     total_minutes = (total_duration.seconds % 3600) // 60
@@ -230,8 +233,8 @@ def analysis_Energy(log_file, km_file,data,data_KM):
 
 
  #Code for SOC_percentage(Starting and Ending SOC)
-    starting_soc_percentage = data['SOC_8'].min()
-    ending_soc_percentage = data['SOC_8'].max()
+    starting_soc_percentage = data['SOC_8'].max()
+    ending_soc_percentage = data['SOC_8'].min()
     print("Starting SOC:", starting_soc_percentage)
     print("Ending SOC:", ending_soc_percentage)
 
@@ -340,16 +343,17 @@ def analysis_Energy(log_file, km_file,data,data_KM):
      print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
  
     # Calculate idling time percentage (RPM was zero for more than 5 seconds)
-    idling_time = (data['MotorSpeed_340920578'] == 0).sum()
+    idling_time = ((data['MotorSpeed_340920578'] <= 0) | data['MotorSpeed_340920578'].isna()).sum()
+    print("data length time",len(data))
     idling_percentage = (idling_time / len(data)) * 100
     print("Idling time percentage:", idling_percentage)
  
     # Calculate time spent in specific speed ranges
-    speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70)]
+    speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
     speed_range_percentages = {}
  
     for range_ in speed_ranges:
-        speed_range_time = ((data['MotorSpeed_340920578'] * 0.016 >= range_[0]) & (data['MotorSpeed_340920578'] * 0.016 < range_[1])).sum()
+        speed_range_time = ((data['MotorSpeed_340920578'] * 0.016 > range_[0]) & (data['MotorSpeed_340920578'] * 0.016 < range_[1])).sum()
         speed_range_percentage = (speed_range_time / len(data)) * 100
         speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
         print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
@@ -357,7 +361,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
 ##############################################################################################################################################################################
            
-            # Calculate power using PackCurr_6 and PackVol_6
+    # Calculate power using PackCurr_6 and PackVol_6
     data_resampled['Power'] = -data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
  
     # Find the peak power
@@ -421,7 +425,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
    
     # Find the battery voltage
-    batteryVoltage = data_resampled['BatteryVoltage_340920578'].max()
+    batteryVoltage = (data_resampled['BatteryVoltage_340920578'].max()) * 10
     print( "Battery Voltage", batteryVoltage )
  
     # Check for abnormal motor temperature at high RPMs for at least 15 seconds
@@ -450,13 +454,13 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     print("Difference between Highest and Lowest Cell Temperature at 100% SOC:", temp_difference)
  
     # Find the maximum BMS temperature in Celsius
-    max_bms_temp = data_resampled['FetTemp_8'].max()
-    print("Maximum BMS Temperature in Celsius:", max_bms_temp)
+    #max_bms_temp = data_resampled['FetTemp_8'].max()
+    #print("Maximum BMS Temperature in Celsius:", max_bms_temp)
  
     total_energy_kwh = actual_ah * batteryVoltage / 1000
     print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
  
-    total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
+    total_energy_kw = total_energy_kwh / total_duration.seconds / 3600 
     print("Electricity consumption units in kW", (total_energy_kw))
  
     # Add these variables and logic to ppt_data
@@ -468,33 +472,33 @@ def analysis_Energy(log_file, km_file,data,data_KM):
         "Ending SoC (Ah)": ending_soc_Ah,
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
-        "Total distance covered (in kilometers)": total_distance,
-        "WH/KM": watt_h / total_distance,
-        "Total SOC consumed": total_soc_consumed,
+        "Total distance covered (km)": total_distance,
+        "Total energy consumption(WH/KM)": watt_h / total_distance,
+        "Total SOC consumed(%)": total_soc_consumed,
         "Mode": "",
-        "Peak Power": peak_power,
-        "Average Power": average_power,
-        "Total Energy Regenerated": energy_regenerated,
-        "Regenerative Effectiveness": regenerative_effectiveness,
-        "Lowest Cell Voltage": min_cell_voltage,
-        "Highest Cell Voltage": max_cell_voltage,
-        "Difference in Cell Voltage": voltage_difference,
-        "Minimum Temperature": min_temp,
-        "Maximum Temperature": max_temp,
-        "Difference in Temperature": temp_difference,
-        "Maximum Fet Temperature": max_fet_temp,
-        "Maximum Afe Temperature": max_afe_temp,
-        "Maximum PCB Temperature": max_pcb_temp,
-        "Maximum MCU Temperature": max_mcu_temp,
-        "Maximum Motor Temperature": max_motor_temp,
-        "Abnormal Motor Temperature Detected": abnormal_motor_temp_detected,
-        "lowest cell temp": max_cell_temp,
-        "highest cell temp": min_cell_temp,
-        "Difference between Highest and Lowest Cell Temperature at 100% SOC": CellTempDiff,
-        "Maximum BMS Temperature in C": max_bms_temp,
-        "Battery Voltage": batteryVoltage,
-        "Total energy charged in kWh": total_energy_kwh,
-        "Electricity consumption units in kW": total_energy_kw
+        "Peak Power(kW)": peak_power,
+        "Average Power(kW)": average_power,
+        "Total Energy Regenerated(kWh)": energy_regenerated,
+        "Regenerative Effectiveness(kWh)": regenerative_effectiveness,
+        "Highest Cell Voltage(V)": max_cell_voltage,
+        "Lowest Cell Voltage(V)": min_cell_voltage,
+        "Difference in Cell Voltage(V)": voltage_difference,
+        "Minimum Temperature(C)": min_temp,
+        "Maximum Temperature(C)": max_temp,
+        "Difference in Temperature(C)": max_temp- min_temp,
+
+        "Maximum Fet Temperature-BMS(C)": max_fet_temp,
+        "Maximum Afe Temperature-BMS(C)": max_afe_temp,
+        "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
+        "Maximum MCU Temperature(C)": max_mcu_temp,
+        "Maximum Motor Temperature(C)": max_motor_temp,
+        "Abnormal Motor Temperature Detected(C)": abnormal_motor_temp_detected,
+        "highest cell temp(C)": max_cell_temp,
+        "lowest cell temp(C)": min_cell_temp,
+        "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
+        "Battery Voltage(V)": batteryVoltage,
+        "Total energy charged(kWh)": total_energy_kwh,
+        "Electricity consumption units(kW)": total_energy_kw
         }
  
    ######################################
@@ -522,13 +526,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
                 mode_strings.append(f"Eco mode\n{percentage:.2f}%")
         ppt_data["Mode"] = "\n".join(mode_strings)
  
- 
-#############################
- 
-       #############################
-   
- 
-        # Add calculated parameters to ppt_data
+     # Add calculated parameters to ppt_data
     ppt_data["Idling time percentage"] = idling_percentage
     ppt_data.update(speed_range_percentages)
 ################################################################################################# recent data
@@ -575,7 +573,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     max_temp_id = data_resampled['MaxTempId_7'].loc[max_temp_index]
  
  
-        # Get the minimum temperature
+    # Get the minimum temperature
     min_temp = data_resampled['MinTemp_7'].min()
  
     # Find the index where the minimum temperature occurs
@@ -585,6 +583,8 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     min_temp_id = data_resampled['MinTempId_7'].loc[min_temp_index]
     # Calculate the difference in temperature
     temp_difference = max_temp - min_temp
+    print("temp_difference------------------------>",temp_difference)
+    print("Total distance------------------------->",total_distance)
  
     # Print the information
     print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
@@ -607,7 +607,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     max_mcu_temp = data_resampled['MCU_Temperature_408094979'].max()
     print("Maximum MCU Temperature:", max_mcu_temp, "C")
  
-        # Check for abnormal motor temperature at high RPMs
+    # Check for abnormal motor temperature at high RPMs
     max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
  
  
@@ -620,9 +620,9 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     # Convert to a binary mask indicating consecutive occurrences
     abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
  
-    # Check if abnormal condition persists for at least 15 seconds
+    #Check if abnormal condition persists for at least 15 seconds
     #if (abnormal_motor_temp_mask >= 15).any():
-      #  print("Abnormal motor temperature detected: NTC has issues - very low temperature at high RPMs")
+    #print("Abnormal motor temperature detected: NTC has issues - very low temperature at high RPMs")
  
  
     return total_duration, total_distance, Wh_km, total_soc_consumed,ppt_data
@@ -775,7 +775,7 @@ km_file = None
  
 
 
-main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
+main_folder_path = r"C:\Users\adarsh\Desktop\Automation_Dashboard_Batterywise\V4\D12_03_2024"
 
 def mergeExcel(main_folder_path):
     def prepare_sheet_in_memory(file_path):
@@ -844,6 +844,7 @@ def mergeExcel(main_folder_path):
     if __name__ == '__main__':
         main(main_folder_path)
 
+
 for subfolder in os.listdir(main_folder_path):
     subfolder_path = os.path.join(main_folder_path, subfolder)
     print(subfolder)
@@ -879,8 +880,4 @@ for subfolder in os.listdir(main_folder_path):
         else:
             print("Log file or KM file not found in subfolder:", subfolder)
 
-mergeExcel(main_folder_path)
-
-
-
-    
+mergeExcel(main_folder_path)   
