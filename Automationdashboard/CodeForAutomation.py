@@ -11,7 +11,7 @@ from openai import OpenAI
  
 #OPENAI_API_KEY = 'Enter OpenAPI key'
  
-folder_path = r"C:\Work\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -432,7 +432,7 @@ def analyze_fault(csv_file, fault_name):
     print("2 minutes after fault time",end_time)
     # Filter data for 5 minutes before and after the fault
     relevant_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
- 
+    
     print(relevant_data['localtime'])
  
     # Find the maximum AC and DC currents before the fault occurrence
@@ -448,7 +448,12 @@ def analyze_fault(csv_file, fault_name):
     current_speed = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'MotorSpeed_340920578'].values[0]
     throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
     relevant_data_beforefault = data[(data['localtime'] >= start_time) & (data['localtime'] <= fault_timestamp)]
-
+    # Attempting a different approach to replace 0 with NaN that should not trigger recursion issues
+    NoZero_relevant_data_beforefault_copy = relevant_data_beforefault.copy()
+    # Using .loc to explicitly modify the DataFrame to avoid potential recursion issues
+    NoZero_relevant_data_beforefault_copy.loc[NoZero_relevant_data_beforefault_copy['MCU_Temperature_408094979'] == 0, 'MCU_Temperature_408094979'] = pd.NA
+    save_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard/relevant_data_beforefault_modified.csv"
+    NoZero_relevant_data_beforefault_copy.to_csv(save_path, index=False)
     # Check if "AC_Current_340920579" exists in the data
     if "AC_Current_340920579" in relevant_data_beforefault.columns:
         # Calculate the average value of "AC_Current_340920579" in this period
