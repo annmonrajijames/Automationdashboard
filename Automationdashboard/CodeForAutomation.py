@@ -473,38 +473,43 @@ def analyze_fault(csv_file, fault_name):
         # Calculate the start and end times of the window with the highest temperature increase
         window_start_time = start_time + pd.to_timedelta(highest_temp_increase_window * interval_size, unit='s')
         window_end_time = window_start_time + pd.to_timedelta(interval_size, unit='s')
+
         # Find the nearest index to window_start_time and window_end_time
         index_start = data_frame.iloc[(data_frame['localtime'] - window_start_time).abs().argsort()[:1]].index
         index_end = data_frame.iloc[(data_frame['localtime'] - window_end_time).abs().argsort()[:1]].index
-        # Retrieve AC_Current_340920579 values
-        ac_current_start = data_frame.loc[index_start, 'AC_Current_340920579'].values[0]
-        ac_current_end = data_frame.loc[index_end, 'AC_Current_340920579'].values[0]
-        # Calculate AC_Current_340920579 difference
-        diff_AC_curr=abs(ac_current_end-ac_current_start)
+        # Fill NaN values with the nearest non-NaN value in the 'PackCurr_6' column before retrieval
+        data_frame['AC_Current_340920579_filled'] = data_frame['AC_Current_340920579'].fillna(method='ffill').fillna(method='bfill')
+        # Find the nearest index to window_start_time and window_end_time
+        index_start = data_frame.iloc[(data_frame['localtime'] - window_start_time).abs().argsort()[:1]].index
+        index_end = data_frame.iloc[(data_frame['localtime'] - window_end_time).abs().argsort()[:1]].index
+        # Retrieve PackCurr_6 values using the filled column
+        ac_curr_start = data_frame.loc[index_start, 'AC_Current_340920579_filled'].values[0]
+        ac_curr_end = data_frame.loc[index_end, 'AC_Current_340920579_filled'].values[0]
+        # Calculate the change in PackCurr_6
+        ac_curr_change = abs(ac_curr_end - ac_curr_start)
+
         # Fill NaN values with the nearest non-NaN value in the 'PackCurr_6' column before retrieval
         data_frame['PackCurr_6_filled'] = data_frame['PackCurr_6'].fillna(method='ffill').fillna(method='bfill')
-
         # Find the nearest index to window_start_time and window_end_time
         index_start = data_frame.iloc[(data_frame['localtime'] - window_start_time).abs().argsort()[:1]].index
         index_end = data_frame.iloc[(data_frame['localtime'] - window_end_time).abs().argsort()[:1]].index
-
         # Retrieve PackCurr_6 values using the filled column
         pack_curr_start = data_frame.loc[index_start, 'PackCurr_6_filled'].values[0]
         pack_curr_end = data_frame.loc[index_end, 'PackCurr_6_filled'].values[0]
-
         # Calculate the change in PackCurr_6
         pack_curr_change = abs(pack_curr_end - pack_curr_start)
+        
         # Print the results
         print(f"Window size: {interval_size} seconds")
         print(f"Window with the highest temperature increase: {highest_temp_increase_window}")
         print(f"Temperature increase of that window: {highest_temp_increase_value} degrees")
         print(f"Starting time of that window: {window_start_time}")
         print(f"Ending time of that window: {window_end_time}")
-        print(f"AC_Current_340920579 at window start time: {ac_current_start}")
-        print(f"AC_Current_340920579 at window end time: {ac_current_end}")
-        print(f"AC_Current_340920579 change {diff_AC_curr}")
-        print(f"PackCurr_6 at window start time (nearest non-null): {pack_curr_start}")
-        print(f"PackCurr_6 at window end time (nearest non-null): {pack_curr_end}")
+        print(f"AC_Current_340920579 at window start time: {ac_curr_start}")
+        print(f"AC_Current_340920579 at window end time: {ac_curr_end}")
+        print(f"AC_Current_340920579 change {ac_curr_change}")
+        print(f"PackCurr_6 at window start time : {pack_curr_start}")
+        print(f"PackCurr_6 at window end time : {pack_curr_end}")
         print(f"Change in PackCurr_6 across the window: {pack_curr_change}")  
         # Check if "AC_Current_340920579" exists in the data
     non_zero_dataframe=MakeallzeroToNan(relevant_data_beforefault, 'MCU_Temperature_408094979') 
