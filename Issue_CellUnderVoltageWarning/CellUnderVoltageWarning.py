@@ -11,7 +11,7 @@ from openai import OpenAI
  
 # OPENAI_API_KEY = 'Enter Open AI KEY'
  
-folder_path = r"C:\Users\kamalesh.kb\Automation_Issues\CellUnderVoltageWarning"
+folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Issue_CellUnderVoltageWarning"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)
@@ -82,7 +82,7 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
  
     print(fault_name)
  
- #################
+#########################################################################Issue_cellUnderVolWarn
     if fault_name == 'CellUnderVolWarn_9':
         # Function to analyze cell voltages
         def analyze_cell_voltages():
@@ -106,12 +106,12 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
         if lowest_voltage < 3:
             print("Some Cells has voltage less than the threshold which may be the reason for the cause of CellUnderVolWarn_9.")
 
-         # Add code to retrieve SOC at error
-        SOC_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'SOC_8'].iloc[-1]
-        print("SOC at error:", SOC_at_error)
+                # Add code to retrieve SOC at error
+                # SOC_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'SOC_8'].iloc[-1]
+                # print("SOC at error:", SOC_at_error)
 
 
-############################### code for finding the rate of change of each cells voltage
+#code for finding the rate of change of each cells voltage
         def calculate_voltage_rate_of_change(data,fault_timestamp):
             # Define the time window before the fault occurrence
             time_window = pd.Timedelta(seconds=10)
@@ -131,7 +131,7 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             # Selecting columns representing cell voltages
             cell_voltage_columns = [col for col in data_within_window.columns if col.startswith('CellVol')]
             
-###############################
+
             # Calculate the time difference between the first and last timestamps in milliseconds
             time_elapsed_ms = (data_within_window.index[-1] - data_within_window.index[0]).total_seconds() * 1000
 
@@ -151,46 +151,44 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
 
             # print("Average rate of change across all cells:", average_rate_of_change, "mV/ms")
             if average_rate_of_change < 5.5:
-                print("Average rate of change(reduction) of cell Voltage is Higher, Overall Rate of change in cell voltages",average_rate_of_change)
-
-
-###############################
-
+                print("The observed average rate of change in cell voltage suggests a notable decline over time, with an average rate of change of:", average_rate_of_change, "mV/ms")
 
         # Call the function to calculate the rate of change of voltage
         calculate_voltage_rate_of_change(data,fault_timestamp)
-        
+        print("Continuous high current draw is leading to a decrease in cell voltages, triggering the CellUnderVoltageWarning.")
 
 
         
-################################
+        
 
 
-#the following is to find the threshold
-        # Initialize variable to store maximum SOC_8 value
-        max_SOC_8_at_error = 0
 
-        # Iterate over relevant_data to find maximum SOC_8 at error
-        for index, row in relevant_data.iterrows():
-            if row[fault_name] == 1 and row['SOC_8'] > max_SOC_8_at_error:
-                max_SOC_8_at_error = row['SOC_8']
+                #the following is to find the threshold 
+                        # Initialize variable to store maximum SOC_8 value
+                            # max_SOC_8_at_error = 0
 
-        # Print the maximum SOC_8 at error
-        # print("Maximum SOC_8 at error:", max_SOC_8_at_error)
+                            # # Iterate over relevant_data to find maximum SOC_8 at error
+                            # for index, row in relevant_data.iterrows():
+                            #     if row[fault_name] == 1 and row['SOC_8'] > max_SOC_8_at_error:
+                            #         max_SOC_8_at_error = row['SOC_8']
 
-        # Define the SOC threshold
-        SOC_threshold = max_SOC_8_at_error  # Adjust the threshold as needed
+                            # # Print the maximum SOC_8 at error
+                            # # print("Maximum SOC_8 at error:", max_SOC_8_at_error)
 
-        # Check if the SOC at error is less than the threshold
-        if SOC_at_error <=  SOC_threshold:
-            analyzed_statements.append({
-                "role": "system",
-                "content": f"The State of Charge (SOC) at the time of error was {SOC_at_error}%, which is below or equal to the threshold of {SOC_threshold}%, which is the reason for the reduction in cell voltage causing the Warning- ({fault_name})."
-                
-            })
-          
-          
-###################
+                            # # Define the SOC threshold
+                            # SOC_threshold = max_SOC_8_at_error  # Adjust the threshold as needed
+
+                            # # Check if the SOC at error is less than the threshold
+                            # if SOC_at_error <=  SOC_threshold:
+                            #     analyzed_statements.append({
+                            #         "role": "system",
+                            #         "content": f"The State of Charge (SOC) at the time of error was {SOC_at_error}%, which is below or equal to the threshold of {SOC_threshold}%, which is the reason for the reduction in cell voltage causing the Warning- ({fault_name})."
+                                    
+                            #     })
+#############################################################################'cellUnderVolWarn'_end
+
+
+#############################################################################Issue- 'Controller_Undervoltage_408094978'
 
     if fault_name == 'Controller_Undervoltage_408094978':
     # Define the threshold voltage for undervoltage
@@ -224,15 +222,21 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                             "role": "system",
                             "content": f"The DC current exceeded the max current allowed by the battery i.e. 120A, the current is {max_pack_dc_current}. Also, this High current caused the Discharge FET to become low, resulting in low voltage."
                         })
-###################
-            
+
+#############################################################################Controller_Undervoltage_408094978- end
+
+#############################################################################Issue - 'ChgPeakProt_9'
     # Generate statements based on data analysis
     if fault_name == 'ChgPeakProt_9':
         if min_pack_dc_current > 80:
             analyzed_statements.append(
                 {"role": "system",
                  "content": f"The DC Regen current exceeded the limit 60A form battery, the current limit is now {min_pack_dc_current}A."})
+
+#############################################################################'ChgPeakProt_9' -end
+
  
+#############################################################################Issue- 'Overcurrent_Fault_408094978'
     if fault_name == 'Overcurrent_Fault_408094978':
         if max_ac_current > 220:
             analyzed_statements.append(
@@ -258,7 +262,10 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
             analyzed_statements.append(
                 {"role": "system",
                  "content": f"The DC current exceeded the the max current allowed by the battery i.e. 120A, the current is {max_pack_dc_current}"})
-#############################################
+#############################################################################'Overcurrent_Fault_408094978'-end        
+            
+
+#############################################################################Issue - 'DriveError_Controller_OverVoltag_408094978'
     if fault_name == 'DriveError_Controller_OverVoltag_408094978':
         print('entered DriveError_Controller_OverVoltag_408094978')
         if max_battery_voltage > 70:
@@ -290,7 +297,6 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                         {"role": "user",
                         "content": f"ChgFetStatus_9 went to zero because negative current was {pack_dc_current*-1} exceeding -60A,  suggesting potential Overcurrent during high regenerative braking."})
  
-###########################################################################################################################
                     prev_mode_value = None
                     timestamp = None
                    
@@ -426,8 +432,7 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                             print("Motor Speed Drop:", motor_speed_drop)
                             print("Time taken for motor speed drop (seconds):", time_difference_seconds)
                             print("Time taken for motor speed drop (milliseconds):", time_difference_milliseconds)
- 
-#################################
+
                             # Calculate the rate of change of RPM (RPM/s)
                             time_difference_seconds = (timestamp_pack_curr_exceed_60 - timestamp_t2).total_seconds()
                             rate_of_change_rpm = motor_speed_drop / time_difference_seconds
@@ -440,7 +445,7 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
                 "role": "user",
                 "content": f"The rate of change of motor speed (RPM) ({rate_of_change_rpm}) exceeds 150 RPM, potentially causing high current to the battery."
             })
-################################
+#############################################################################'DriveError_Controller_OverVoltag_408094978'-end
  
     print("here",analyzed_statements)
     return analyzed_statements
