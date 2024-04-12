@@ -448,12 +448,12 @@ def analyze_fault(csv_file, fault_name):
     current_speed = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'MotorSpeed_340920578'].values[0]
     throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
     relevant_data_beforefault = data[(data['localtime'] >= start_time) & (data['localtime'] <= fault_timestamp)]
-    # Attempting a different approach to replace 0 with NaN that should not trigger recursion issues
-    NoZero_relevant_data_beforefault_copy = relevant_data_beforefault.copy()
-    # Using .loc to explicitly modify the DataFrame to avoid potential recursion issues
-    NoZero_relevant_data_beforefault_copy.loc[NoZero_relevant_data_beforefault_copy['MCU_Temperature_408094979'] == 0, 'MCU_Temperature_408094979'] = pd.NA
-    # Filter the data within the specified time range
-    NoZero_relevant_data_beforefault_copy = NoZero_relevant_data_beforefault_copy[(NoZero_relevant_data_beforefault_copy['localtime'] >= start_time) & (NoZero_relevant_data_beforefault_copy['localtime'] <= fault_timestamp)]
+    def MakeallzeroToNan(dataframe, column):
+        # Attempting a different approach to replace 0 with NaN that should not trigger recursion issues
+        dataframe = dataframe.copy()
+        # Using .loc to explicitly modify the DataFrame to avoid potential recursion issues
+        dataframe.loc[dataframe[column] == 0, column] = pd.NA
+        return dataframe
     def highestChange_TimeintervalChunks(data_frame, interval_size, column):
         # Sort the data by 'localtime' for sequential processing
         data_frame = data_frame.sort_values('localtime')
@@ -481,7 +481,8 @@ def analyze_fault(csv_file, fault_name):
         print(f"Starting time of that window: {window_start_time}")
         print(f"Ending time of that window: {window_end_time}")    
         # Check if "AC_Current_340920579" exists in the data
-    highestChange_TimeintervalChunks(NoZero_relevant_data_beforefault_copy, 5, 'MCU_Temperature_408094979') # highestChange_TimeintervalChunks(data frame, enter window size,the column you want to analysis) 
+    non_zero_dataframe=MakeallzeroToNan(relevant_data_beforefault, 'MCU_Temperature_408094979') 
+    highestChange_TimeintervalChunks(non_zero_dataframe, 5, 'MCU_Temperature_408094979') # highestChange_TimeintervalChunks(data frame, enter window size,the column you want to analysis) 
     if "AC_Current_340920579" in relevant_data_beforefault.columns:
         # Calculate the average value of "AC_Current_340920579" in this period
         average_ac_current_before_fault = relevant_data_beforefault['AC_Current_340920579'].mean()
