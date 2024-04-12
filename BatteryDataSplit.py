@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Assuming 'df' is your dataframe with SOC data
-df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024_MulBattery\B4_17.33_21.40\log_file.csv')
+df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V2\D11_03_2024_MulBattery\B4_9.00_10.58\log_file.csv')
 
 # Set the threshold for detecting battery change
 threshold = 40  # Example threshold value, adjust as needed
