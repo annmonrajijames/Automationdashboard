@@ -1,16 +1,30 @@
 import tkinter as tk
 from tkinter.filedialog import askdirectory
+import subprocess
 
 def choose_folder():
     """ Opens a dialog to choose a folder and prints the selected path. """
     folder_path = askdirectory()
     if folder_path:
-        print(folder_path)
- 
+        print("Folder selected:", folder_path)
+        return folder_path
+
+def run_script(script_name):
+    """ Runs a Python script based on the selected analysis type. """
+    if script_name == "Date based - ANALYSIS":
+        subprocess.run(["python", "CodeForAutomation24AndPowerParameters_excel.py"])
+    elif script_name == "Battery based - ANALYSIS":
+        subprocess.run(["python", "battery_analysis.py"])
+    elif script_name == "Error Reasoning":
+        subprocess.run(["python", "CellUnderVoltageWarning.py"])
+    else:
+        print("Invalid selection.")
+
 def on_select(value):
-    """ Handles selection changes in the dropdown, printing the selected option. """
+    """ Handles selection changes in the dropdown. """
     print("Selected:", value)
-  
+    run_script(value)
+
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="#7b7b7f")
