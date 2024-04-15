@@ -1,4 +1,4 @@
-input=2
+input=int(input("Enter input :"))
 if input == 1:
     filename = 'CellUnderVoltageWarning.py'
     with open(filename, 'r') as file:
