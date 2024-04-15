@@ -1,13 +1,17 @@
 import pandas as pd
 
 # Assuming 'df' is your dataframe with SOC data
-df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V2\D11_03_2024_MulBattery\B4_17.33_21.40\log_file.csv')
+df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V2\D11_03_2024_MulBattery\B3_wholeDayBB\b3_11_03_24.csv',low_memory=False)
+
+
+# Convert 'SOC_8' column to numeric
+df['SOC_8'] = pd.to_numeric(df['SOC_8'], errors='coerce')  # 'coerce' will convert non-numeric values to NaN
 
 # Set the threshold for detecting battery change
 threshold = 40  # Example threshold value, adjust as needed
 
 # Convert 'localtime' column to datetime objects
-df['localtime'] = pd.to_datetime(df['localtime'])
+df['localtime'] = pd.to_datetime(df['localtime'], format=r'%d-%m-%Y %H:%M:%S')
 
 # Initialize battery_end_index and battery_number
 battery_end_index = 0
@@ -28,6 +32,8 @@ t2_index=1      #to avoid the while loop enter into the infinite loop
 while i >= 0 and t2_index >0:
     t1 = df.iloc[i]['localtime']
     t2 = t1 + pd.Timedelta(seconds=Time_window)  # t2 is 60 seconds earlier than t1
+    print("t1------------------>",t1)
+    print("t1------------------>",t2)
     # print("t1---------->: ",t1,"t2---------->: ",t2)
 
     # Find the index of t2
