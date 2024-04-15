@@ -337,7 +337,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
    
     # Calculate regenerative effectiveness as a percentage
     if total_energy_consumed != 0:
-     regenerative_effectiveness = (energy_regenerated / total_energy_consumed) * 100
+     regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
      print("Regenerative Effectiveness (%):", regenerative_effectiveness)
     else:
      print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
@@ -436,22 +436,22 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     abnormal_motor_temp_detected = (abnormal_motor_temp_mask >= 120).any()
  
  
-    # Filter rows where SOC is 100%
-    data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
+    # # Filter rows where SOC is 100%
+    # data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
  
-    # Find the lowest cell temperature at 100% SOC
-    lowest_temp_100_soc = data_100_soc['Temp1_10'].min()
-    print("Lowest Cell Temperature at 100% SOC:", lowest_temp_100_soc)
+    # # Find the lowest cell temperature at 100% SOC
+    # lowest_temp_100_soc = data_100_soc['Temp1_10'].min()
+    # print("Lowest Cell Temperature at 100% SOC:", lowest_temp_100_soc)
  
-    # Filter rows where SOC is 100%
-    data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
+    # # Filter rows where SOC is 100%
+    # data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
  
-    # Find the highest cell temperature at 100% SOC
-    highest_temp_100_soc = data_100_soc['Temp1_10'].max()
-    print("highest Cell Temperature at 100% SOC:", highest_temp_100_soc)
+    # # Find the highest cell temperature at 100% SOC
+    # highest_temp_100_soc = data_100_soc['Temp1_10'].max()
+    # print("highest Cell Temperature at 100% SOC:", highest_temp_100_soc)
  
-    temp_difference = highest_temp_100_soc - lowest_temp_100_soc
-    print("Difference between Highest and Lowest Cell Temperature at 100% SOC:", temp_difference)
+    # temp_difference = highest_temp_100_soc - lowest_temp_100_soc
+    # print("Difference between Highest and Lowest Cell Temperature at 100% SOC:", temp_difference)
  
     # Find the maximum BMS temperature in Celsius
     #max_bms_temp = data_resampled['FetTemp_8'].max()
@@ -474,12 +474,12 @@ def analysis_Energy(log_file, km_file,data,data_KM):
         "Ending SoC (%)": ending_soc_percentage,
         "Total distance covered (km)": total_distance,
         "Total energy consumption(WH/KM)": watt_h / total_distance,
-        "Total SOC consumed(%)": total_soc_consumed,
+        "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Mode": "",
         "Peak Power(kW)": peak_power,
         "Average Power(kW)": average_power,
         "Total Energy Regenerated(kWh)": energy_regenerated,
-        "Regenerative Effectiveness(kWh)": regenerative_effectiveness,
+        "Regenerative Effectiveness(%)": regenerative_effectiveness,
         "Highest Cell Voltage(V)": max_cell_voltage,
         "Lowest Cell Voltage(V)": min_cell_voltage,
         "Difference in Cell Voltage(V)": voltage_difference,
@@ -775,7 +775,7 @@ km_file = None
  
 
 
-main_folder_path = r"C:\Users\adarsh\Desktop\Automation_Dashboard_Batterywise\V4\D12_03_2024"
+main_folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
 
 def mergeExcel(main_folder_path):
     def prepare_sheet_in_memory(file_path):
@@ -874,7 +874,7 @@ for subfolder in os.listdir(main_folder_path):
             mode_values = 0
 
             # Plot graphs
-            # plot_ghps(data)
+            plot_ghps(data)
             total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file, km_file, data, data_KM)
             capture_analysis_output(log_file, km_file, subfolder_path)
         else:

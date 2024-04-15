@@ -134,7 +134,46 @@ def analysis_Energy(log_file, km_file):
     total_distance = 0
     Wh_km = 0
     SOC_consumed = 0
- 
+    
+
+##################
+    if (data['SOC_8'] > 90).any():
+        # Maximum cell temperature calculation
+        temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
+        max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
+        print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+
+        # Minimum cell temperature calculation
+        temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
+        min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
+        print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
+
+        #Difference between Maximum and Minimum cell Temperature
+        CellTempDiff= max_cell_temp-min_cell_temp
+        print("Temperature difference: ",CellTempDiff)
+
+    else:
+        print("SOC is not maximum!")
+         # Maximum cell temperature calculation
+        temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
+        max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
+        print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+
+        # Minimum cell temperature calculation
+        temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
+        min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
+        print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
+
+        #Difference between Maximum and Minimum cell Temperature
+        CellTempDiff= max_cell_temp-min_cell_temp
+        print("Temperature difference: ",CellTempDiff)
+
+##################
+
     # Check if 'localtime' column exists in data DataFrame
     if 'localtime' not in data.columns:
         print("Error: 'localtime' column not found in the DataFrame.")
@@ -182,11 +221,17 @@ def analysis_Energy(log_file, km_file):
     print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
  
     ###########   starting and ending ah
-    starting_soc = data['SOCAh_8'].iloc[0]
-    ending_soc = data['SOCAh_8'].iloc[-1]
+    starting_soc_Ah = data['SOCAh_8'].iloc[0]
+    ending_soc_Ah = data['SOCAh_8'].iloc[-1]
  
-    print("Starting SoC (Ah):{:.2f}".format (starting_soc))
-    print("Ending SoC (Ah):{:.2f}".format  (ending_soc))
+    print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
+    print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
+
+ #Code for SOC_percentage(Starting and Ending SOC)
+    starting_soc_percentage = data['SOC_8'].max()
+    ending_soc_percentage = data['SOC_8'].min()
+    print("Starting SOC:", starting_soc_percentage)
+    print("Ending SOC:", ending_soc_percentage)
  
     ##################### KM ---------------------
     # Convert the 'localtime' column to datetime format
@@ -274,7 +319,7 @@ def analysis_Energy(log_file, km_file):
    
     # Calculate regenerative effectiveness as a percentage
     if total_energy_consumed != 0:
-     regenerative_effectiveness = (energy_regenerated / total_energy_consumed) * 100
+     regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
      print("Regenerative Effectiveness (%):", regenerative_effectiveness)
     else:
      print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
@@ -375,28 +420,37 @@ def analysis_Energy(log_file, km_file):
         "Total time taken for the ride": total_duration,
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)": watt_h,
-        "Starting SoC (Ah)": starting_soc,
-        "Ending SoC (Ah)": ending_soc,
-        "Total distance covered (in kilometers)": total_distance,
-        "WH/KM": watt_h / total_distance,
-        "Total SOC consumed": total_soc_consumed,
+        "Starting SoC (Ah)": starting_soc_Ah,
+        "Ending SoC (Ah)": ending_soc_Ah,
+        "Starting SoC (%)": starting_soc_percentage,
+        "Ending SoC (%)": ending_soc_percentage,
+        "Total distance covered (km)": total_distance,
+        "Total energy consumption(WH/KM)": watt_h / total_distance,
+        "Total SOC consumed(%)":starting_soc_percentage - ending_soc_percentage ,
         "Mode": "",
-        "Peak Power": peak_power,
-        "Average Power": average_power,
-        "Total Energy Regenerated": energy_regenerated,
-        "Regenerative Effectiveness": regenerative_effectiveness,
-        "Lowest Cell Voltage": min_cell_voltage,
-        "Highest Cell Voltage": max_cell_voltage,
-        "Difference in Cell Voltage": voltage_difference,
-        "Minimum Temperature": min_temp,
-        "Maximum Temperature": max_temp,
-        "Difference in Temperature": temp_difference,
-        "Maximum Fet Temperature": max_fet_temp,
-        "Maximum Afe Temperature": max_afe_temp,
-        "Maximum PCB Temperature": max_pcb_temp,
-        "Maximum MCU Temperature": max_mcu_temp,
-        "Maximum Motor Temperature": max_motor_temp,
-        "Abnormal Motor Temperature Detected": abnormal_motor_temp_detected
+        "Peak Power(kW)": peak_power,
+        "Average Power(kW)": average_power,
+        "Total Energy Regenerated(kWh)": energy_regenerated,
+        "Regenerative Effectiveness(%)": regenerative_effectiveness,
+        "Highest Cell Voltage(V)": max_cell_voltage,
+        "Lowest Cell Voltage(V)": min_cell_voltage,
+        "Difference in Cell Voltage(V)": voltage_difference,
+        "Minimum Temperature(C)": min_temp,
+        "Maximum Temperature(C)": max_temp,
+        "Difference in Temperature(C)": max_temp- min_temp,
+ 
+        "Maximum Fet Temperature-BMS(C)": max_fet_temp,
+        "Maximum Afe Temperature-BMS(C)": max_afe_temp,
+        "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
+        "Maximum MCU Temperature(C)": max_mcu_temp,
+        "Maximum Motor Temperature(C)": max_motor_temp,
+        "Abnormal Motor Temperature Detected(C)": abnormal_motor_temp_detected,
+        "highest cell temp(C)": max_cell_temp,
+        "lowest cell temp(C)": min_cell_temp,
+        "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
+        "Battery Voltage(V)": batteryVoltage,
+        "Total energy charged(kWh)": total_energy_kwh,
+        "Electricity consumption units(kW)": total_energy_kw
     }
     mode_values = data_resampled['Mode_Ack_408094978'].unique()
     if len(mode_values) == 1:
@@ -502,10 +556,16 @@ def analysis_Energy(log_file, km_file):
  
         # Check for abnormal motor temperature at high RPMs
     max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
- 
- 
     print("Maximum Motor Temperature:", max_motor_temp, "C")
  
+    batteryVoltage = (data_resampled['BatteryVoltage_340920578'].max()) * 10
+    print( "Battery Voltage", batteryVoltage )
+
+    total_energy_kwh = actual_ah * batteryVoltage / 1000
+    print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
+
+    total_energy_kw = total_energy_kwh / total_duration.seconds / 3600 
+    print("Electricity consumption units in kW", (total_energy_kw))
  
     # Check for abnormal motor temperature at high RPMs for at least 15 seconds
     abnormal_motor_temp = (data_resampled['Motor_Temperature_408094979'] < 10) & (data_resampled['MotorSpeed_340920578'] > 3500)
