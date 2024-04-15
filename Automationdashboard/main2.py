@@ -5,8 +5,6 @@ from tkinter import filedialog
 def choose_folder():
     folder_path = filedialog.askdirectory()
     if folder_path:
-        # folder_entry.delete(0, tk.END)
-        # folder_entry.insert(0, folder_path)
         print(folder_path)
  
 def on_select(value):
@@ -21,13 +19,6 @@ def on_checkbox_click():
     for index, option in enumerate(checkbox_vars):
         if option.get():
             print(f"Option {index + 1}")
- 
-# def on_checkbox_click():
-#     if checkbox_var.get():
-#         print("Checkbox is checked")
-#     else:
-#         print("Checkbox is unchecked")
- 
  
 root = tk.Tk()
 radio_var = tk.StringVar()
@@ -64,13 +55,7 @@ dropdown = tk.OptionMenu(padded_frame, selected_option,
                          *dropOptions, command=on_select).grid(row=1, column=1)
  
  
-# choose_button = tk.Button(root, text="Choose Folder", command=choose_folder)
 # choose_button.pack()
 v = tk.StringVar()
- 
-# tk.Button(root, text='Generate and download report',
-#           bg="#3d76bf", fg="white").pack()
- 
-# folder_entry = tk.Entry(root, width=40)
-# folder_entry.pack(pady=(0, 10))
+
 root.mainloop()
