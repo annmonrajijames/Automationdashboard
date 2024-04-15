@@ -6,7 +6,7 @@ import os
 
 def on_script_select(event):
     # Enable the upload button only if a script is selected
-    if combo_box.get():
+    if combo_box.get() != "Choose your task":
         upload_button['state'] = 'normal'
     else:
         upload_button['state'] = 'disabled'
@@ -14,58 +14,47 @@ def on_script_select(event):
 
 def run_selected_script():
     script_name = combo_box.get()
-    if script_name:
+    if script_name and script_name != "Choose your task":
         try:
-            # Using subprocess to run the python file more safely
             completed_process = subprocess.run(['python', script_name], check=True, text=True, capture_output=True)
             messagebox.showinfo("Success", f"Script {script_name} executed successfully!\n\nOutput:\n{completed_process.stdout}")
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"Script {script_name} execution failed!\n\nError:\n{e.stderr}")
-    else:
-        messagebox.showwarning("Warning", "Please select a script to run.")
 
 def upload_and_save_files():
-    # Open the file dialog to choose files
-    filepaths = filedialog.askopenfilenames()  # Allows selection of multiple files
+    filepaths = filedialog.askopenfilenames()
     if filepaths:
-        # Define the destination directory
-        destination_dir = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
-        # Ensure the directory exists
+        destination_dir = r'C:\DestinationDirectory'
         os.makedirs(destination_dir, exist_ok=True)
-        
         for filepath in filepaths:
-            # Define the full destination path for each file
-            destination_path = os.path.join(destination_dir, os.path.basename(filepath))
-            # Copy each file to the destination
-            shutil.copy(filepath, destination_path)
-        
-        messagebox.showinfo("Success", f"Files uploaded and saved successfully to {destination_dir}")
-        # Enable the run script button after files are uploaded
+            shutil.copy(filepath, os.path.join(destination_dir, os.path.basename(filepath)))
+        messagebox.showinfo("Success", f"Files uploaded successfully to {destination_dir}")
         run_button['state'] = 'normal'
 
-# Create the main window
+# Set up the main application window
 root = tk.Tk()
 root.title("Script and File Runner")
+root.configure(bg='lightblue')
 
-# List of scripts
+# Create a main frame for padding and background
+main_frame = tk.Frame(root, padx=20, pady=15, borderwidth=2, bg="lightblue")
+main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+# Script selection components
+tk.Label(main_frame, text="Select the analysis to be performed :-", bg="lightblue").grid(row=0, column=0, sticky="w", pady=10)
 scripts = ['CellUnderVoltageWarning.py', 'CodeForAutomation24AndPowerParameters_excel.py']
-
-# Create a label
-label = ttk.Label(root, text="Select a script to run:")
-label.pack(pady=10)
-
-# Create a combobox to select the script
-combo_box = ttk.Combobox(root, values=scripts)
-combo_box.pack(pady=10)
+combo_box = ttk.Combobox(main_frame, values=["Choose your task"] + scripts, state="readonly")
+combo_box.set('Choose your task')  # Set placeholder text
+combo_box.grid(row=0, column=1, pady=10)
 combo_box.bind("<<ComboboxSelected>>", on_script_select)
 
-# Create a button that will run the selected script when clicked
-run_button = ttk.Button(root, text="Run Script", command=run_selected_script, state='disabled')
-run_button.pack(pady=20)
+# File upload components
+tk.Label(main_frame, text="Select files :-", bg="lightblue").grid(row=1, column=0, sticky="e", pady=10)
+upload_button = ttk.Button(main_frame, text="Choose Files", command=upload_and_save_files, state='disabled')
+upload_button.grid(row=1, column=1, pady=10)
 
-# Create a button to upload and save files
-upload_button = ttk.Button(root, text="Upload and Save Files", command=upload_and_save_files, state='disabled')
-upload_button.pack(pady=20)
+# Run script button placed at the bottom
+run_button = ttk.Button(main_frame, text="Output", command=run_selected_script, state='disabled')
+run_button.grid(row=2, column=0, columnspan=2, pady=10)
 
-# Start the GUI event loop
 root.mainloop()
