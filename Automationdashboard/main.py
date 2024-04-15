@@ -24,20 +24,23 @@ def run_selected_script():
     else:
         messagebox.showwarning("Warning", "Please select a script to run.")
 
-def upload_and_save_file():
-    # Open the file dialog to choose the file
-    filepath = filedialog.askopenfilename()
-    if filepath:
+def upload_and_save_files():
+    # Open the file dialog to choose files
+    filepaths = filedialog.askopenfilenames()  # Allows selection of multiple files
+    if filepaths:
         # Define the destination directory
         destination_dir = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
         # Ensure the directory exists
         os.makedirs(destination_dir, exist_ok=True)
-        # Define the full destination path
-        destination_path = os.path.join(destination_dir, os.path.basename(filepath))
-        # Copy the file to the destination
-        shutil.copy(filepath, destination_path)
-        messagebox.showinfo("Success", f"File uploaded and saved successfully to {destination_path}")
-        # Enable the run script button after file is uploaded
+        
+        for filepath in filepaths:
+            # Define the full destination path for each file
+            destination_path = os.path.join(destination_dir, os.path.basename(filepath))
+            # Copy each file to the destination
+            shutil.copy(filepath, destination_path)
+        
+        messagebox.showinfo("Success", f"Files uploaded and saved successfully to {destination_dir}")
+        # Enable the run script button after files are uploaded
         run_button['state'] = 'normal'
 
 # Create the main window
@@ -60,8 +63,8 @@ combo_box.bind("<<ComboboxSelected>>", on_script_select)
 run_button = ttk.Button(root, text="Run Script", command=run_selected_script, state='disabled')
 run_button.pack(pady=20)
 
-# Create a button to upload and save a file
-upload_button = ttk.Button(root, text="Upload and Save File", command=upload_and_save_file, state='disabled')
+# Create a button to upload and save files
+upload_button = ttk.Button(root, text="Upload and Save Files", command=upload_and_save_files, state='disabled')
 upload_button.pack(pady=20)
 
 # Start the GUI event loop
