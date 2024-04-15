@@ -4,6 +4,14 @@ import subprocess
 import shutil
 import os
 
+def on_script_select(event):
+    # Enable the upload button only if a script is selected
+    if combo_box.get():
+        upload_button['state'] = 'normal'
+    else:
+        upload_button['state'] = 'disabled'
+        run_button['state'] = 'disabled'
+
 def run_selected_script():
     script_name = combo_box.get()
     if script_name:
@@ -29,6 +37,8 @@ def upload_and_save_file():
         # Copy the file to the destination
         shutil.copy(filepath, destination_path)
         messagebox.showinfo("Success", f"File uploaded and saved successfully to {destination_path}")
+        # Enable the run script button after file is uploaded
+        run_button['state'] = 'normal'
 
 # Create the main window
 root = tk.Tk()
@@ -44,13 +54,14 @@ label.pack(pady=10)
 # Create a combobox to select the script
 combo_box = ttk.Combobox(root, values=scripts)
 combo_box.pack(pady=10)
+combo_box.bind("<<ComboboxSelected>>", on_script_select)
 
 # Create a button that will run the selected script when clicked
-run_button = ttk.Button(root, text="Run Script", command=run_selected_script)
+run_button = ttk.Button(root, text="Run Script", command=run_selected_script, state='disabled')
 run_button.pack(pady=20)
 
 # Create a button to upload and save a file
-upload_button = ttk.Button(root, text="Upload and Save File", command=upload_and_save_file)
+upload_button = ttk.Button(root, text="Upload and Save File", command=upload_and_save_file, state='disabled')
 upload_button.pack(pady=20)
 
 # Start the GUI event loop
