@@ -17,7 +17,7 @@ def choose_folder():
         copy_files_to_directory(source_folder, destination_folder)
 
 def copy_files_to_directory(source_folder, destination_folder):
-    """ Copies all files and folders from the source folder to the destination folder. """
+    """ Copies all files and folders from the source folder to the destination folder, overwriting existing files. """
     try:
         # Ensure the destination directory exists
         os.makedirs(destination_folder, exist_ok=True)
@@ -27,9 +27,11 @@ def copy_files_to_directory(source_folder, destination_folder):
             src_path = os.path.join(source_folder, item)
             dst_path = os.path.join(destination_folder, item)
             if os.path.isdir(src_path):
+                if os.path.exists(dst_path):  # Check if the directory already exists
+                    shutil.rmtree(dst_path)  # Remove the existing directory to allow overwriting
                 shutil.copytree(src_path, dst_path)
             elif os.path.isfile(src_path):
-                shutil.copy(src_path, dst_path)
+                shutil.copy(src_path, dst_path)  # Overwrite the file
 
         messagebox.showinfo("Success", "All files and folders have been copied successfully!")
     except Exception as e:
