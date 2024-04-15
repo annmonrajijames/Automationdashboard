@@ -2,6 +2,7 @@ import pandas as pd
 
 # Assuming 'df' is your dataframe with SOC data
 df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V2\D11_03_2024_MulBattery\B3_wholeDayBB\b3_11_03_24.csv',low_memory=False)
+<<<<<<< HEAD
 df['localtime'] = pd.to_datetime(df['localtime'], format=r'%d-%m-%Y %H:%M:%S')
 
 # Reverse the order of the rows
@@ -11,14 +12,24 @@ df_reversed.to_csv("reversed_csv_file.csv", index=False)
 
 # Convert 'SOC_8' column to numeric
 df_reversed['SOC_8'] = pd.to_numeric(df_reversed['SOC_8'], errors='coerce')  # 'coerce' will convert non-numeric values to NaN
+=======
+
+
+# Convert 'SOC_8' column to numeric
+df['SOC_8'] = pd.to_numeric(df['SOC_8'], errors='coerce')  # 'coerce' will convert non-numeric values to NaN
+>>>>>>> 2db56ae19a5e1b45215763dda4a232df2fc3d25d
 
 # Set the threshold for detecting battery change
 threshold = 40  # Example threshold value, adjust as needed
 
 # Convert 'localtime' column to datetime objects
+<<<<<<< HEAD
 df_reversed['localtime'] = pd.to_datetime(df_reversed['localtime'], format=r'%d-%m-%Y %H:%M:%S')
 # df_reversed['localtime'] = pd.to_datetime(df_reversed['localtime'], format=r'%y-%m-%d %H:%M:%S')
 
+=======
+df['localtime'] = pd.to_datetime(df['localtime'], format=r'%d-%m-%Y %H:%M:%S')
+>>>>>>> 2db56ae19a5e1b45215763dda4a232df2fc3d25d
 
 # Initialize battery_end_index and battery_number
 battery_end_index = 0
@@ -41,7 +52,7 @@ while i >= 0 and t2_index >0:
     t1 = df_reversed.iloc[i]['localtime']
     t2 = t1 + pd.Timedelta(seconds=Time_window)  # t2 is 60 seconds earlier than t1
     print("t1------------------>",t1)
-    print("t2------------------>",t2)
+    print("t1------------------>",t2)
     # print("t1---------->: ",t1,"t2---------->: ",t2)
 
     # Find the index of t2
