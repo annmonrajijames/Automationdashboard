@@ -34,11 +34,7 @@ padded_frame.pack(fill="both", expand=True)  # Optional: Fill remaining space
  
 # defining dropOptions for the drop down
 dropOptions = ["Daily Report", "Error Protection", "Battery Cycler"]
-radioOptions = ["Option 1", "Option 2", "Option 3", "Option 4"]
-checkbox_texts = ["Option 1", "Option 2", "Option 3", "Option 1", "Option 2", "Option 3", "Option 1", "Option 2", "Option 3", "Option 1", "Option 2", "Option 3", "Option 1",
-                  "Option 2", "Option 3", "Option 1", "Option 2", "Option 3", "Option 1", "Option 2", "Option 3", "Option 1", "Option 2", "Option 3", "Option 1", "Option 2", "Option 3"]
- 
-radio_var.set(radioOptions[0])
+
  
 root.title("SpikeBot")
 label = tk.Label(padded_frame, text='Select the folder :----------',
