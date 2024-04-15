@@ -2,19 +2,49 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 import subprocess
+import shutil
+import os
 
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
-    folder_path = askdirectory()
-    if folder_path:
-        print("Folder selected:", folder_path)
-        app_data['folder_path'] = folder_path  # Store the folder path in the dictionary.
+    source_folder = askdirectory()
+    if source_folder:
+        print("Folder selected:", source_folder)
+        app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
         update_run_button_state()  # Update the state of the Run button.
+
+        destination_folder = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard"
+        copy_files_to_directory(source_folder, destination_folder)
+
+def copy_files_to_directory(source_folder, destination_folder):
+    """ Copies all files and folders from the source folder to the destination folder. """
+    try:
+        # Ensure the destination directory exists
+        os.makedirs(destination_folder, exist_ok=True)
+
+        # Copy each item from the source folder to the destination folder
+        for item in os.listdir(source_folder):
+            src_path = os.path.join(source_folder, item)
+            dst_path = os.path.join(destination_folder, item)
+            if os.path.isdir(src_path):
+                shutil.copytree(src_path, dst_path)
+            elif os.path.isfile(src_path):
+                shutil.copy(src_path, dst_path)
+
+        messagebox.showinfo("Success", "All files and folders have been copied successfully!")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to copy files and folders: {e}")
+
+def on_select(value):
+    """ Handles selection changes in the dropdown. """
+    print("Selected:", value)
+    app_data['selected_option'] = value
+    update_run_button_state()
 
 def run_script():
     """ Runs a Python script based on the selected analysis type. """
     script_name = app_data.get('selected_option')
-    folder_path = app_data.get('6')
+    folder_path = app_data.get('folder_path')
     if script_name and folder_path:
         try:
             if script_name == "Date based - ANALYSIS":
@@ -28,12 +58,6 @@ def run_script():
             messagebox.showerror("Error", "Script execution failed!")
     else:
         messagebox.showerror("Error", "Folder or analysis type is not selected.")
-
-def on_select(value):
-    """ Stores the selected option and updates button state. """
-    print("Selected:", value)
-    app_data['selected_option'] = value
-    update_run_button_state()
 
 def update_run_button_state():
     """ Enables the Run button only if both a folder and an analysis option have been selected. """
