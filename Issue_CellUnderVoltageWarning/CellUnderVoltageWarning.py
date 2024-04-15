@@ -80,8 +80,59 @@ def gpt_analyze_data(max_pack_dc_current, max_ac_current, min_pack_dc_current, c
     # Placeholder for GPT-analyzed statements
     analyzed_statements = []
  
-    print(fault_name)
- 
+    print("Fault name=", fault_name)
+    if fault_name == 'Controller_Over_Temeprature_408094978':
+        # Initialize variable to store minimum PcbTemp_12 value at the time of error
+        min_PcbTemp_12_at_error = float('inf')
+
+        # Iterate over relevant_data to find minimum PcbTemp_12 at error
+        for index, row in relevant_data.iterrows():
+            if row[fault_name] == 1 and row['PcbTemp_12'] < min_PcbTemp_12_at_error:
+                min_PcbTemp_12_at_error = row['PcbTemp_12']
+
+        # Check for no faults found condition
+        if min_PcbTemp_12_at_error == float('inf'):
+            print("No faults found for", fault_name)
+        else:
+            # Print the minimum PcbTemp_12 at error
+            print("Minimum PcbTemp_12 at error:", min_PcbTemp_12_at_error)
+        pcb_temp_threshold = min_PcbTemp_12_at_error # I got 61 from csv
+            # Find the PCB temperature when the error occurred
+        pcb_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'PcbTemp_12'].iloc[0]
+        print("PCB Temperature at error:", pcb_temp_at_error)
+
+        # Check if the PCB temperature exceeds the defined overtemperature threshold
+        if pcb_temp_at_error >= pcb_temp_threshold:
+            analyzed_statements.append({
+                "role": "system",
+                "content": f"The PCB temperature ({pcb_temp_at_error}°C) exceeded the overtemperature threshold of {pcb_temp_threshold}°C, which may be the cause of Controller Over Temperature condition."
+            })
+                    # Initialize variable to store minimum MCU_Temperature_408094979 value at the time of error
+            min_MCU_Temperature_at_error = float('inf')
+
+            # Iterate over relevant_data to find minimum MCU_Temperature_408094979 at error
+            for index, row in relevant_data.iterrows():
+                if row[fault_name] == 1 and row['MCU_Temperature_408094979'] < min_MCU_Temperature_at_error:
+                    min_MCU_Temperature_at_error = row['MCU_Temperature_408094979']
+
+            # Check for no faults found condition
+            if min_MCU_Temperature_at_error == float('inf'):
+                print("No faults found for", fault_name)
+            else:
+                # Print the minimum MCU_Temperature_408094979 at error
+                print("Minimum MCU_Temperature_408094979 at error:", min_MCU_Temperature_at_error)
+            mcu_temp_threshold = min_MCU_Temperature_at_error # 83 from csv file
+                    # Find the MCU temperature when the error occurred
+            mcu_temp_at_error = relevant_data.loc[relevant_data[fault_name] == 1, 'MCU_Temperature_408094979'].iloc[0]
+            print("MCU Temperature at error:", mcu_temp_at_error)
+
+            # Check if the MCU temperature exceeds the defined overtemperature threshold
+            if mcu_temp_at_error >= mcu_temp_threshold:
+                analyzed_statements.append({
+                    "role": "system",
+                    "content": f"The MCU temperature ({mcu_temp_at_error}°C) exceeded the overtemperature threshold of {mcu_temp_threshold}°C, which may be the cause of PCB over temperature condition."
+                })
+    ################### 
 #########################################################################Issue_cellUnderVolWarn
     if fault_name == 'CellUnderVolWarn_9':
         # Function to analyze cell voltages
@@ -520,7 +571,72 @@ def analyze_fault(csv_file, fault_name):
     # Capture current speed and throttle percentage at fault occurrence
     current_speed = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'MotorSpeed_340920578'].values[0]
     throttle_percentage = fault_data.loc[fault_data['localtime'] == fault_timestamp, 'Throttle_408094978'].values[0]
- 
+    print("Fault timestamp=", fault_timestamp)
+    print("5 minutes before fault time=",start_time)
+    print("2 minutes after fault time",end_time)
+    relevant_data_beforefault = data[(data['localtime'] >= start_time) & (data['localtime'] <= fault_timestamp)]
+    def MakeallzeroToNan(dataframe, column):
+        # Attempting a different approach to replace 0 with NaN that should not trigger recursion issues
+        dataframe = dataframe.copy()
+        # Using .loc to explicitly modify the DataFrame to avoid potential recursion issues
+        dataframe.loc[dataframe[column] == 0, column] = pd.NA
+        return dataframe
+    def highestChange_TimeintervalChunks(data_frame, interval_size, column):
+        # Sort the data by 'localtime' for sequential processing
+        data_frame = data_frame.sort_values('localtime')
+
+        # Calculate the difference in 'MCU_Temperature_408094979' over each 5-second window
+        data_frame['temp_increase'] = data_frame[column].diff()
+        # Define each 5-second window starting from the beginning of the specified range
+        data_frame['time_window'] = (data_frame['localtime'] - start_time).dt.total_seconds() // interval_size
+
+        # Sum up the temperature increase for each window
+        windowed_temp_increase = data_frame.groupby('time_window')['temp_increase'].sum()
+
+        # Find the window with the highest temperature increase
+        highest_temp_increase_window = windowed_temp_increase.idxmax()
+        highest_temp_increase_value = windowed_temp_increase.max()
+
+        # Calculate the start and end times of the window with the highest temperature increase
+        window_start_time = start_time + pd.to_timedelta(highest_temp_increase_window * interval_size, unit='s')
+        window_end_time = window_start_time + pd.to_timedelta(interval_size, unit='s')
+
+        # Fill NaN values with the nearest non-NaN value in the 'PackCurr_6' column before retrieval
+        data_frame['PackCurr_6_filled'] = data_frame['PackCurr_6'].fillna(method='ffill').fillna(method='bfill')
+        # Find the nearest index to window_start_time and window_end_time
+        index_start = data_frame.iloc[(data_frame['localtime'] - window_start_time).abs().argsort()[:1]].index
+        index_end = data_frame.iloc[(data_frame['localtime'] - window_end_time).abs().argsort()[:1]].index
+        # Retrieve PackCurr_6 values using the filled column
+        pack_curr_start = data_frame.loc[index_start, 'PackCurr_6_filled'].values[0]
+        pack_curr_end = data_frame.loc[index_end, 'PackCurr_6_filled'].values[0]
+        # Calculate the change in PackCurr_6
+        pack_curr_change = abs(pack_curr_end - pack_curr_start)
+        # Filter data within the identified window
+        window_data = data_frame[(data_frame['localtime'] >= window_start_time) & (data_frame['localtime'] <= window_end_time)]
+
+        # Calculate the average AC Current in the identified window
+        average_ac_current = window_data['AC_Current_340920579'].mean()      
+        print(f"Average AC Current in this window: {average_ac_current}")
+        # Print the results
+        print(f"Window size: {interval_size} seconds")
+        print(f"Window with the highest temperature increase: {highest_temp_increase_window}")
+        print(f"Temperature increase of that window: {highest_temp_increase_value} degrees")
+        print(f"Starting time of that window: {window_start_time}")
+        print(f"Ending time of that window: {window_end_time}")
+        print(f"PackCurr_6 at window start time : {pack_curr_start}")
+        print(f"PackCurr_6 at window end time : {pack_curr_end}")
+        print(f"Change in PackCurr_6 across the window: {pack_curr_change}")  
+        # Check if "AC_Current_340920579" exists in the data
+    non_zero_dataframe=MakeallzeroToNan(relevant_data_beforefault, 'MCU_Temperature_408094979') 
+    highestChange_TimeintervalChunks(non_zero_dataframe, 5, 'MCU_Temperature_408094979') # highestChange_TimeintervalChunks(data frame, enter window size,the column you want to analysis) 
+    if "AC_Current_340920579" in relevant_data_beforefault.columns:
+        # Calculate the average value of "AC_Current_340920579" in this period
+        average_ac_current_before_fault = relevant_data_beforefault['AC_Current_340920579'].mean()
+
+        # Print the average value
+        print("Average AC_Current_340920579 between 'fault' and '5 minutes before fault':", average_ac_current_before_fault)
+    else:
+        print("Column 'AC_Current_340920579' not found in the dataset.")      
  
     generate_label(fault_name, max_pack_dc_current, max_ac_current, min_pack_dc_current, fault_timestamp,current_speed, throttle_percentage, relevant_data, max_battery_voltage)
  
@@ -612,4 +728,4 @@ def analyze_fault(csv_file, fault_name):
 # client = OpenAI()
  
 # Call the function for 'DriveError_Controller_OverVoltag_408094978'
-analyze_fault(log_file, 'CellUnderVolWarn_9')
+analyze_fault(log_file, 'Controller_Over_Temeprature_408094978')
