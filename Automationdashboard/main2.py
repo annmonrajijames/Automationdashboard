@@ -33,10 +33,10 @@ root.configure(bg="#7b7b7f")
 padded_frame.pack(fill="both", expand=True)  # Optional: Fill remaining space
  
 # defining dropOptions for the drop down
-dropOptions = ["Daily Report", "Error Protection", "Battery Cycler"]
+dropOptions = ["Date based - ANALYSIS", "Battery based - ANALYSIS", "Error Reasoning"]
 
  
-root.title("SpikeBot")
+root.title("Run Python file based on dropdown menu selection")
 label = tk.Label(padded_frame, text='Select the folder :----------',
                  background="lightblue").grid(row=0, column=0, pady=10)
 choose_button = tk.Button(padded_frame, text="Choose Folder", command=choose_folder).grid(row=0, column=1, pady=10)
