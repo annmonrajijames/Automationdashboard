@@ -645,87 +645,121 @@ def analyze_fault(csv_file, fault_name):
     print("Maximum DC Current before fault from MCU:", max_dc_current, "A")
     print("Maximum DC Current before fault from Battery:", max_pack_dc_current, "A")
     print("Maximum Battery Voltage:", max_battery_voltage, "V")
- 
-    # Create a figure and axes for plotting
-    fig, ax1 = plt.subplots(figsize=(10, 6))
- 
-    # Plot 'PackCurr_6' on primary y-axis
-    line1, = ax1.plot(relevant_data['localtime'], -relevant_data['PackCurr_6'], color='blue', label='PackCurr_6')
-    ax1.set_ylabel('Pack Current (A)', color='blue')
-    ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
- 
-    # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
-    ax2 = ax1.twinx()
-    line2, = ax2.plot(relevant_data['localtime'], relevant_data['MotorSpeed_340920578'], color='green', label='Motor Speed')
-    ax2.set_ylabel('Motor Speed (RPM)', color='green')
- 
-    # Add 'AC_Current_340920579' to primary y-axis
-    line3, = ax1.plot(relevant_data['localtime'], relevant_data['AC_Current_340920579'], color='red', label='AC Current')
- 
-    # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-    line4, = ax1.plot(relevant_data['localtime'], relevant_data['AC_Voltage_340920580'] * 10, color='orange', label='AC Voltage (x10)')
- 
-    # Add 'Throttle_408094978' to the left side y-axis
-    line5, = ax1.plot(relevant_data['localtime'], relevant_data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
- 
-    # Add 'DchgFetStatus_9*10' to the left side y-axis
-    line6, = ax1.plot(relevant_data['localtime'], relevant_data['DchgFetStatus_9'] * 10, color='purple', label='DchgFetStatus_9 (x10)')
- 
-    # Add 'ChgFetStatus_9*10' to the left side y-axis
-    line7, = ax1.plot(relevant_data['localtime'], relevant_data['ChgFetStatus_9'] * 10, color='brown', label='ChgFetStatus_9 (x10)')
- 
-    # Add 'BatteryVoltage_340920578*10' to the left side y-axis
-    line8, = ax1.plot(relevant_data['localtime'], relevant_data['BatteryVoltage_340920578'] * 10, color='magenta', label='BatteryVoltage_340920578 (x10)')
- 
-    line9, = ax1.plot(relevant_data['localtime'], relevant_data['SOC_8'] , color='magenta', label='SOC_8 ')
- 
-    line10, = ax1.plot(relevant_data['localtime'], relevant_data['Mode_Ack_408094978'] *10, color='green', label='Mode_Ack_408094978 ')
+def plotgraph(csv_file, fault_name):
+        # Load CSV data into a DataFrame
+        data = pd.read_csv(csv_file)
+    
+        # Convert 'localtime' to datetime
+        data['localtime'] = pd.to_datetime(data['localtime'])
+    
+        # Check if the column exists in the DataFrame
+        if fault_name not in data.columns:
+            print(f"Column '{fault_name}' not found in the DataFrame.")
+            return
+    
+        # Filter rows where fault occurred
+        fault_data = data[data[fault_name] == 1]
+    
+        if fault_data.empty:
+            print(f"No {fault_name} data found.")
+            return
+        else:
+            print(f"{fault_name} data found.")
+    
+        # Sort fault data by 'localtime' in ascending order
+        fault_data.sort_values(by='localtime', inplace=True)
+    
+        # Extract timestamp of the first occurrence of the fault
+        fault_timestamp = fault_data.iloc[0]['localtime']
+        # Calculate start time (5 minutes before the fault)
+        start_time = fault_timestamp - pd.Timedelta(minutes=5)
+        # Calculate end time (2 minutes after the fault)
+        end_time = fault_timestamp + pd.Timedelta(minutes=2)
+    
+        # Filter data for 5 minutes before and after the fault
+        relevant_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
+        # Create a figure and axes for plotting
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+    
+        # Plot 'PackCurr_6' on primary y-axis
+        line1, = ax1.plot(relevant_data['localtime'], -relevant_data['PackCurr_6'], color='blue', label='PackCurr_6')
+        ax1.set_ylabel('Pack Current (A)', color='blue')
+        ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
+    
+        # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
+        ax2 = ax1.twinx()
+        line2, = ax2.plot(relevant_data['localtime'], relevant_data['MotorSpeed_340920578'], color='green', label='Motor Speed')
+        ax2.set_ylabel('Motor Speed (RPM)', color='green')
+    
+        # Add 'AC_Current_340920579' to primary y-axis
+        line3, = ax1.plot(relevant_data['localtime'], relevant_data['AC_Current_340920579'], color='red', label='AC Current')
+    
+        # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
+        line4, = ax1.plot(relevant_data['localtime'], relevant_data['AC_Voltage_340920580'] * 10, color='orange', label='AC Voltage (x10)')
+    
+        # Add 'Throttle_408094978' to the left side y-axis
+        line5, = ax1.plot(relevant_data['localtime'], relevant_data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
+    
+        # Add 'DchgFetStatus_9*10' to the left side y-axis
+        line6, = ax1.plot(relevant_data['localtime'], relevant_data['DchgFetStatus_9'] * 10, color='purple', label='DchgFetStatus_9 (x10)')
+    
+        # Add 'ChgFetStatus_9*10' to the left side y-axis
+        line7, = ax1.plot(relevant_data['localtime'], relevant_data['ChgFetStatus_9'] * 10, color='brown', label='ChgFetStatus_9 (x10)')
+    
+        # Add 'BatteryVoltage_340920578*10' to the left side y-axis
+        line8, = ax1.plot(relevant_data['localtime'], relevant_data['BatteryVoltage_340920578'] * 10, color='magenta', label='BatteryVoltage_340920578 (x10)')
+    
+        line9, = ax1.plot(relevant_data['localtime'], relevant_data['SOC_8'] , color='magenta', label='SOC_8 ')
+    
+        line10, = ax1.plot(relevant_data['localtime'], relevant_data['Mode_Ack_408094978'] *10, color='green', label='Mode_Ack_408094978 ')
 
-    line11, = ax1.plot(relevant_data['localtime'], relevant_data['CellUnderVolWarn_9'] *10, color='yellow', label='CellUnderVoltageWarning')
- 
-    line12, = ax1.plot(relevant_data['localtime'], relevant_data['CellUnderVolProt_9'] *10, color='yellow', label='CellUnderVoltageProtection')
- 
-    # Hide the y-axis label for 'AC_Current_340920579'
-    ax1.get_yaxis().get_label().set_visible(False)
- 
-    # Add vertical line for fault occurrence
-    ax1.axvline(x=fault_timestamp, color='gray', linestyle='--', label='Fault Occurrence')
- 
-    # Set x-axis label and legend
-    ax1.set_xlabel('Local Time')
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper right')
- 
-    # Add a title to the plot
-    plt.title('Battery Pack, Motor Data, and Throttle')
- 
-    # Format x-axis ticks as hours:minutes:seconds
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
- 
-    # Set grid lines lighter
-    ax1.grid(True, linestyle=':', linewidth=0.5, color='gray')
-    ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
- 
-    # Enable cursor for data points
-    mplcursors.cursor(hover=True)
- 
-    # Create checkboxes
-    rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','CellUnderVolWarn_9','CellUnderVolProt_9')
-    lines = [line1, line3, line2, line4, line5, line6, line7, line8,line9,line10,line11,line12]
-    visibility = [line.get_visible() for line in lines]
-    check = CheckButtons(rax, labels, visibility)
- 
-    def func(label):
-        index = labels.index(label)
-        lines[index].set_visible(not lines[index].get_visible())
-        plt.draw()
- 
-    check.on_clicked(func)
- 
-    plt.show()
- 
+        line11, = ax1.plot(relevant_data['localtime'], relevant_data['CellUnderVolWarn_9'] *10, color='yellow', label='CellUnderVoltageWarning')
+    
+        line12, = ax1.plot(relevant_data['localtime'], relevant_data['CellUnderVolProt_9'] *10, color='yellow', label='CellUnderVoltageProtection')
+    
+        # Hide the y-axis label for 'AC_Current_340920579'
+        ax1.get_yaxis().get_label().set_visible(False)
+    
+        # Add vertical line for fault occurrence
+        ax1.axvline(x=fault_timestamp, color='gray', linestyle='--', label='Fault Occurrence')
+    
+        # Set x-axis label and legend
+        ax1.set_xlabel('Local Time')
+        ax1.legend(loc='upper left')
+        ax2.legend(loc='upper right')
+    
+        # Add a title to the plot
+        plt.title('Battery Pack, Motor Data, and Throttle')
+    
+        # Format x-axis ticks as hours:minutes:seconds
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+    
+        # Set grid lines lighter
+        ax1.grid(True, linestyle=':', linewidth=0.5, color='gray')
+        ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
+    
+        # Enable cursor for data points
+        mplcursors.cursor(hover=True)
+    
+        # Create checkboxes
+        rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
+        labels = ('PackCurr_6', 'AC_Current_340920579', 'MotorSpeed_340920578', 'AC_Voltage_340920580', 'Throttle_408094978', 'DchgFetStatus_9', 'ChgFetStatus_9', 'BatteryVoltage_340920578','SOC_8','Mode_Ack_408094978','CellUnderVolWarn_9','CellUnderVolProt_9')
+        lines = [line1, line3, line2, line4, line5, line6, line7, line8,line9,line10,line11,line12]
+        visibility = [line.get_visible() for line in lines]
+        check = CheckButtons(rax, labels, visibility)
+    
+        def func(label):
+            index = labels.index(label)
+            lines[index].set_visible(not lines[index].get_visible())
+            plt.draw()
+    
+        check.on_clicked(func)
+    
+        plt.show()
 # client = OpenAI()
+file_name=log_file # Enter the file name
+issue_name='Controller_Over_Temeprature_408094978' # Enter the issue name
+plotgraph(file_name, issue_name)
  
 # Call the function for 'DriveError_Controller_OverVoltag_408094978'
-analyze_fault(log_file, 'Controller_Over_Temeprature_408094978')
+analyze_fault(file_name, issue_name)
