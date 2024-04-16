@@ -50,16 +50,18 @@ def run_script():
     if script_name and folder_path:
         try:
             if script_name == "Date based - ANALYSIS":
-                subprocess.run(["python", "CodeForAutomation24AndPowerParameters_excel.py"], check=True)
+                subprocess.run(["python", "date_analysis.py"], check=True)
             elif script_name == "Battery based - ANALYSIS":
                 subprocess.run(["python", "battery_analysis.py"], check=True)
             elif script_name == "Error Reasoning":
                 subprocess.run(["python", "CellUnderVoltageWarning.py"], check=True)
+                save_output_file()  # Call function to save the output file after the script is executed.
             messagebox.showinfo("Success", "Script executed successfully!")
         except subprocess.CalledProcessError:
             messagebox.showerror("Error", "Script execution failed!")
     else:
         messagebox.showerror("Error", "Folder or analysis type is not selected.")
+
 
 def update_run_button_state():
     """ Enables the Run button only if both a folder and an analysis option have been selected. """
@@ -67,6 +69,16 @@ def update_run_button_state():
         run_button.config(state=tk.NORMAL)
     else:
         run_button.config(state=tk.DISABLED)
+
+def save_output_file():
+    """ Saves the output file to a user-defined directory. """
+    output_file = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT/graph.png"
+    destination_folder = askdirectory(title='Select folder to save output file')
+    if destination_folder:
+        shutil.copy(output_file, destination_folder)
+        messagebox.showinfo("Success", "Output file saved successfully!")
+    else:
+        messagebox.showinfo("Cancelled", "File save operation was cancelled.")
 
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
