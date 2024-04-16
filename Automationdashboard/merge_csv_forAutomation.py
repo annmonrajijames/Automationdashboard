@@ -3,8 +3,8 @@ from scipy.spatial import KDTree
 import numpy as np
 
 # Load the CSV files
-log1_df = pd.read_csv(r"D:\Git_Projects\Automationdashboard\Automationdashboard\log 1.csv")
-km2_df = pd.read_csv(r"D:\Git_Projects\Automationdashboard\Automationdashboard\km 2.csv")
+log1_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\log 1.csv")
+km2_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\km 2.csv")
 
 # Convert "localtime" columns to datetime format for both DataFrames, specifying day-first parsing
 log1_df['localtime'] = pd.to_datetime(log1_df['localtime'], dayfirst=True)
@@ -37,7 +37,7 @@ merged_df.rename(columns={
 merged_df.drop(columns=['km2_index'], inplace=True)
 
 # Save the merged dataframe to a new CSV file
-merged_path = r"D:\Git_Projects\Automationdashboard\Automationdashboard\log 1_km 2_merged.csv"
+merged_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\log 1_km 2_merged.csv"
 merged_df.to_csv(merged_path, index=False)
 
 print(f"Merged file saved to {merged_path}")
