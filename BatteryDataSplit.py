@@ -4,7 +4,8 @@ import os
 
 
 # Assuming 'df' is your dataframe with SOC data
-df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V2\D11_03_2024_MulBattery\B4_17.33_21.40\log_file.csv')
+df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\OneDayData\B4_30_03_24\log_file.csv')
+folder_path= r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\OneDayData\B4_30_03_24'
 
 # Set the threshold for detecting battery change
 threshold = 40  # Example threshold value, adjust as needed
@@ -82,10 +83,10 @@ while i >= 0 and t2_index >0:
         
          # Create a folder for each battery
         folder_name = f'Battery_{battery_number}'
-        os.makedirs(os.path.join('D:/batterywise/', folder_name), exist_ok=True)
+        os.makedirs(os.path.join(folder_path, folder_name), exist_ok=True)
  
         # Save the battery data to a new CSV file inside the folder
-        battery_data.to_csv(os.path.join('D:/batterywise/', folder_name, f'log_file.csv'), index=False)
+        battery_data.to_csv(os.path.join(folder_path, folder_name, f'log_file.csv'), index=False)
         print("Folder and Excel file for Battery", battery_number, "generated----------------->")
         print("Excel file for", battery_number ,"generated----------------->")
 
