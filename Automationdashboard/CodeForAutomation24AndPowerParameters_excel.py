@@ -334,7 +334,6 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
    
    
-   
     # Calculate regenerative effectiveness as a percentage
     if total_energy_consumed != 0:
      regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
@@ -434,6 +433,15 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
     # Check if abnormal condition persists for at least 15 seconds
     abnormal_motor_temp_detected = (abnormal_motor_temp_mask >= 120).any()
+
+    cycleCount= data_resampled['CycleCount_7'].max()
+    print("cycleCount----------->",cycleCount)
+
+    starting_time= data_KM['localtime'].iloc[-1]
+    print("starting_time------------->",starting_time)
+
+    Ending_time= data_KM['localtime'].iloc[0]
+    print("Ending_time------------->",Ending_time)
  
  
     # # Filter rows where SOC is 100%
@@ -441,7 +449,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
     # # Find the lowest cell temperature at 100% SOC
     # lowest_temp_100_soc = data_100_soc['Temp1_10'].min()
-    # print("Lowest Cell Temperature at 100% SOC:", lowest_temp_100_soc)
+    # print("Lowest Cell Temperature at 100%f SOC:", lowest_temp_100_soc)
  
     # # Filter rows where SOC is 100%
     # data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
@@ -464,7 +472,8 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     print("Electricity consumption units in kW", (total_energy_kw))
  
     # Add these variables and logic to ppt_data
-    ppt_data = {
+    ppt_data = { 
+        "Date and Time": str(starting_time) + " to " + str(Ending_time),
         "Total time taken for the ride": total_duration,
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)": watt_h,
@@ -498,7 +507,8 @@ def analysis_Energy(log_file, km_file,data,data_KM):
         "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
         "Battery Voltage(V)": batteryVoltage,
         "Total energy charged(kWh)": total_energy_kwh,
-        "Electricity consumption units(kW)": total_energy_kw
+        "Electricity consumption units(kW)": total_energy_kw,
+        "Cycle Count of battery": cycleCount
         }
  
    ######################################
@@ -630,7 +640,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
  
 # folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21"
- 
+
  
 ####################
    
@@ -646,6 +656,8 @@ def capture_analysis_output(log_file, km_file, folder_path):
  
         # Extract folder name from folder_path
         folder_name = os.path.basename(folder_path)
+        
+        
  
         # Create a new PowerPoint presentation
         prs = Presentation()
