@@ -58,7 +58,8 @@ for project_folder in project_folders:
         all_data_sorted = all_data.sort_values(by='localtime')
         all_data_unique = all_data_sorted.drop_duplicates(subset='localtime', keep='first')
 
-        # Save the final merged dataframe to a new CSV file in the current project folder
-        final_output_path = os.path.join(project_folder, 'final_merged_output.csv')
+        # Construct output file name based on the project folder name
+        folder_name = os.path.basename(project_folder)
+        final_output_path = os.path.join(project_folder, f'{folder_name}_dailyreport.csv')
         all_data_unique.to_csv(final_output_path, index=False)
         print(f"Final merged file saved to {final_output_path}")
