@@ -6,6 +6,9 @@ import os
 # Define the main directory containing the subfolders
 main_folder = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\Mar-30'
 
+# List to store each merged dataframe
+all_merged_dfs = []
+
 # Iterate over each subdirectory in the main folder
 for subfolder in os.listdir(main_folder):
     subfolder_path = os.path.join(main_folder, subfolder)
@@ -41,8 +44,17 @@ for subfolder in os.listdir(main_folder):
 
             merged_df.drop(columns=['km2_index'], inplace=True)
 
-            # Save the merged dataframe to a new CSV file in the same subfolder
-            merged_path = os.path.join(subfolder_path, 'log_km_merged.csv')
-            merged_df.to_csv(merged_path, index=False)
+            # Append the merged dataframe to the list
+            all_merged_dfs.append(merged_df)
 
-            print(f"Merged file saved to {merged_path}")
+# Concatenate all dataframes from the list
+all_data = pd.concat(all_merged_dfs)
+
+# Sort by 'localtime' and remove duplicates if needed
+all_data_sorted = all_data.sort_values(by='localtime')
+all_data_unique = all_data_sorted.drop_duplicates(subset='localtime', keep='first')
+
+# Optionally, save the final merged dataframe to a new CSV file
+all_data_unique.to_csv(r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\final_merged_output.csv', index=False)
+
+print("Final merged file saved and all operations complete.")
