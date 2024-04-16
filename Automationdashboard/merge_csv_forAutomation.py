@@ -3,8 +3,8 @@ from scipy.spatial import KDTree
 import numpy as np
 
 # Load the CSV files
-log1_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\log 1.csv")
-km2_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\km 2.csv")
+log1_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\log.csv")
+km2_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\km.csv")
 
 # Convert "localtime" columns to datetime format for both DataFrames, specifying day-first parsing
 log1_df['localtime'] = pd.to_datetime(log1_df['localtime'], dayfirst=True)
