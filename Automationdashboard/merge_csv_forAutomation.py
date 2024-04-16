@@ -1,43 +1,48 @@
 import pandas as pd
 from scipy.spatial import KDTree
 import numpy as np
+import os
 
-# Load the CSV files
-log1_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\log.csv")
-km2_df = pd.read_csv(r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\km.csv")
+# Define the main directory containing the subfolders
+main_folder = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\Mar-30'
 
-# Convert "localtime" columns to datetime format for both DataFrames, specifying day-first parsing
-log1_df['localtime'] = pd.to_datetime(log1_df['localtime'], dayfirst=True)
-km2_df['localtime'] = pd.to_datetime(km2_df['localtime'], dayfirst=True)
+# Iterate over each subdirectory in the main folder
+for subfolder in os.listdir(main_folder):
+    subfolder_path = os.path.join(main_folder, subfolder)
 
-# Convert the "localtime" to numeric timestamps for KDTree, using astype instead of view
-log1_timestamps = log1_df['localtime'].astype('int64').to_numpy()
-km2_timestamps = km2_df['localtime'].astype('int64').to_numpy()
+    # Check if the path is indeed a directory
+    if os.path.isdir(subfolder_path):
+        log_file = os.path.join(subfolder_path, 'log.csv')
+        km_file = os.path.join(subfolder_path, 'km.csv')
 
-# Build a KDTree for efficient nearest neighbor search, converting to a 2D array for KDTree
-km2_tree = KDTree(km2_timestamps.reshape(-1, 1))
+        # Check if both files exist in the subfolder
+        if os.path.exists(log_file) and os.path.exists(km_file):
+            # Load the CSV files
+            log_df = pd.read_csv(log_file)
+            km_df = pd.read_csv(km_file)
 
-# Find the closest timestamp in km2 for each entry in log1, converting log1_timestamps to a 2D array
-distances, indices = km2_tree.query(log1_timestamps.reshape(-1, 1))
+            # Process the files as per your existing logic
+            log_df['localtime'] = pd.to_datetime(log_df['localtime'], dayfirst=True)
+            km_df['localtime'] = pd.to_datetime(km_df['localtime'], dayfirst=True)
+            log_timestamps = log_df['localtime'].astype('int64').to_numpy()
+            km_timestamps = km_df['localtime'].astype('int64').to_numpy()
 
-# Use the found indices to match entries from km2_df to log1_df
-log1_df['km2_index'] = indices
+            km_tree = KDTree(km_timestamps.reshape(-1, 1))
+            distances, indices = km_tree.query(log_timestamps.reshape(-1, 1))
 
-# Merge the two dataframes based on the matched indices
-merged_df = pd.merge(log1_df, km2_df, left_on='km2_index', right_index=True, suffixes=('_log1', '_km2'))
+            log_df['km2_index'] = indices
+            merged_df = pd.merge(log_df, km_df, left_on='km2_index', right_index=True, suffixes=('_log', '_km'))
 
-# Rename columns back to their original names from log 1.csv
-merged_df.rename(columns={
-    'id_log1': 'id',
-    'timestamp_log1': 'timestamp',
-    'localtime_log1': 'localtime'
-}, inplace=True)
+            merged_df.rename(columns={
+                'id_log': 'id',
+                'timestamp_log': 'timestamp',
+                'localtime_log': 'localtime'
+            }, inplace=True)
 
-# Drop the auxiliary column used for merging
-merged_df.drop(columns=['km2_index'], inplace=True)
+            merged_df.drop(columns=['km2_index'], inplace=True)
 
-# Save the merged dataframe to a new CSV file
-merged_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\log 1_km 2_merged.csv"
-merged_df.to_csv(merged_path, index=False)
+            # Save the merged dataframe to a new CSV file in the same subfolder
+            merged_path = os.path.join(subfolder_path, 'log_km_merged.csv')
+            merged_df.to_csv(merged_path, index=False)
 
-print(f"Merged file saved to {merged_path}")
+            print(f"Merged file saved to {merged_path}")
