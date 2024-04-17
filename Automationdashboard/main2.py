@@ -19,10 +19,7 @@ def choose_folder():
 def copy_files_to_directory(source_folder, destination_folder):
     """ Copies all files and folders from the source folder to the destination folder, overwriting existing files. """
     try:
-        # Ensure the destination directory exists
         os.makedirs(destination_folder, exist_ok=True)
-        
-        # Copy each item from the source folder to the destination folder
         for item in os.listdir(source_folder):
             src_path = os.path.join(source_folder, item)
             dst_path = os.path.join(destination_folder, item)
@@ -32,7 +29,6 @@ def copy_files_to_directory(source_folder, destination_folder):
                 shutil.copytree(src_path, dst_path)
             elif os.path.isfile(src_path):
                 shutil.copy(src_path, dst_path)
-                
         messagebox.showinfo("Success", "Output files have been saved to the selected location successfully!")
     except Exception as e:
         messagebox.showerror("Error", f"Failed to save output files: {e}")
@@ -54,19 +50,23 @@ def save_output(output_directory):
     if destination:
         copy_files_to_directory(output_directory, destination)
 def run_script():
-    """ Runs the selected Python script and handles file output location. """
+    """ Runs the selected Python script based on dropdown selection and handles file output location. """
     script_name = app_data.get('selected_option')
     folder_path = app_data.get('folder_path')
     if script_name and folder_path:
         try:
-            output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_1"
             if script_name == "Date based - ANALYSIS":
-                subprocess.run(["python", "merge_csv_forAutomation.py"], check=True)
+                output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_1"
+                subprocess.run(["python", "merge_csv_forAutomation_1.py"], check=True)
                 save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
-                subprocess.run(["python", "battery_analysis.py"], check=True)
+                output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_2"
+                subprocess.run(["python", "merge_csv_forAutomation_2.py"], check=True)
+                save_output(output_directory)
             elif script_name == "Error Reasoning":
-                subprocess.run(["python", "CellUnderVoltageWarning.py"], check=True)
+                output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_3"
+                subprocess.run(["python", "merge_csv_forAutomation_3.py"], check=True)
+                save_output(output_directory)
             messagebox.showinfo("Success", "Script executed successfully!")
         except subprocess.CalledProcessError:
             messagebox.showerror("Error", "Script execution failed!")
