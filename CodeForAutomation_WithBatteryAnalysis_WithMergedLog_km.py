@@ -67,7 +67,8 @@ def plot_ghps(data):
  
     # Apply the adjustment function to the DataFrame
  
-    data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    data['localtime'] = pd.to_datetime(data['localtime'])
     data.set_index('localtime', inplace=True)
     data['PackCurr_6'] = data.apply(adjust_current, axis=1)
    
@@ -140,7 +141,7 @@ def splitBatteryWise(main_folder_path):
             log_found = False
             km_found = False
             for file in os.listdir(subfolder_path):
-                if file.startswith('log 1_km 2_merged') and file.endswith('.csv'):
+                if file.startswith('log') and file.endswith('.csv'):
                     log_file = os.path.join(subfolder_path, file)
                     log_found = True
                 elif file.startswith('km') and file.endswith('.csv'):
@@ -317,7 +318,8 @@ def analysis_Energy(log_file, km_file):
     data.dropna(subset=['SOCAh_8'], inplace=True)
  
     # Convert the 'localtime' column to datetime s
-    data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f',dayfirst=True)
+    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f',dayfirst=True)
+    data['localtime'] = pd.to_datetime(data['localtime'])
  
     # Calculate the start time and end time
     start_time = data['localtime'].min()
@@ -379,6 +381,7 @@ def analysis_Energy(log_file, km_file):
     ##################### KM ---------------------
     # Convert the 'localtime' column to datetime format
     data_KM['localtime'] = pd.to_datetime(data_KM['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    # data['localtime'] = pd.to_datetime(data['localtime'])
  
     # Initialize total distance covered
     total_distance = 0
