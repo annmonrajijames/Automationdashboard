@@ -4,6 +4,7 @@ from tkinter.filedialog import askdirectory
 import subprocess
 import shutil
 import os
+from tkinter import messagebox, filedialog
 
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
@@ -39,11 +40,6 @@ def on_select(value):
     app_data['selected_option'] = value
     update_run_button_state()
 
-import tkinter as tk
-from tkinter import messagebox, filedialog
-import subprocess
-import shutil
-import os
 def save_output(output_directory):
     """ Asks the user to select a new location to save the output files, then copies them there. """
     destination = filedialog.askdirectory(title="Select Destination for Output Files")
