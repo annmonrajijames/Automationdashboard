@@ -1,8 +1,9 @@
 import pandas as pd
 
 # Assuming 'df' is your dataframe with SOC data
-df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V2\D11_03_2024_MulBattery\B3_wholeDayBB\b3_11_03_24.csv',low_memory=False)
-df['localtime'] = pd.to_datetime(df['localtime'], format=r'%d-%m-%Y %H:%M:%S')
+df = pd.read_csv(r'C:\Users\kamalesh.kb\CodeForAutomation\OneDayData\B4_30_03_24\log_file.csv',low_memory=False)
+#df['localtime'] = pd.to_datetime(df['localtime'], format=r'%d-%m-%Y %H:%M:%S')
+df['localtime'] = pd.to_datetime(df['localtime'])
 
 # Reverse the order of the rows
 df_reversed = df[::-1]
@@ -20,8 +21,8 @@ df_reversed['SOC_8'] = pd.to_numeric(df_reversed['SOC_8'], errors='coerce')  # '
 threshold = 40  # Example threshold value, adjust as needed
 
 # Convert 'localtime' column to datetime objects
-df_reversed['localtime'] = pd.to_datetime(df_reversed['localtime'], format=r'%d-%m-%Y %H:%M:%S')
-# df_reversed['localtime'] = pd.to_datetime(df_reversed['localtime'], format=r'%y-%m-%d %H:%M:%S')
+# df_reversed['localtime'] = pd.to_datetime(df_reversed['localtime'], format=r'%d-%m-%Y %H:%M:%S')
+df_reversed['localtime'] = pd.to_datetime(df_reversed['localtime'], format=r'%Y-%m-%d %H:%M:%S')
 
 
 # Initialize battery_end_index and battery_number
@@ -43,7 +44,7 @@ t2_index=1      #to avoid the while loop enter into the infinite loop
 # Iterate over the dataframe in steps of 60 seconds
 while i >= 0 and t2_index >0:
     t1 = df_reversed.iloc[i]['localtime']
-    t2 = t1 + pd.Timedelta(seconds=Time_window)  # t2 is 60 seconds earlier than t1
+    t2 = t1 - pd.Timedelta(seconds=Time_window)  # t2 is 60 seconds earlier than t1
     print("t1------------------>",t1)
     print("t2------------------>",t2)
     # print("t1---------->: ",t1,"t2---------->: ",t2)
