@@ -21,21 +21,21 @@ def copy_files_to_directory(source_folder, destination_folder):
     try:
         # Ensure the destination directory exists
         os.makedirs(destination_folder, exist_ok=True)
-
+        
         # Copy each item from the source folder to the destination folder
         for item in os.listdir(source_folder):
             src_path = os.path.join(source_folder, item)
             dst_path = os.path.join(destination_folder, item)
             if os.path.isdir(src_path):
-                if os.path.exists(dst_path):  # Check if the directory already exists
-                    shutil.rmtree(dst_path)  # Remove the existing directory to allow overwriting
+                if os.path.exists(dst_path):
+                    shutil.rmtree(dst_path)
                 shutil.copytree(src_path, dst_path)
             elif os.path.isfile(src_path):
-                shutil.copy(src_path, dst_path)  # Overwrite the file
-
-        messagebox.showinfo("Success", "All files and folders have been copied successfully!")
+                shutil.copy(src_path, dst_path)
+                
+        messagebox.showinfo("Success", "Output files have been saved to the selected location successfully!")
     except Exception as e:
-        messagebox.showerror("Error", f"Failed to copy files and folders: {e}")
+        messagebox.showerror("Error", f"Failed to save output files: {e}")
 
 def on_select(value):
     """ Handles selection changes in the dropdown. """
@@ -43,14 +43,26 @@ def on_select(value):
     app_data['selected_option'] = value
     update_run_button_state()
 
+import tkinter as tk
+from tkinter import messagebox, filedialog
+import subprocess
+import shutil
+import os
+def save_output(output_directory):
+    """ Asks the user to select a new location to save the output files, then copies them there. """
+    destination = filedialog.askdirectory(title="Select Destination for Output Files")
+    if destination:
+        copy_files_to_directory(output_directory, destination)
 def run_script():
-    """ Runs a Python script based on the selected analysis type. """
+    """ Runs the selected Python script and handles file output location. """
     script_name = app_data.get('selected_option')
     folder_path = app_data.get('folder_path')
     if script_name and folder_path:
         try:
+            output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_1"
             if script_name == "Date based - ANALYSIS":
                 subprocess.run(["python", "merge_csv_forAutomation.py"], check=True)
+                save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
                 subprocess.run(["python", "battery_analysis.py"], check=True)
             elif script_name == "Error Reasoning":
