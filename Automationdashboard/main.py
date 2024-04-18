@@ -1,21 +1,17 @@
 import tkinter as tk
-from tkinter import messagebox
-from tkinter.filedialog import askdirectory
+from tkinter import messagebox, filedialog
 import subprocess
 import shutil
 import os
-from tkinter import messagebox, filedialog
 
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
-    source_folder = askdirectory()
+    source_folder = filedialog.askdirectory()
     if source_folder:
         print("Folder selected:", source_folder)
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
         folder_label_text.set(source_folder)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
-        destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
-        copy_files_to_directory(source_folder, destination_folder)
 
 def copy_files_to_directory(source_folder, destination_folder):
     """ Copies all files and folders from the source folder to the destination folder, overwriting existing files. """
@@ -34,17 +30,13 @@ def copy_files_to_directory(source_folder, destination_folder):
     except Exception as e:
         messagebox.showerror("Error", f"Failed to upload Folder/Files: {e}")
 
-def on_select(value):
-    """ Handles selection changes in the dropdown. """
-    print("Selected:", value)
-    app_data['selected_option'] = value
-    update_run_button_state()
-
 def save_output(output_directory):
     """ Asks the user to select a new location to save the output files, then copies them there. """
-    destination = filedialog.askdirectory(title="Select Destination for Output Files")
+    custom_folder_name = folder_name_entry.get() or "New folder"
+    destination = os.path.join(filedialog.askdirectory(title="Select Destination for Output Files"), custom_folder_name)
     if destination:
         copy_files_to_directory(output_directory, destination)
+
 def run_script():
     """ Runs the selected Python script based on dropdown selection and handles file output location. """
     script_name = app_data.get('selected_option')
@@ -76,6 +68,14 @@ def update_run_button_state():
     else:
         run_button.config(state=tk.DISABLED)
 
+def on_select(value):
+    """ Handles selection changes in the dropdown. """
+    print("Selected:", value)
+    app_data['selected_option'] = value  # Update app data with the selected option.
+    update_run_button_state()  # Update the state of the Run button to reflect new selection.
+
+# Below is the context where the function is used in the application.
+
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="#7b7b7f")
@@ -91,6 +91,11 @@ folder_label = tk.Label(padded_frame, textvariable=folder_label_text, bg="lightb
 folder_label.grid(row=0, column=0, pady=10)
 tk.Button(padded_frame, text="Choose Folder", command=choose_folder).grid(row=0, column=1, pady=10)
 
+# Entry for output folder name
+folder_name_entry = tk.Entry(padded_frame, width=20)
+folder_name_entry.grid(row=2, column=1, pady=10)
+tk.Label(padded_frame, text="Type the Output folder name:", bg="lightblue").grid(row=2, column=0)
+
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
 selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
@@ -99,7 +104,7 @@ dropdown = tk.OptionMenu(padded_frame, selected_option, *dropOptions, command=on
 dropdown.grid(row=1, column=1)
 
 # Run button (initially disabled)
-run_button = tk.Button(padded_frame, text="Run", command=run_script, state=tk.DISABLED)
-run_button.grid(row=2, column=0, columnspan=2, pady=20)
+run_button = tk.Button(padded_frame, text="Run and save file", command=run_script, state=tk.DISABLED)
+run_button.grid(row=3, column=0, columnspan=2, pady=20)
 
 root.mainloop()
