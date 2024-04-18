@@ -52,15 +52,15 @@ def run_script():
     if script_name and folder_path:
         try:
             if script_name == "Date based - ANALYSIS":
-                output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_1"
+                output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
                 subprocess.run(["python", "merge_csv_forAutomation_1.py"], check=True)
                 save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
-                output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_2"
+                output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2"
                 subprocess.run(["python", "merge_csv_forAutomation_2.py"], check=True)
                 save_output(output_directory)
             elif script_name == "Error Reasoning":
-                output_directory = "C:/Lectrix_company/work/Git_Projects/Automationdashboard/Automationdashboard/OUTPUT_3"
+                output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
                 subprocess.run(["python", "merge_csv_forAutomation_3.py"], check=True)
                 save_output(output_directory)
             messagebox.showinfo("Success", "Script executed successfully!")
