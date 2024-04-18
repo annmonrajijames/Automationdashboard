@@ -8,6 +8,7 @@ from tkinter import messagebox, filedialog
 
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
+    cleanup_directories()
     source_folder = filedialog.askdirectory()
     if source_folder:
         print("Folder selected:", source_folder)
