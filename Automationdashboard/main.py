@@ -63,6 +63,7 @@ def save_output(output_directory):
     destination = filedialog.askdirectory(title="Select Destination for Output Files")
     if destination:
         copy_files_to_directory(output_directory, destination)
+        cleanup_directories()
         reset_gui()
 def run_script():
     """ Runs the selected Python script based on dropdown selection and handles file output location. """
@@ -103,7 +104,28 @@ def reset_gui():
     update_run_button_state()  # Update button states
     choose_folder_button.config(state=tk.DISABLED)  # Disable the Choose Folder button
     run_button.config(state=tk.DISABLED)  # Ensure the Run button is disabled
+def clear_directory_contents(directory):
+    """ Clears all files and folders in the specified directory. """
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
+        if os.path.isdir(item_path):
+            shutil.rmtree(item_path)
+        else:
+            os.remove(item_path)
 
+def cleanup_directories():
+    """ Clears all files and folders in specified directories after operations are completed. """
+    directories = [
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
+    ]
+    for directory in directories:
+        clear_directory_contents(directory)
+    messagebox.showinfo("Cleanup", "All directories have been cleared!")
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="#7b7b7f")
