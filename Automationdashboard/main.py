@@ -30,9 +30,9 @@ def copy_files_to_directory(source_folder, destination_folder):
                 shutil.copytree(src_path, dst_path)
             elif os.path.isfile(src_path):
                 shutil.copy(src_path, dst_path)
-        messagebox.showinfo("Success", "Output files have been saved to the selected location successfully!")
+        messagebox.showinfo("Success", "Folder/Files upload complete!")
     except Exception as e:
-        messagebox.showerror("Error", f"Failed to save output files: {e}")
+        messagebox.showerror("Error", f"Failed to upload Folder/Files: {e}")
 
 def on_select(value):
     """ Handles selection changes in the dropdown. """
@@ -51,9 +51,9 @@ def run_script():
     folder_path = app_data.get('folder_path')
     if script_name and folder_path:
         try:
-            if script_name == "Date based - ANALYSIS":
+            if script_name == "Daily_Analysis":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
-                subprocess.run(["python", "merge_csv_forAutomation_1.py"], check=True)
+                subprocess.run(["python", "Daily_Analysis.py"], check=True)
                 save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2"
@@ -88,7 +88,7 @@ padded_frame.pack(fill="both", expand=True)
 tk.Label(padded_frame, text='Select the folder:', bg="lightblue").grid(row=0, column=0, pady=10)
 tk.Button(padded_frame, text="Choose Folder", command=choose_folder).grid(row=0, column=1, pady=10)
 
-dropOptions = ["Date based - ANALYSIS", "Battery based - ANALYSIS", "Error Reasoning"]
+dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
 selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
 tk.Label(padded_frame, text='Select the analysis to be performed:', bg="lightblue").grid(row=1, column=0)
