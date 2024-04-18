@@ -12,8 +12,8 @@ def choose_folder():
     if source_folder:
         print("Folder selected:", source_folder)
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
+        folder_label_text.set(source_folder)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
-
         destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
         copy_files_to_directory(source_folder, destination_folder)
 
@@ -85,7 +85,10 @@ app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold 
 padded_frame = tk.Frame(root, padx=20, pady=15, borderwidth=2, bg="lightblue")
 padded_frame.pack(fill="both", expand=True)
 
-tk.Label(padded_frame, text='Select the folder:', bg="lightblue").grid(row=0, column=0, pady=10)
+folder_label_text = tk.StringVar(root)
+folder_label_text.set("----------->")  # Initial placeholder text
+folder_label = tk.Label(padded_frame, textvariable=folder_label_text, bg="lightblue")
+folder_label.grid(row=0, column=0, pady=10)
 tk.Button(padded_frame, text="Choose Folder", command=choose_folder).grid(row=0, column=1, pady=10)
 
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
