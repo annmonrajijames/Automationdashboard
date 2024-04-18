@@ -11,7 +11,7 @@ from openai import OpenAI
  
 # OPENAI_API_KEY = 'Enter Open AI KEY'
  
-folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
+folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3"
  
 # Get the list of files in the folder
 files = os.listdir(folder_path)

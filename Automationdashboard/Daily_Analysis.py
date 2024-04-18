@@ -787,7 +787,7 @@ km_file = None
  
 
 
-main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
+main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
 
 def mergeExcel(main_folder_path):
     def prepare_sheet_in_memory(file_path):

@@ -14,9 +14,18 @@ def choose_folder():
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
         folder_label_text.set(source_folder)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
-        
-        # Here we define the destination folder where files will be copied to
-        destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
+
+        # Determine destination folder based on the selected analysis type
+        if app_data['selected_option'] == "Daily_Analysis":
+            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1"
+        elif app_data['selected_option'] == "Battery based - ANALYSIS":
+            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2"
+        elif app_data['selected_option'] == "Error Reasoning":
+            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3"
+        else:
+            messagebox.showerror("Error", "No valid analysis type selected for file operations.")
+            return
+
         copy_files_to_directory(source_folder, destination_folder)
 
 def copy_files_to_directory(source_folder, destination_folder):
