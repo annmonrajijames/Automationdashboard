@@ -8,12 +8,14 @@ from tkinter import messagebox, filedialog
 
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
-    source_folder = askdirectory()
+    source_folder = filedialog.askdirectory()
     if source_folder:
         print("Folder selected:", source_folder)
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
         folder_label_text.set(source_folder)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
+        
+        # Here we define the destination folder where files will be copied to
         destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
         copy_files_to_directory(source_folder, destination_folder)
 
@@ -38,8 +40,15 @@ def on_select(value):
     """ Handles selection changes in the dropdown. """
     print("Selected:", value)
     app_data['selected_option'] = value
+    choose_folder_button.config(state=tk.NORMAL)  # Enable the Choose Folder button
     update_run_button_state()
 
+def update_run_button_state():
+    """ Enables the Run button only if both a folder and an analysis option have been selected. """
+    if app_data.get('folder_path') and app_data.get('selected_option'):
+        run_button.config(state=tk.NORMAL)
+    else:
+        run_button.config(state=tk.DISABLED)
 def save_output(output_directory):
     """ Asks the user to select a new location to save the output files, then copies them there. """
     destination = filedialog.askdirectory(title="Select Destination for Output Files")
@@ -89,7 +98,10 @@ folder_label_text = tk.StringVar(root)
 folder_label_text.set("----------->")  # Initial placeholder text
 folder_label = tk.Label(padded_frame, textvariable=folder_label_text, bg="lightblue")
 folder_label.grid(row=0, column=0, pady=10)
-tk.Button(padded_frame, text="Choose Folder", command=choose_folder).grid(row=0, column=1, pady=10)
+
+# Choose Folder button initially disabled
+choose_folder_button = tk.Button(padded_frame, text="Choose Folder", command=choose_folder, state=tk.DISABLED)
+choose_folder_button.grid(row=0, column=1, pady=10)
 
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
 selected_option = tk.StringVar(root)
