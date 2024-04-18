@@ -61,7 +61,7 @@ def run_script():
                 save_output(output_directory)
             elif script_name == "Error Reasoning":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
-                subprocess.run(["python", "merge_csv_forAutomation_3.py"], check=True)
+                subprocess.run(["python", "Error_causes.py"], check=True)
                 save_output(output_directory)
             messagebox.showinfo("Success", "Script executed successfully!")
         except subprocess.CalledProcessError:
