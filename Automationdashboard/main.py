@@ -63,6 +63,7 @@ def save_output(output_directory):
     destination = filedialog.askdirectory(title="Select Destination for Output Files")
     if destination:
         copy_files_to_directory(output_directory, destination)
+        reset_gui()
 def run_script():
     """ Runs the selected Python script based on dropdown selection and handles file output location. """
     script_name = app_data.get('selected_option')
@@ -93,6 +94,15 @@ def update_run_button_state():
         run_button.config(state=tk.NORMAL)
     else:
         run_button.config(state=tk.DISABLED)
+def reset_gui():
+    """ Resets the GUI to its initial state. """
+    folder_label_text.set("----------->")  # Reset the folder label
+    selected_option.set(dropOptions[0])  # Reset the dropdown to the first option
+    app_data['folder_path'] = None
+    app_data['selected_option'] = None
+    update_run_button_state()  # Update button states
+    choose_folder_button.config(state=tk.DISABLED)  # Disable the Choose Folder button
+    run_button.config(state=tk.DISABLED)  # Ensure the Run button is disabled
 
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
