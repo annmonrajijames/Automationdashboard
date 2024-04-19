@@ -163,10 +163,11 @@ dropdown.grid(row=1, column=1, columnspan=2)
 # Entry for new folder name, initially disabled
 new_folder_name = tk.StringVar(root)
 new_folder_entry = tk.Entry(padded_frame, textvariable=new_folder_name, state=tk.DISABLED)
-new_folder_entry.grid(row=2, column=0, columnspan=2, pady=10)
+new_folder_entry.grid(row=2, column=1, columnspan=2, pady=10)
+tk.Label(padded_frame, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10)
 
 # Run button (initially disabled)
-run_button = tk.Button(padded_frame, text="Run", command=run_script, state=tk.DISABLED)
+run_button = tk.Button(padded_frame, text="Run and Save file", command=run_script, state=tk.DISABLED)
 run_button.grid(row=3, column=0, columnspan=2, pady=20)
 
 root.mainloop()
