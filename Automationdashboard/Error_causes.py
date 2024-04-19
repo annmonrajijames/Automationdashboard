@@ -754,8 +754,15 @@ def plotgraph(csv_file, fault_name):
             plt.draw()
     
         check.on_clicked(func)
-    
-        plt.show()
+        # Save the figure to a specified path
+        output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
+        output_path = os.path.join(output_directory, 'graph.png')
+        plt.savefig(output_path)
+        plt.close(fig)  # Close the plot to free up memory
+
+        print(f"Graph saved to {output_path}")
+
+        
 # client = OpenAI()
 file_name=log_file # Enter the file name
 issue_name='Controller_Over_Temeprature_408094978' # Enter the issue name

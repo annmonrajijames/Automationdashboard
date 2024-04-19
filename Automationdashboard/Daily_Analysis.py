@@ -852,6 +852,11 @@ def mergeExcel(main_folder_path):
         merged_file_path = os.path.join(directory, 'merged_analysis.xlsx')
         merged_workbook.save(filename=merged_file_path)
         print("Merged Excel file is ready")
+        # Save in the additional directory
+        additional_directory = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1'
+        additional_merged_file_path = os.path.join(additional_directory, 'merged_analysis.xlsx')
+        merged_workbook.save(filename=additional_merged_file_path)
+        print("Merged Excel file is saved in the additional directory")
 
     if __name__ == '__main__':
         main(main_folder_path)
