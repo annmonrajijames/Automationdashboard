@@ -91,9 +91,10 @@ def run_script():
             messagebox.showinfo("Success", "Script executed successfully!")
         except subprocess.CalledProcessError:
             messagebox.showerror("Error", "Script execution failed!")
+            reset_gui()
     else:
         messagebox.showerror("Error", "Folder or analysis type is not selected.")
-
+        reset_gui()
 def update_run_button_state():
     """ Enables the Run button only if both a folder and an analysis option have been selected. """
     if app_data.get('folder_path') and app_data.get('selected_option'):
