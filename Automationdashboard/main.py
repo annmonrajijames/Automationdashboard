@@ -42,7 +42,6 @@ def copy_files_to_directory(source_folder, destination_folder):
                 shutil.copytree(src_path, dst_path)
             elif os.path.isfile(src_path):
                 shutil.copy(src_path, dst_path)
-        messagebox.showinfo("Success", "Folder/Files upload complete!")
     except Exception as e:
         messagebox.showerror("Error", f"Failed to upload Folder/Files: {e}")
 
@@ -66,6 +65,7 @@ def save_output(output_directory):
         final_destination = os.path.join(destination, new_folder_name.get().strip())
         os.makedirs(final_destination, exist_ok=True)
         copy_files_to_directory(output_directory, final_destination)
+        messagebox.showinfo("Success", "Output files/folders saved successfully!")
         cleanup_directories()
         reset_gui()
     else:
@@ -88,7 +88,6 @@ def run_script():
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
                 subprocess.run(["python", "Error_causes.py"], check=True)
                 save_output(output_directory)
-            messagebox.showinfo("Success", "Script executed successfully!")
         except subprocess.CalledProcessError:
             messagebox.showerror("Error", "Script execution failed!")
             reset_gui()
@@ -134,7 +133,7 @@ def cleanup_directories():
     ]
     for directory in directories:
         clear_directory_contents(directory)
-    messagebox.showinfo("Cleanup", "All directories have been cleared!")
+    #messagebox.showinfo("Cleanup", "All directories have been cleared!")
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="#7b7b7f")
