@@ -106,9 +106,12 @@ def reset_gui():
     selected_option.set(dropOptions[0])  # Reset the dropdown to the first option
     app_data['folder_path'] = None
     app_data['selected_option'] = None
-    update_run_button_state()  # Update button states
-    choose_folder_button.config(state=tk.DISABLED)  # Disable the Choose Folder button
+    new_folder_name.set("")  # Clear the new folder name entry box
+    new_folder_entry.config(state=tk.DISABLED)  # Disable the entry box again
+    choose_folder_button.config(state=tk.DISABLED)  # Re-enable the Choose Folder button
     run_button.config(state=tk.DISABLED)  # Ensure the Run button is disabled
+    update_run_button_state()  # Optionally update states of other controls if needed
+
 def clear_directory_contents(directory):
     """ Clears all files and folders in the specified directory. """
     for item in os.listdir(directory):
