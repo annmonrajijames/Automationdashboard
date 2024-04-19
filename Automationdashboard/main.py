@@ -15,7 +15,7 @@ def choose_folder():
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
         folder_label_text.set(source_folder)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
-
+        new_folder_entry.config(state=tk.NORMAL)
         # Determine destination folder based on the selected analysis type
         if app_data['selected_option'] == "Daily_Analysis":
             destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1"
@@ -62,10 +62,14 @@ def update_run_button_state():
 def save_output(output_directory):
     """ Asks the user to select a new location to save the output files, then copies them there. """
     destination = filedialog.askdirectory(title="Select Destination for Output Files")
-    if destination:
-        copy_files_to_directory(output_directory, destination)
+    if destination and new_folder_name.get().strip():  # Ensure there's a name
+        final_destination = os.path.join(destination, new_folder_name.get().strip())
+        os.makedirs(final_destination, exist_ok=True)
+        copy_files_to_directory(output_directory, final_destination)
         cleanup_directories()
         reset_gui()
+    else:
+        messagebox.showerror("Error", "You must enter a folder name.")
 def run_script():
     """ Runs the selected Python script based on dropdown selection and handles file output location. """
     script_name = app_data.get('selected_option')
@@ -150,10 +154,15 @@ selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
 tk.Label(padded_frame, text='Select the analysis to be performed:', bg="lightblue").grid(row=1, column=0)
 dropdown = tk.OptionMenu(padded_frame, selected_option, *dropOptions, command=on_select)
-dropdown.grid(row=1, column=1)
+dropdown.grid(row=1, column=1, columnspan=2)
+
+# Entry for new folder name, initially disabled
+new_folder_name = tk.StringVar(root)
+new_folder_entry = tk.Entry(padded_frame, textvariable=new_folder_name, state=tk.DISABLED)
+new_folder_entry.grid(row=2, column=0, columnspan=2, pady=10)
 
 # Run button (initially disabled)
 run_button = tk.Button(padded_frame, text="Run", command=run_script, state=tk.DISABLED)
-run_button.grid(row=2, column=0, columnspan=2, pady=20)
+run_button.grid(row=3, column=0, columnspan=2, pady=20)
 
 root.mainloop()
