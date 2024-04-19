@@ -150,24 +150,25 @@ folder_label = tk.Label(padded_frame, textvariable=folder_label_text, bg="lightb
 folder_label.grid(row=0, column=0, pady=10)
 
 # Choose Folder button initially disabled
-choose_folder_button = tk.Button(padded_frame, text="Choose Folder", command=choose_folder, state=tk.DISABLED)
+choose_folder_button = tk.Button(padded_frame, text="Choose Folder", command=choose_folder, state=tk.DISABLED, width=20)
 choose_folder_button.grid(row=0, column=1, pady=10)
 
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
 selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
-tk.Label(padded_frame, text='Select the analysis to be performed:', bg="lightblue").grid(row=1, column=0)
+tk.Label(padded_frame, text='Choose the analysis:', bg="lightblue").grid(row=1, column=0)
 dropdown = tk.OptionMenu(padded_frame, selected_option, *dropOptions, command=on_select)
+dropdown.config(width=20)  # Set the width of the dropdown to prevent resizing
 dropdown.grid(row=1, column=1, columnspan=2)
 
 # Entry for new folder name, initially disabled
 new_folder_name = tk.StringVar(root)
-new_folder_entry = tk.Entry(padded_frame, textvariable=new_folder_name, state=tk.DISABLED)
+new_folder_entry = tk.Entry(padded_frame, textvariable=new_folder_name, state=tk.DISABLED, width=27)
 new_folder_entry.grid(row=2, column=1, columnspan=2, pady=10)
 tk.Label(padded_frame, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10)
 
 # Run button (initially disabled)
-run_button = tk.Button(padded_frame, text="Run and Save file", command=run_script, state=tk.DISABLED)
+run_button = tk.Button(padded_frame, text="Run and Save file", command=run_script, state=tk.DISABLED, width=20)
 run_button.grid(row=3, column=0, columnspan=2, pady=20)
 
 root.mainloop()
