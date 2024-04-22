@@ -133,39 +133,6 @@ def plot_ghps(data):
     plt.show()
  
  
-###################################
-def splitBatteryWise(main_folder_path):
- 
-    ############
-    for subfolder in os.listdir(main_folder_path):
-        if subfolder.startswith("Battery"):  # Ignore folders starting with "Battery"
-            continue
- 
-        subfolder_path = os.path.join(main_folder_path, subfolder)
-        print(subfolder)
-        if os.path.isdir(subfolder_path):
-            log_file = None
-            # km_file = None
-            # Find 'log' and 'km' files
-            log_found = False
-            # km_found = False
-            for file in os.listdir(subfolder_path):
-                if file.startswith('log_withoutanamoly') and file.endswith('.csv'):
-                    log_file = os.path.join(subfolder_path, file)
-                    log_found = True
-                # elif file.startswith('km') and file.endswith('.csv'):
-                #     km_file = os.path.join(subfolder_path, file)
-                #     km_found = True
-                # if log_found and km_found:
-                if log_found:
-                    break
- 
-            # if log_found and km_found:
-            if log_found:
-                df= pd.read_csv(log_file)
-               
- 
-# def analysis_Energy(log_file, km_file):
 def analysis_Energy(log_file):
  
     print("Entered analysis energy")
