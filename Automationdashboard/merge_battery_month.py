@@ -23,7 +23,8 @@ def merge_excel_files(root_directory):
                 if merged_df is None:
                     merged_df = data
                 else:
-                    merged_df = merged_df.merge(data, left_index=True, right_index=True, how='outer')
+                    # Use 'outer' join and avoid sorting the indices
+                    merged_df = pd.concat([merged_df, data], axis=1)
 
     # Reset index if you prefer 'File name' as a regular column
     merged_df.reset_index(inplace=True)
@@ -31,8 +32,8 @@ def merge_excel_files(root_directory):
     return merged_df
 
 # Specify the root directory containing all subdirectories with 'merged_analysis.xlsx' files
-root_directory_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\March_BB3'
+root_directory_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\March_BB4'
 merged_data = merge_excel_files(root_directory_path)
 
 # Save the merged DataFrame to a new Excel file
-merged_data.to_excel(r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\March_BB3\merged_final.xlsx', index=False)
+merged_data.to_excel(r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\March_BB4\merged_final.xlsx', index=False)
