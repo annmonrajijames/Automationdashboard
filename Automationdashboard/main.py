@@ -153,11 +153,13 @@ choose_folder_button = tk.Button(padded_frame, text="Choose Folder", command=cho
 choose_folder_button.grid(row=1, column=1, columnspan=2, pady=10) 
 # choose_folder_button.grid(row=2, column=1, columnspan=2)
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
+fixed_width = len("Battery based - ANALYSIS")  # Manually set to the longest option
+
 selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
 tk.Label(padded_frame, text='Choose the analysis:', bg="lightblue").grid(row=0, column=0)
 dropdown = tk.OptionMenu(padded_frame, selected_option, *dropOptions, command=on_select)
-dropdown.config(width=20)  # Set the width of the dropdown to prevent resizing
+dropdown.config(width=fixed_width)  # Fixed length for the drop down menu
 dropdown.grid(row=0, column=1, pady=10) 
 
 # Entry for new folder name, initially disabled
