@@ -60,19 +60,19 @@ def update_run_button_state():
         run_button.config(state=tk.NORMAL)
     else:
         run_button.config(state=tk.DISABLED)
-def save_output(output_directory):
-    """ Asks the user to provide a new folder name in the entry box, then copies the files there. """
-    destination = filedialog.askdirectory(title="Select Destination for Output Files")
-    if destination:
-        # Get the folder name from the entry box or use a default name if it's empty
-        folder_name = new_folder_name.get().strip() if new_folder_name.get().strip() else "Lectrix_Analysis"
-        final_destination = os.path.join(destination, folder_name)
-        os.makedirs(final_destination, exist_ok=True)  # Create the new directory
-        copy_files_to_directory(output_directory, final_destination)
-        # cleanup_directories()  # Perform cleanup after saving output
-        reset_gui()  # Reset the GUI to initial state
-    else:
-        messagebox.showerror("Error", "You must select a destination directory.")
+# def save_output(output_directory):
+#     """ Asks the user to provide a new folder name in the entry box, then copies the files there. """
+#     destination = filedialog.askdirectory(title="Select Destination for Output Files")
+#     if destination:
+#         # Get the folder name from the entry box or use a default name if it's empty
+#         folder_name = new_folder_name.get().strip() if new_folder_name.get().strip() else "Lectrix_Analysis"
+#         final_destination = os.path.join(destination, folder_name)
+#         os.makedirs(final_destination, exist_ok=True)  # Create the new directory
+#         copy_files_to_directory(output_directory, final_destination)
+#         # cleanup_directories()  # Perform cleanup after saving output
+#         reset_gui()  # Reset the GUI to initial state
+#     else:
+#         messagebox.showerror("Error", "You must select a destination directory.")
 def run_script():
     """ Runs the selected Python script based on dropdown selection and handles file output location. """
     script_name = app_data.get('selected_option')
@@ -82,15 +82,15 @@ def run_script():
             if script_name == "Daily_Analysis":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
                 subprocess.run(["python", "Daily_Analysis.py"], check=True)
-                save_output(output_directory)
+                #save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2"
                 subprocess.run(["python", "merge_csv_forAutomation_2.py"], check=True)
-                save_output(output_directory)
+                #save_output(output_directory)
             elif script_name == "Error Reasoning":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
                 subprocess.run(["python", "Error_causes.py"], check=True)
-                save_output(output_directory)
+                #save_output(output_directory)
         except subprocess.CalledProcessError:
             messagebox.showerror("Error", "Script execution failed!")
             reset_gui()
@@ -140,7 +140,7 @@ def reset_gui():
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="lightblue")
-root.geometry("450x225")
+root.geometry("400x200")
 root.resizable(False, False)  # Disable resizing of the window
 app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold application data.
  
@@ -166,10 +166,10 @@ dropdown.grid(row=0, column=1, pady=10, padx=20)
  
 new_folder_name = tk.StringVar(root)
 new_folder_entry = tk.Entry(root, textvariable=new_folder_name, state=tk.DISABLED, width=uniform_width+6)
-new_folder_entry.grid(row=2, column=1, padx=20)
-tk.Label(root, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10, padx=20, sticky='w')
+#new_folder_entry.grid(row=2, column=1, padx=20)
+#tk.Label(root, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10, padx=20, sticky='w')
  
-run_button = tk.Button(root, text="Run and Save file", command=run_script, state=tk.DISABLED, width=uniform_width)
+run_button = tk.Button(root, text="Run", command=run_script, state=tk.DISABLED, width=uniform_width)
 run_button.grid(row=3, column=0, columnspan=2, pady=20, padx=20)
  
 root.mainloop()
