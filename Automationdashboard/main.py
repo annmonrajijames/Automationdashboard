@@ -13,7 +13,8 @@ def choose_folder():
     if source_folder:
         print("Folder selected:", source_folder)
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
-        folder_label_text.set(source_folder)  # Update label with chosen folder path
+        wrapped_path = wrap_text(source_folder, 27)
+        folder_label_text.set(wrapped_path)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
         new_folder_entry.config(state=tk.NORMAL)
         # Determine destination folder based on the selected analysis type
@@ -28,7 +29,8 @@ def choose_folder():
             return
 
         copy_files_to_directory(source_folder, destination_folder)
-
+def wrap_text(text, length):
+    return '\n'.join(text[i:i+length] for i in range(0, len(text), length))
 def copy_files_to_directory(source_folder, destination_folder):
     """ Copies all files and folders from the source folder to the destination folder, overwriting existing files. """
     try:
@@ -137,13 +139,13 @@ def cleanup_directories():
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="lightblue")
-
+root.geometry("450x225")
 app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold application data.
 
 folder_label_text = tk.StringVar(root)
-folder_label_text.set("----------->")  # Initial placeholder text
-folder_label = tk.Label(root, textvariable=folder_label_text, bg="lightblue")
-folder_label.grid(row=1, column=0, pady=10, padx=20, sticky='w')
+folder_label_text.set("Path of input file")  # Initial placeholder text
+folder_label = tk.Label(root, textvariable=folder_label_text, bg="lightblue", justify=tk.LEFT)
+folder_label.grid(row=1, column=0, pady=10, padx=20, sticky='w',columnspan=2)
 
 # Determine a suitable width for all input-related widgets
 uniform_width = 25  # This width value should be sufficient to match the widest element
