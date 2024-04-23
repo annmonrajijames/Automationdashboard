@@ -136,40 +136,36 @@ def cleanup_directories():
     #messagebox.showinfo("Cleanup", "All directories have been cleared!")
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
-root.configure(bg="#7b7b7f")
+root.configure(bg="lightblue")
 
 app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold application data.
 
-padded_frame = tk.Frame(root, padx=20, pady=15, borderwidth=2, bg="lightblue")
-padded_frame.pack(fill="both", expand=True)
-
 folder_label_text = tk.StringVar(root)
 folder_label_text.set("----------->")  # Initial placeholder text
-folder_label = tk.Label(padded_frame, textvariable=folder_label_text, bg="lightblue")
-folder_label.grid(row=1, column=0, pady=10)
+folder_label = tk.Label(root, textvariable=folder_label_text, bg="lightblue")
+folder_label.grid(row=1, column=0, pady=10, padx=20, sticky='w')
 
-# Choose Folder button initially disabled
-choose_folder_button = tk.Button(padded_frame, text="Choose Folder", command=choose_folder, state=tk.DISABLED, width=20)
-choose_folder_button.grid(row=1, column=1, columnspan=2, pady=10) 
-# choose_folder_button.grid(row=2, column=1, columnspan=2)
+# Determine a suitable width for all input-related widgets
+uniform_width = 25  # This width value should be sufficient to match the widest element
+
+choose_folder_button = tk.Button(root, text="Choose Folder", command=choose_folder, state=tk.DISABLED, width=uniform_width+1)
+choose_folder_button.grid(row=1, column=1, pady=10, padx=20) 
+
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
-fixed_width = len("Battery based - ANALYSIS")  # Manually set to the longest option
 
 selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
-tk.Label(padded_frame, text='Choose the analysis:', bg="lightblue").grid(row=0, column=0)
-dropdown = tk.OptionMenu(padded_frame, selected_option, *dropOptions, command=on_select)
-dropdown.config(width=fixed_width)  # Fixed length for the drop down menu
-dropdown.grid(row=0, column=1, pady=10) 
+tk.Label(root, text='Choose the analysis:', bg="lightblue").grid(row=0, column=0, padx=20, sticky='w')
+dropdown = tk.OptionMenu(root, selected_option, *dropOptions, command=on_select)
+dropdown.config(width=uniform_width)  # Setting the width here to match other elements
+dropdown.grid(row=0, column=1, pady=10, padx=20) 
 
-# Entry for new folder name, initially disabled
 new_folder_name = tk.StringVar(root)
-new_folder_entry = tk.Entry(padded_frame, textvariable=new_folder_name, state=tk.DISABLED, width=27)
-new_folder_entry.grid(row=2, column=1, columnspan=2) 
-tk.Label(padded_frame, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10)
+new_folder_entry = tk.Entry(root, textvariable=new_folder_name, state=tk.DISABLED, width=uniform_width+6)
+new_folder_entry.grid(row=2, column=1, padx=20) 
+tk.Label(root, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10, padx=20, sticky='w')
 
-# Run button (initially disabled)
-run_button = tk.Button(padded_frame, text="Run and Save file", command=run_script, state=tk.DISABLED, width=20)
-run_button.grid(row=3, column=0, columnspan=2, pady=20)
+run_button = tk.Button(root, text="Run and Save file", command=run_script, state=tk.DISABLED, width=uniform_width)
+run_button.grid(row=3, column=0, columnspan=2, pady=20, padx=20)
 
 root.mainloop()
