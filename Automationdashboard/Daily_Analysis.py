@@ -1,5 +1,6 @@
+
 import pandas as pd
-from math import radians, sin, cos, sqrt, atan2 
+from math import radians, sin, cos, sqrt, atan2
 import sys
 import io
 import openpyxl
@@ -20,6 +21,8 @@ from openpyxl import load_workbook, Workbook
 # Path to the folder containing the CSV files
 # path = r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21"
  
+ 
+ 
 # List to store DataFrames from each CSV file
 dfs = []
 def haversine(lat1, lon1, lat2, lon2):
@@ -32,7 +35,7 @@ def haversine(lat1, lon1, lat2, lon2):
     lon1 = radians(lon1)
     lat2 = radians(lat2)
     lon2 = radians(lon2)
-
+ 
     # Radius of the Earth in kilometers
     R = 6371.0
    
@@ -59,13 +62,19 @@ def adjust_current(row):
         return 0
     else:
         return row['PackCurr_6']
-    
-def plot_ghps(data):
-    # data = pd.read_csv(r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21\log_file.csv")
+   
+def plot_ghps(data,Path):
+
+
+    if 'localtime' not in data.columns:
+        # Convert the 'timestamp' column from Unix milliseconds to datetime
+        data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
+
+        # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
+        data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
  
-    # Apply the adjustment function to the DataFrame
- 
-    data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    data['localtime'] = pd.to_datetime(data['localtime'])
     data.set_index('localtime', inplace=True)
     data['PackCurr_6'] = data.apply(adjust_current, axis=1)
    
@@ -83,17 +92,15 @@ def plot_ghps(data):
     ax2.set_ylabel('Motor Speed (RPM)', color='green')
  
     # Add 'AC_Current_340920579' to primary y-axis
-    line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='lightgray', label='AC Current')
+    line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='red', label='AC Current')
  
     # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-    line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='lightgray', label='AC Voltage (x10)')
+    line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='yellow', label='AC Voltage (x10)')
  
     # Add 'Throttle_408094978' to the left side y-axis
-    line5, = ax1.plot(data.index, data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
-
-        # Add 'Throttle_408094978' to the left side y-axis
-    line6, = ax1.plot(data.index, data['SOC_8'], color='red', label='SOC (%)')
+    line5, = ax1.plot(data.index, data['Throttle_408094978'], color='orange', label='Throttle (%)')
  
+
     # Hide the y-axis label for 'AC_Current_340920579'
     ax1.get_yaxis().get_label().set_visible(False)
  
@@ -117,38 +124,53 @@ def plot_ghps(data):
  
     # Save the plot as an image or display it
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
-    plt.savefig('graph.png')  # Save the plot as an image
-    plt.show()
+    # plt.savefig('graph.png')  # Save the plot as an image
 
+    os.makedirs(Path, exist_ok=True)
+    plt.savefig(os.path.join(Path, 'graph.png'))  # Save the plot as an image in the specified directory
+    # plt.show()
+ 
+ 
+###################################
 
-
-def analysis_Energy(log_file, km_file,data,data_KM):
+ 
+# def analysis_Energy(log_file, km_file):
+def analysis_Energy(log_file):
+ 
+    print("Entered analysis energy")
     dayfirst=True
     data = pd.read_csv(log_file)
-    data_KM = pd.read_csv(km_file)
+
+    if 'localtime' not in data.columns:
+    # Convert the 'timestamp' column from Unix milliseconds to datetime
+        data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
+ 
+    # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
+        data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
+   
  
     total_duration = 0
     total_distance = 0
     Wh_km = 0
     SOC_consumed = 0
-    
+   
     if (data['SOC_8'] > 90).any():
         # Maximum cell temperature calculation
         temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
         max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
         max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
         print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
-
+ 
         # Minimum cell temperature calculation
         temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
         min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
         min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
         print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
-
+ 
         #Difference between Maximum and Minimum cell Temperature
         CellTempDiff= max_cell_temp-min_cell_temp
         print("Temperature difference: ",CellTempDiff)
-
+ 
     else:
         print("SOC is not maximum!")
          # Maximum cell temperature calculation
@@ -156,21 +178,21 @@ def analysis_Energy(log_file, km_file,data,data_KM):
         max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
         max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
         print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
-
+ 
         # Minimum cell temperature calculation
         temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
         min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
         min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
         print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
-
+ 
         #Difference between Maximum and Minimum cell Temperature
         CellTempDiff= max_cell_temp-min_cell_temp
         print("Temperature difference: ",CellTempDiff)
-
-
-    
-
-
+ 
+ 
+   
+ 
+ 
     # Check if 'localtime' column exists in data DataFrame
     if 'localtime' not in data.columns:
         print("Error: 'localtime' column not found in the DataFrame.")
@@ -180,12 +202,19 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     data.dropna(subset=['SOCAh_8'], inplace=True)
  
     # Convert the 'localtime' column to datetime s
-    data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f',dayfirst=True)
+    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f',dayfirst=True)
+    data['localtime'] = pd.to_datetime(data['localtime'])
  
     # Calculate the start time and end time
     start_time = data['localtime'].min()
     end_time = data['localtime'].max()
- 
+
+    # Calculate the start time and end time with formatting
+    start_time_seconds = data['localtime'].min().strftime('%d/%m/%Y %H:%M:%S')
+    end_time_seconds = data['localtime'].max().strftime('%d/%m/%Y %H:%M:%S')
+    
+    print(start_time,end_time)
+
     # Calculate the total time taken for the ride``
     total_duration = end_time - start_time
     total_hours = total_duration.seconds // 3600
@@ -220,6 +249,14 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
  
+    # #Added date and time
+    # starting_time= data['localtime'].iloc[-1]
+   
+    # Ending_time= data['localtime'].iloc[0]
+    # print(starting_time)
+    # print(Ending_time)
+
+
  ####################
  #the following code is providing wrong value for SOC_percentage, so skipped it.
     # Calculate starting and ending SoC in percentage
@@ -230,33 +267,53 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     # print("Starting SoC (%): {:.2f}%".format(starting_soc_percentage))
     # print("Ending SoC (%): {:.2f}%".format(ending_soc_percentage))
  #####################
-
-
+ 
+ 
  #Code for SOC_percentage(Starting and Ending SOC)
     starting_soc_percentage = data['SOC_8'].max()
     ending_soc_percentage = data['SOC_8'].min()
     print("Starting SOC:", starting_soc_percentage)
     print("Ending SOC:", ending_soc_percentage)
-
-
+ 
+ 
     ##################### KM ---------------------
     # Convert the 'localtime' column to datetime format
-    data_KM['localtime'] = pd.to_datetime(data_KM['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
- 
+    # data_KM['localtime'] = pd.to_datetime(data_KM['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    # data['localtime'] = pd.to_datetime(data['localtime'])
+   
     # Initialize total distance covered
     total_distance = 0
  
     # Iterate over rows to compute distance covered between consecutive points
-    for i in range(1, len(data_KM)):
+    for i in range(len(data) - 1):
+        # print("length--------------->",len(data))
+        # print("i------------------->",i)
+        # print(data['latitude'])
+        # print(data['longitude'])
         # Get latitude and longitude of consecutive points
-        lat1, lon1 = data_KM.loc[i - 1, 'latitude'], data_KM.loc[i - 1, 'longitude']
-        lat2, lon2 = data_KM.loc[i, 'latitude'], data_KM.loc[i, 'longitude']
+        # lat1, lon1 = data_KM.loc[i - 1, 'latitude'], data_KM.loc[i - 1, 'longitude']
+        # lat2, lon2 = data_KM.loc[i, 'latitude'], data_KM.loc[i, 'longitude']
+        # lat1, lon1 = data.loc[i - 1, 'latitude'], data.loc[i - 1, 'longitude']
+        # lat2, lon2 = data.loc[i, 'latitude'], data.loc[i, 'longitude']
+         # Get latitude and longitude of consecutive points
+        # lat1 = data.iloc[i, data.columns.get_loc('latitude')]
+        # lon1 = data.iloc[i, data.columns.get_loc('longitude')]
+        # lat2 = data.iloc[i + 1, data.columns.get_loc('latitude')]
+        # lon2 = data.iloc[i + 1, data.columns.get_loc('longitude')]
+   
+        # Get latitude and longitude of consecutive points
+        lat1 = data['latitude'].iloc[i]
+        lon1 = data['longitude'].iloc[i]
+        lat2 = data['latitude'].iloc[i + 1]
+        lon2 = data['longitude'].iloc[i + 1]
+       
  
         # Calculate distance between consecutive points
         distance = haversine(lat1, lon1, lat2, lon2)
  
         # Add distance to total distance covered
         total_distance += distance
+        # print("TotalDistancw----------->",total_distance)
  
     print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
  
@@ -311,9 +368,8 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     print("Peak Power:", peak_power)
    
     # Calculate the average power
-    average_power = data_resampled['Power'].mean()
+    average_power = abs(data_resampled['Power'].mean())
     print("Average Power:", average_power)
- 
     altitude = None
     # Calculate altitude if 'Altitude' column exists in data_resampled
     if 'Altitude' in data_resampled.columns:
@@ -332,6 +388,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     print("total",total_energy_consumed)
     print("total energy regenerated",energy_regenerated)
  
+   
    
    
     # Calculate regenerative effectiveness as a percentage
@@ -433,15 +490,14 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
     # Check if abnormal condition persists for at least 15 seconds
     abnormal_motor_temp_detected = (abnormal_motor_temp_mask >= 120).any()
-
+ 
+    #For battery Analysis
     cycleCount= data_resampled['CycleCount_7'].max()
-    print("cycleCount----------->",cycleCount)
-
-    starting_time= data_KM['localtime'].iloc[-1]
-    print("starting_time------------->",starting_time)
-
-    Ending_time= data_KM['localtime'].iloc[0]
-    print("Ending_time------------->",Ending_time)
+ 
+   
+ 
+    ByteBeamId= data['id'].iloc[0]
+   
  
  
     # # Filter rows where SOC is 100%
@@ -449,7 +505,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
     # # Find the lowest cell temperature at 100% SOC
     # lowest_temp_100_soc = data_100_soc['Temp1_10'].min()
-    # print("Lowest Cell Temperature at 100%f SOC:", lowest_temp_100_soc)
+    # print("Lowest Cell Temperature at 100% SOC:", lowest_temp_100_soc)
  
     # # Filter rows where SOC is 100%
     # data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
@@ -468,15 +524,16 @@ def analysis_Energy(log_file, km_file,data,data_KM):
     total_energy_kwh = actual_ah * batteryVoltage / 1000
     print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
  
-    total_energy_kw = total_energy_kwh / total_duration.seconds / 3600 
+    total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
     print("Electricity consumption units in kW", (total_energy_kw))
  
     # Add these variables and logic to ppt_data
-    ppt_data = { 
-        "Date and Time": str(starting_time) + " to " + str(Ending_time),
+    ppt_data = {
+        "Date and Time": str(start_time_seconds) + " to " + str(end_time_seconds),
+        "Byte Beam ID": ByteBeamId,
         "Total time taken for the ride": total_duration,
         "Actual Ampere-hours (Ah)": actual_ah,
-        "Actual Watt-hours (Wh)": watt_h,
+        "Actual Watt-hours (Wh)- Calculated_UsingFormala": watt_h,
         "Starting SoC (Ah)": starting_soc_Ah,
         "Ending SoC (Ah)": ending_soc_Ah,
         "Starting SoC (%)": starting_soc_percentage,
@@ -495,7 +552,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
         "Minimum Temperature(C)": min_temp,
         "Maximum Temperature(C)": max_temp,
         "Difference in Temperature(C)": max_temp- min_temp,
-
+ 
         "Maximum Fet Temperature-BMS(C)": max_fet_temp,
         "Maximum Afe Temperature-BMS(C)": max_afe_temp,
         "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
@@ -506,7 +563,7 @@ def analysis_Energy(log_file, km_file,data,data_KM):
         "lowest cell temp(C)": min_cell_temp,
         "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
         "Battery Voltage(V)": batteryVoltage,
-        "Total energy charged(kWh)": total_energy_kwh,
+        "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
         "Electricity consumption units(kW)": total_energy_kw,
         "Cycle Count of battery": cycleCount
         }
@@ -640,11 +697,12 @@ def analysis_Energy(log_file, km_file,data,data_KM):
  
  
 # folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21"
-
+ 
  
 ####################
    
-def capture_analysis_output(log_file, km_file, folder_path):
+# def capture_analysis_output(log_file, km_file, folder_path):
+def capture_analysis_output(log_file,folder_path):
     try:
         # Capture print statements
         analysis_output = io.StringIO()
@@ -656,8 +714,6 @@ def capture_analysis_output(log_file, km_file, folder_path):
  
         # Extract folder name from folder_path
         folder_name = os.path.basename(folder_path)
-        
-        
  
         # Create a new PowerPoint presentation
         prs = Presentation()
@@ -783,12 +839,13 @@ def capture_analysis_output(log_file, km_file, folder_path):
  
 # Initialize variables to store file paths
 log_file = None
-km_file = None
+# km_file = None
  
+ 
+ 
+main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1"
 
-
-main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1\MAIN_FOLDER\Automation_Dashboard_Batterywise\V4\D11_03_2024"
-
+ 
 def mergeExcel(main_folder_path):
     def prepare_sheet_in_memory(file_path):
         workbook = load_workbook(filename=file_path)
@@ -798,14 +855,14 @@ def mergeExcel(main_folder_path):
         sheet['A1'] = 'file name'
         sheet['B1'] = file_name
         return sheet, file_name
-
+ 
     def sheet_to_dict(sheet):
         data_dict = {}
         for row in sheet.iter_rows(min_row=2, values_only=True):
             key, *values = row
             data_dict[key] = values
         return data_dict
-
+ 
     def merge_dicts(dict1, dict2):
         for key, values in dict2.items():
             if key in dict1:
@@ -814,7 +871,7 @@ def mergeExcel(main_folder_path):
             else:
                 dict1[key] = values
         return dict1
-
+ 
     def process_directory(directory):
         merged_data = {}
         file_names = []
@@ -831,70 +888,67 @@ def mergeExcel(main_folder_path):
                             if extracted_file_name not in file_names:
                                 file_names.append(extracted_file_name)
         return merged_data, file_names
-
+ 
     def main(main_folder_path):
         directory = main_folder_path
         merged_data, file_names = process_directory(directory)
-
+ 
         merged_workbook = Workbook()
         merged_sheet = merged_workbook.active
-
+ 
         # Use the extracted file names for headers
         headers = ['File name'] + file_names
         merged_sheet.append(headers)
-
+ 
         if merged_data:
             for key, values in merged_data.items():
                 merged_sheet.append([key] + values)
         else:
             print("No data found in merged_data")
-
+ 
         merged_file_path = os.path.join(directory, 'merged_analysis.xlsx')
         merged_workbook.save(filename=merged_file_path)
         print("Merged Excel file is ready")
-        # Save in the additional directory
-        additional_directory = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1'
-        additional_merged_file_path = os.path.join(additional_directory, 'merged_analysis.xlsx')
-        merged_workbook.save(filename=additional_merged_file_path)
-        print("Merged Excel file is saved in the additional directory")
-
+ 
     if __name__ == '__main__':
         main(main_folder_path)
+ 
 
+ 
+ 
+for mar_subfolder in os.listdir(main_folder_path):
+    if mar_subfolder.startswith("Mar"):
+        mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
+        print(mar_subfolder)
+        
+        # Iterate over subfolders starting with "Battery" within "Mar" subfolders
+        for subfolder in os.listdir(mar_subfolder_path):
+            if subfolder.startswith("Battery"):
+                subfolder_path = os.path.join(mar_subfolder_path, subfolder)
+                print(subfolder)
+                if os.path.isdir(subfolder_path):
+                    log_file = None
+                    log_found = False
+                    for file in os.listdir(subfolder_path):
+                        if file.startswith('log_withoutanamoly') and file.endswith('.csv'):
+                            log_file = os.path.join(subfolder_path, file)
+                            log_found = True
+                        if log_found:
+                            break
+                    if log_found:
+                        data = pd.read_csv(log_file)
+                        total_duration = 0
+                        total_distance = 0
+                        Wh_km = 0
+                        SOC_consumed = 0
+                        mode_values = 0
 
-for subfolder in os.listdir(main_folder_path):
-    subfolder_path = os.path.join(main_folder_path, subfolder)
-    print(subfolder)
-    if os.path.isdir(subfolder_path):
-        log_file = None
-        km_file = None
-        # Find 'log' and 'km' files
-        log_found = False
-        km_found = False
-        for file in os.listdir(subfolder_path):
-            if file.startswith('log') and file.endswith('.csv'):
-                log_file = os.path.join(subfolder_path, file)
-                log_found = True
-            elif file.startswith('km') and file.endswith('.csv'):
-                km_file = os.path.join(subfolder_path, file)
-                km_found = True
-            if log_found and km_found:
-                break
-
-        if log_found and km_found:
-            data = pd.read_csv(log_file)
-            data_KM = pd.read_csv(km_file)
-            total_duration = 0
-            total_distance = 0
-            Wh_km = 0
-            SOC_consumed = 0
-            mode_values = 0
-
-            # Plot graphs
-            plot_ghps(data)
-            total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file, km_file, data, data_KM)
-            capture_analysis_output(log_file, km_file, subfolder_path)
-        else:
-            print("Log file or KM file not found in subfolder:", subfolder)
-
-mergeExcel(main_folder_path)   
+                        plot_ghps(data,subfolder_path)
+                        total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
+                        capture_analysis_output(log_file, subfolder_path)
+                    else:
+                        print("Log file or KM file not found in subfolder:", subfolder)
+ 
+mergeExcel(main_folder_path) 
+                
+ 
