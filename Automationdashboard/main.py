@@ -140,6 +140,7 @@ root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="lightblue")
 root.geometry("450x225")
+root.resizable(False, False)  # Disable resizing of the window
 app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold application data.
 
 folder_label_text = tk.StringVar(root)
