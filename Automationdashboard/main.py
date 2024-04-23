@@ -5,10 +5,10 @@ import subprocess
 import shutil
 import os
 from tkinter import messagebox, filedialog
-
+ 
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
-    cleanup_directories()
+    # cleanup_directories()
     source_folder = filedialog.askdirectory()
     if source_folder:
         print("Folder selected:", source_folder)
@@ -27,7 +27,7 @@ def choose_folder():
         else:
             messagebox.showerror("Error", "No valid analysis type selected for file operations.")
             return
-
+ 
         copy_files_to_directory(source_folder, destination_folder)
 def wrap_text(text, length):
     return '\n'.join(text[i:i+length] for i in range(0, len(text), length))
@@ -46,14 +46,14 @@ def copy_files_to_directory(source_folder, destination_folder):
                 shutil.copy(src_path, dst_path)
     except Exception as e:
         messagebox.showerror("Error", f"Failed to upload Folder/Files: {e}")
-
+ 
 def on_select(value):
     """ Handles selection changes in the dropdown. """
     print("Selected:", value)
     app_data['selected_option'] = value
     choose_folder_button.config(state=tk.NORMAL)  # Enable the Choose Folder button
     update_run_button_state()
-
+ 
 def update_run_button_state():
     """ Enables the Run button only if both a folder and an analysis option have been selected. """
     if app_data.get('folder_path') and app_data.get('selected_option'):
@@ -69,7 +69,7 @@ def save_output(output_directory):
         final_destination = os.path.join(destination, folder_name)
         os.makedirs(final_destination, exist_ok=True)  # Create the new directory
         copy_files_to_directory(output_directory, final_destination)
-        cleanup_directories()  # Perform cleanup after saving output
+        # cleanup_directories()  # Perform cleanup after saving output
         reset_gui()  # Reset the GUI to initial state
     else:
         messagebox.showerror("Error", "You must select a destination directory.")
@@ -114,62 +114,62 @@ def reset_gui():
     choose_folder_button.config(state=tk.DISABLED)  # Re-enable the Choose Folder button
     run_button.config(state=tk.DISABLED)  # Ensure the Run button is disabled
     update_run_button_state()  # Optionally update states of other controls if needed
-
-def clear_directory_contents(directory):
-    """ Clears all files and folders in the specified directory. """
-    for item in os.listdir(directory):
-        item_path = os.path.join(directory, item)
-        if os.path.isdir(item_path):
-            shutil.rmtree(item_path)
-        else:
-            os.remove(item_path)
-
-def cleanup_directories():
-    """ Clears all files and folders in specified directories after operations are completed. """
-    directories = [
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
-    ]
-    for directory in directories:
-        clear_directory_contents(directory)
-    #messagebox.showinfo("Cleanup", "All directories have been cleared!")
+ 
+# def clear_directory_contents(directory):
+#     """ Clears all files and folders in the specified directory. """
+#     for item in os.listdir(directory):
+#         item_path = os.path.join(directory, item)
+#         if os.path.isdir(item_path):
+#             shutil.rmtree(item_path)
+#         else:
+#             os.remove(item_path)
+ 
+# def cleanup_directories():
+#     """ Clears all files and folders in specified directories after operations are completed. """
+#     directories = [
+#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1",
+#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2",
+#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3",
+#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
+#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
+#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
+#     ]
+#     for directory in directories:
+#         clear_directory_contents(directory)
+#     #messagebox.showinfo("Cleanup", "All directories have been cleared!")
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
 root.configure(bg="lightblue")
 root.geometry("450x225")
 root.resizable(False, False)  # Disable resizing of the window
 app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold application data.
-
+ 
 folder_label_text = tk.StringVar(root)
 folder_label_text.set("Path of selected folder")  # Initial placeholder text
 folder_label = tk.Label(root, textvariable=folder_label_text, bg="lightblue", justify=tk.LEFT)
 folder_label.grid(row=1, column=0, pady=10, padx=20, sticky='w',columnspan=2)
-
+ 
 # Determine a suitable width for all input-related widgets
 uniform_width = 25  # This width value should be sufficient to match the widest element
-
+ 
 choose_folder_button = tk.Button(root, text="Choose Folder", command=choose_folder, state=tk.DISABLED, width=uniform_width+1)
-choose_folder_button.grid(row=1, column=1, pady=10, padx=20) 
-
+choose_folder_button.grid(row=1, column=1, pady=10, padx=20)
+ 
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
-
+ 
 selected_option = tk.StringVar(root)
 selected_option.set(dropOptions[0])  # Default option is set but button is still disabled.
 tk.Label(root, text='Choose the analysis:', bg="lightblue").grid(row=0, column=0, padx=20, sticky='w')
 dropdown = tk.OptionMenu(root, selected_option, *dropOptions, command=on_select)
 dropdown.config(width=uniform_width)  # Setting the width here to match other elements
-dropdown.grid(row=0, column=1, pady=10, padx=20) 
-
+dropdown.grid(row=0, column=1, pady=10, padx=20)
+ 
 new_folder_name = tk.StringVar(root)
 new_folder_entry = tk.Entry(root, textvariable=new_folder_name, state=tk.DISABLED, width=uniform_width+6)
-new_folder_entry.grid(row=2, column=1, padx=20) 
+new_folder_entry.grid(row=2, column=1, padx=20)
 tk.Label(root, text='Type the Output folder name:', bg="lightblue").grid(row=2, column=0, pady=10, padx=20, sticky='w')
-
+ 
 run_button = tk.Button(root, text="Run and Save file", command=run_script, state=tk.DISABLED, width=uniform_width)
 run_button.grid(row=3, column=0, columnspan=2, pady=20, padx=20)
-
+ 
 root.mainloop()
