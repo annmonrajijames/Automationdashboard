@@ -3,6 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
+import warnings
+
+# Disable the SettingWithCopyWarning
+warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
 # Define the paths for input and output
 main_folder_path = r'C:\Users\kamalesh.kb\CodeForAutomation\BB4\OUTPUT_1\Mar-29'
