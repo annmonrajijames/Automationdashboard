@@ -126,26 +126,33 @@ for subfolder in os.listdir(main_folder_path):
 
             plot_ghps(data,subfolder)
 
-             # Allow user to input start time and end time after seeing the graph
-            start_time_input = input("Enter start time (format: DD-MM-YYYY HH:MM:SS): ")
-            end_time_input = input("Enter end time (format: DD-MM-YYYY HH:MM:SS): ")
 
-            # Convert input strings to datetime
-            start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
-            end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
+            # Check if cropping is needed
+            crop = input("Do you want to crop anomalies? (yes/no): ")
+            if crop.lower() == "yes":
+                # Allow user to input start time and end time after seeing the graph
+                start_time_input = input("Enter start time (format: DD-MM-YYYY HH:MM:SS): ")
+                end_time_input = input("Enter end time (format: DD-MM-YYYY HH:MM:SS): ")
 
-            # Filter the data based on user input time range
-            filtered_data = data[(data.index >= start_time) & (data.index <= end_time)]
-            
-            plot_ghps(filtered_data, subfolder)
-            # # Filter the data based on time range
-            # filtered_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
-            
-            # Define output file path for this Battery folder
-            output_file_path = os.path.join(subfolder_path, f'log_withoutanamoly.csv')
-            
-            # Save the filtered data to CSV in the same folder
-            filtered_data.to_csv(output_file_path, index=False)
-            print("Filtered data saved to:", output_file_path)
+                # Convert input strings to datetime
+                start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
+                end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
+
+                # Filter the data based on user input time range
+                filtered_data = data[(data.index >= start_time) & (data.index <= end_time)]
+                
+                plot_ghps(filtered_data, subfolder) #plotting the filtered data
+                
+                # Define output file path for this Battery folder
+                output_file_path = os.path.join(subfolder_path, f'log_withoutanamoly.csv')
+                
+                # Save the filtered data to CSV in the same folder
+                filtered_data.to_csv(output_file_path, index=False)
+
+            else:
+                data.to_csv(os.path.join(subfolder_path, 'log_withoutanamoly.csv'), index=False)
+                
+
+                
         else:
             print("No log file found in folder:", subfolder)
