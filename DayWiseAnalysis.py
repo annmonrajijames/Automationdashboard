@@ -64,8 +64,6 @@ def adjust_current(row):
         return row['PackCurr_6']
    
 def plot_ghps(data):
-
-
     if 'localtime' not in data.columns:
         # Convert the 'timestamp' column from Unix milliseconds to datetime
         data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
@@ -73,12 +71,6 @@ def plot_ghps(data):
         # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
         data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
 
-
-    # data = pd.read_csv(r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21\log_file.csv")
- 
-    # Apply the adjustment function to the DataFrame
- 
-    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
     data['localtime'] = pd.to_datetime(data['localtime'])
     data.set_index('localtime', inplace=True)
     data['PackCurr_6'] = data.apply(adjust_current, axis=1)
@@ -115,7 +107,7 @@ def plot_ghps(data):
     ax2.legend(loc='upper right')
  
     # Add a title to the plot
-    plt.title('Battery Pack, Motor Data, and Throttle')
+    plt.title('Vehicle Data')
  
     # Format x-axis ticks as hours:minutes:seconds
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
@@ -134,8 +126,6 @@ def plot_ghps(data):
  
  
 def analysis_Energy(log_file):
- 
-    print("Entered analysis energy")
     dayfirst=True
     data = pd.read_csv(log_file)
 
@@ -154,7 +144,7 @@ def analysis_Energy(log_file):
    
     if (data['SOC_8'] > 90).any():
         # Maximum cell temperature calculation
-        temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
+        temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]     #temp_columns_max will be a list containing the strings 'Temp1_10', 'Temp2_10', ..., 'Temp8_10'.
         max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
         max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
         print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
@@ -199,8 +189,6 @@ def analysis_Energy(log_file):
     # Drop rows with missing values in 'SOCAh_8' column
     data.dropna(subset=['SOCAh_8'], inplace=True)
  
-    # Convert the 'localtime' column to datetime s
-    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f',dayfirst=True)
     data['localtime'] = pd.to_datetime(data['localtime'])
  
     # Calculate the start time and end time
@@ -240,72 +228,30 @@ def analysis_Energy(log_file):
     watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
     print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
  
-    ###########   starting and ending ah
+    #starting and ending ah
     starting_soc_Ah = data['SOCAh_8'].iloc[-1]
     ending_soc_Ah = data['SOCAh_8'].iloc[0]
  
     print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
  
-    # #Added date and time
-    # starting_time= data['localtime'].iloc[-1]
-   
-    # Ending_time= data['localtime'].iloc[0]
-    # print(starting_time)
-    # print(Ending_time)
-
-
- ####################
- #the following code is providing wrong value for SOC_percentage, so skipped it.
-    # Calculate starting and ending SoC in percentage
-    # starting_soc_percentage = (starting_soc / actual_ah) * 100
-    # ending_soc_percentage = (ending_soc / actual_ah) * 100
- 
-    # # Print the results
-    # print("Starting SoC (%): {:.2f}%".format(starting_soc_percentage))
-    # print("Ending SoC (%): {:.2f}%".format(ending_soc_percentage))
- #####################
- 
- 
- #Code for SOC_percentage(Starting and Ending SOC)
+    #Code for SOC_percentage(Starting and Ending SOC)
     starting_soc_percentage = data['SOC_8'].max()
     ending_soc_percentage = data['SOC_8'].min()
     print("Starting SOC:", starting_soc_percentage)
     print("Ending SOC:", ending_soc_percentage)
- 
- 
-    ##################### KM ---------------------
-    # Convert the 'localtime' column to datetime format
-    # data_KM['localtime'] = pd.to_datetime(data_KM['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
-    # data['localtime'] = pd.to_datetime(data['localtime'])
    
     # Initialize total distance covered
     total_distance = 0
  
     # Iterate over rows to compute distance covered between consecutive points
-    for i in range(len(data) - 1):
-        # print("length--------------->",len(data))
-        # print("i------------------->",i)
-        # print(data['latitude'])
-        # print(data['longitude'])
-        # Get latitude and longitude of consecutive points
-        # lat1, lon1 = data_KM.loc[i - 1, 'latitude'], data_KM.loc[i - 1, 'longitude']
-        # lat2, lon2 = data_KM.loc[i, 'latitude'], data_KM.loc[i, 'longitude']
-        # lat1, lon1 = data.loc[i - 1, 'latitude'], data.loc[i - 1, 'longitude']
-        # lat2, lon2 = data.loc[i, 'latitude'], data.loc[i, 'longitude']
-         # Get latitude and longitude of consecutive points
-        # lat1 = data.iloc[i, data.columns.get_loc('latitude')]
-        # lon1 = data.iloc[i, data.columns.get_loc('longitude')]
-        # lat2 = data.iloc[i + 1, data.columns.get_loc('latitude')]
-        # lon2 = data.iloc[i + 1, data.columns.get_loc('longitude')]
-   
+    for i in range(len(data) - 1):   
         # Get latitude and longitude of consecutive points
         lat1 = data['latitude'].iloc[i]
         lon1 = data['longitude'].iloc[i]
         lat2 = data['latitude'].iloc[i + 1]
         lon2 = data['longitude'].iloc[i + 1]
        
- 
         # Calculate distance between consecutive points
         distance = haversine(lat1, lon1, lat2, lon2)
  
@@ -315,7 +261,7 @@ def analysis_Energy(log_file):
  
     print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
  
-    ##############   Wh/Km
+    #Wh/Km
     Wh_km = abs(watt_h / total_distance)
     print("WH/KM:{:.2f}". format (watt_h / total_distance))
  
@@ -325,14 +271,8 @@ def analysis_Energy(log_file):
  
     # Calculate total SOC consumed
     total_soc_consumed =  abs(final_soc - initial_soc)
- 
     print ("Total SOC consumed:{:.2f}".format (total_soc_consumed),"%")
  
- 
-    # Check if the mode remains constant or changes
- 
- 
-    #############################
     mode_values = data['Mode_Ack_408094978'].unique()
  
     if len(mode_values) == 1:
@@ -354,10 +294,10 @@ def analysis_Energy(log_file):
                 print(f"Sports mode: {percentage:.2f}%")
             elif mode == 1:
                 print(f"Eco mode: {percentage:.2f}%")
-    ###############################
+    
  
  
-  ##preak current##
+  #Peak current
     # Calculate power using PackCurr_6 and PackVol_6
     data_resampled['Power'] = data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
  
@@ -378,10 +318,10 @@ def analysis_Energy(log_file):
  
  
     # Calculate energy regenerated (in watt-hours)
-    energy_regenerated = ((data_resampled[data_resampled['Power'] > 0]['Power']*data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours   ######################################################################
+    energy_regenerated = ((data_resampled[data_resampled['Power'] > 0]['Power']*data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours  
  
     # Calculate total energy consumed (in watt-hours)
-    total_energy_consumed =  ((data_resampled[data_resampled['Power'] < 0]['Power']*data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours   ######################################################################
+    total_energy_consumed =  ((data_resampled[data_resampled['Power'] < 0]['Power']*data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours   
  
     print("total",total_energy_consumed)
     print("total energy regenerated",energy_regenerated)
@@ -841,7 +781,7 @@ log_file = None
  
  
  
-main_folder_path = r"D:\March_BB4\March_BB4\Mar-30"
+main_folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\BB4\OUTPUT_1\done\Mar-29"
 
  
 def mergeExcel(main_folder_path):
@@ -951,7 +891,7 @@ for subfolder in os.listdir(main_folder_path):
                 plot_ghps(data)
                 # total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file, km_file)
                 # capture_analysis_output(log_file, km_file, subfolder_path)
-                total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file )
+                total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
                 capture_analysis_output(log_file, subfolder_path,)
                 
  

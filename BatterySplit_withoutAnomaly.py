@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
 
 # Define the paths for input and output
-main_folder_path = r'C:\Users\kamalesh.kb\CodeForAutomation\BB4\OUTPUT_1\Mar-23'
+main_folder_path = r'C:\Users\kamalesh.kb\CodeForAutomation\BB4\OUTPUT_1\Mar-29'
 
 
 
@@ -137,6 +137,7 @@ for subfolder in os.listdir(main_folder_path):
             # Filter the data based on user input time range
             filtered_data = data[(data.index >= start_time) & (data.index <= end_time)]
             
+            plot_ghps(filtered_data, subfolder)
             # # Filter the data based on time range
             # filtered_data = data[(data['localtime'] >= start_time) & (data['localtime'] <= end_time)]
             
