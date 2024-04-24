@@ -13,7 +13,7 @@ def choose_folder():
     if source_folder:
         print("Folder selected:", source_folder)
         app_data['folder_path'] = source_folder  # Store the folder path in the dictionary.
-        wrapped_path = wrap_text(source_folder, 27)
+        wrapped_path = wrap_text(source_folder, 20)
         folder_label_text.set(wrapped_path)  # Update label with chosen folder path
         update_run_button_state()  # Update the state of the Run button.
         new_folder_entry.config(state=tk.NORMAL)
@@ -82,15 +82,18 @@ def run_script():
             if script_name == "Daily_Analysis":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
                 subprocess.run(["python", "Daily_Analysis.py"], check=True)
+                reset_gui()
                 #save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2"
                 subprocess.run(["python", "merge_csv_forAutomation_2.py"], check=True)
                 #save_output(output_directory)
+                reset_gui()
             elif script_name == "Error Reasoning":
                 output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
                 subprocess.run(["python", "Error_causes.py"], check=True)
                 #save_output(output_directory)
+                reset_gui()
         except subprocess.CalledProcessError:
             messagebox.showerror("Error", "Script execution failed!")
             reset_gui()
