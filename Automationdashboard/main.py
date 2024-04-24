@@ -141,7 +141,7 @@ def cleanup_directories():
         clear_directory_contents(directory)
 #     #messagebox.showinfo("Cleanup", "All directories have been cleared!")
 root = tk.Tk()
-root.title("Run Python file based on dropdown menu selection")
+root.title("Lectrix Data Analysis software")
 root.configure(bg="lightblue")
 root.geometry("400x200")
 root.resizable(False, False)  # Disable resizing of the window
@@ -150,13 +150,13 @@ app_data = {'folder_path': None, 'selected_option': None}  # Dictionary to hold 
 folder_label_text = tk.StringVar(root)
 folder_label_text.set("Path of selected folder")  # Initial placeholder text
 folder_label = tk.Label(root, textvariable=folder_label_text, bg="lightblue", justify=tk.LEFT)
-folder_label.grid(row=1, column=0, pady=10, padx=20, sticky='w',columnspan=2)
+folder_label.grid(row=1, column=0, pady=20, padx=20, sticky='w',columnspan=2, rowspan=2)
  
 # Determine a suitable width for all input-related widgets
 uniform_width = 25  # This width value should be sufficient to match the widest element
  
 choose_folder_button = tk.Button(root, text="Choose Folder", command=choose_folder, state=tk.DISABLED, width=uniform_width+1)
-choose_folder_button.grid(row=1, column=1, pady=10, padx=20)
+choose_folder_button.grid(row=1, column=1, pady=35, padx=20)
  
 dropOptions = ["Daily_Analysis", "Battery based - ANALYSIS", "Error Reasoning"]
  
