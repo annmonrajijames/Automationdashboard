@@ -1,4 +1,3 @@
-
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
 import sys
@@ -957,6 +956,4 @@ for mar_subfolder in os.listdir(main_folder_path):
                     else:
                         print("Log file or KM file not found in subfolder:", subfolder)
  
-mergeExcel(main_folder_path) 
-                
- 
+mergeExcel(main_folder_path)
