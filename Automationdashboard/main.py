@@ -8,7 +8,7 @@ from tkinter import messagebox, filedialog
  
 def choose_folder():
     """ Opens a dialog to choose a folder and stores the selected path. """
-    # cleanup_directories()
+    cleanup_directories()
     source_folder = filedialog.askdirectory()
     if source_folder:
         print("Folder selected:", source_folder)
@@ -118,27 +118,27 @@ def reset_gui():
     run_button.config(state=tk.DISABLED)  # Ensure the Run button is disabled
     update_run_button_state()  # Optionally update states of other controls if needed
  
-# def clear_directory_contents(directory):
-#     """ Clears all files and folders in the specified directory. """
-#     for item in os.listdir(directory):
-#         item_path = os.path.join(directory, item)
-#         if os.path.isdir(item_path):
-#             shutil.rmtree(item_path)
-#         else:
-#             os.remove(item_path)
+def clear_directory_contents(directory):
+    """ Clears all files and folders in the specified directory. """
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
+        if os.path.isdir(item_path):
+            shutil.rmtree(item_path)
+        else:
+            os.remove(item_path)
  
-# def cleanup_directories():
-#     """ Clears all files and folders in specified directories after operations are completed. """
-#     directories = [
-#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1",
-#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2",
-#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3",
-#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
-#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
-#         r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
-#     ]
-#     for directory in directories:
-#         clear_directory_contents(directory)
+def cleanup_directories():
+    """ Clears all files and folders in specified directories after operations are completed. """
+    directories = [
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
+    ]
+    for directory in directories:
+        clear_directory_contents(directory)
 #     #messagebox.showinfo("Cleanup", "All directories have been cleared!")
 root = tk.Tk()
 root.title("Run Python file based on dropdown menu selection")
