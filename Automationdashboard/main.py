@@ -19,11 +19,11 @@ def choose_folder():
         new_folder_entry.config(state=tk.NORMAL)
         # Determine destination folder based on the selected analysis type
         if app_data['selected_option'] == "Daily_Analysis":
-            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1"
+            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_1_Daily_Analysis"
         elif app_data['selected_option'] == "Battery based - ANALYSIS":
-            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2"
+            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_2_Battery_Analysis"
         elif app_data['selected_option'] == "Error Reasoning":
-            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3"
+            destination_folder = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_3_Error_Causes"
         else:
             messagebox.showerror("Error", "No valid analysis type selected for file operations.")
             return
@@ -80,17 +80,17 @@ def run_script():
     if script_name and folder_path:
         try:
             if script_name == "Daily_Analysis":
-                output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
+                #output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
                 subprocess.run(["python", "Daily_Analysis.py"], check=True)
                 reset_gui()
                 #save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":
-                output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2"
-                subprocess.run(["python", "merge_csv_forAutomation_2.py"], check=True)
+                #output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2"
+                subprocess.run(["python", "Battery_Analysis.py"], check=True)
                 #save_output(output_directory)
                 reset_gui()
             elif script_name == "Error Reasoning":
-                output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
+                #output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
                 subprocess.run(["python", "Error_causes.py"], check=True)
                 #save_output(output_directory)
                 reset_gui()
@@ -130,12 +130,12 @@ def clear_directory_contents(directory):
 def cleanup_directories():
     """ Clears all files and folders in specified directories after operations are completed. """
     directories = [
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_3",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
-        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_1_Daily_Analysis",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_2_Battery_Analysis",
+        r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_3_Error_Causes",
+        # r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
+        # r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
+        # r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"
     ]
     for directory in directories:
         clear_directory_contents(directory)

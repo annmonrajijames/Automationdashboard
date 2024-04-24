@@ -851,7 +851,7 @@ log_file = None
  
  
  
-main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_1"
+main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\menu_1_Daily_Analysis"
 
  
 def mergeExcel(main_folder_path):
