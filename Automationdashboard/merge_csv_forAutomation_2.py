@@ -4,10 +4,10 @@ import numpy as np
 import os
 
 # Define the main directory containing all project subfolders
-main_folder = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\INPUT_2'
+main_folder = r'\INPUT_2'
 
 # Define the directory to save copies of all output files
-common_output_dir = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2'
+common_output_dir = r'\OUTPUT_2'
 
 # Ensure the common output directory exists
 if not os.path.exists(common_output_dir):

@@ -99,6 +99,9 @@ def plot_ghps(data,Path):
  
     # Add 'Throttle_408094978' to the left side y-axis
     line5, = ax1.plot(data.index, data['Throttle_408094978'], color='orange', label='Throttle (%)')
+
+    # Add 'Throttle_408094978' to the left side y-axis
+    line6, = ax1.plot(data.index, data['SOC_8'], color='black', label='SOC (%)')
  
 
     # Hide the y-axis label for 'AC_Current_340920579'
@@ -120,15 +123,18 @@ def plot_ghps(data,Path):
     ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
  
     # Enable cursor to display values on graphs
-    mplcursors.cursor([line1, line2, line3, line4, line5])
+    mplcursors.cursor([line1, line2, line3, line4, line5,line6])
  
     # Save the plot as an image or display it
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     # plt.savefig('graph.png')  # Save the plot as an image
 
     os.makedirs(Path, exist_ok=True)
+    graph_path = os.path.join(Path, 'graph.png')
     plt.savefig(os.path.join(Path, 'graph.png'))  # Save the plot as an image in the specified directory
     # plt.show()
+
+    return graph_path # Return the path of the saved graph image
  
  
 ###################################
@@ -782,6 +788,8 @@ def capture_analysis_output(log_file,folder_path):
  
             # Increment row index
             row_index += 1
+
+        graph_path= plot_ghps(data,subfolder_path)
  
         # Add image slide with title and properly scaled image
         slide_layout = prs.slide_layouts[5]
@@ -801,7 +809,7 @@ def capture_analysis_output(log_file,folder_path):
         graph_height = prs.slide_height - Inches(2)
         left = (prs.slide_width - graph_width) / 2
         top = (prs.slide_height - graph_height) / 2 + Inches(1)
-        pic = slide.shapes.add_picture('graph.png', left, top, width=graph_width, height=graph_height)
+        pic = slide.shapes.add_picture(graph_path, left, top, width=graph_width, height=graph_height)
  
         # Save the presentation
         output_file_name = f"{folder_path}/analysis_{folder_name}.pptx"
@@ -943,7 +951,7 @@ for mar_subfolder in os.listdir(main_folder_path):
                         SOC_consumed = 0
                         mode_values = 0
 
-                        plot_ghps(data,subfolder_path)
+                        
                         total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
                         capture_analysis_output(log_file, subfolder_path)
                     else:
