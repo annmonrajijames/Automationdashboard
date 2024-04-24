@@ -2,7 +2,7 @@ import pandas as pd
 import os
  
 # Define the main folder path (replace with your actual path)
-main_folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\Battery_data\B2"
+main_folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\Graph_analysis"
  
 # Define a list to store row values
 summary_data = []
