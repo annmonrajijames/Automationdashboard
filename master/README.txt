@@ -3,6 +3,9 @@ Master Folder structure
 
 Welcome to Lectrix's data analysis software, the 'main' folder contains the complete software necessary for running the full data analysis suite and the 'accessories' folder contains individual scripts that perform specific tasks, allowing users to run standalone functions without operating the full system.
 
+Reminder
+In Version 1.0, you have to modify the directory path in four python files before running.
+
 Lectrix Data Analysis software(Master)/
 │
 ├── main/                                # Main software
