@@ -1,3 +1,4 @@
+Lectrix Data Analysis software version 1.0
 Master Folder structure
 
 Welcome to Lectrix's data analysis software, the 'main' folder contains the complete software necessary for running the full data analysis suite and the 'accessories' folder contains individual scripts that perform specific tasks, allowing users to run standalone functions without operating the full system.
@@ -15,7 +16,7 @@ Lectrix Data Analysis software(Master)/
 │   └── README.md                        # Documentation file for the software
 │
 ├── accessories/                         # Accessory tools for specific tasks
-│   ├── code_to_corp.py                  # Selective data extraction 
+│   ├── code_to_crop.py                  # Selective data extraction 
 │   ├── Correlation.py                   # Find correlation between two parameters (in columns)
 │   ├── KD_Tree.py                       # Merge two data files based on time by finding the closest time
 │   ├── KD_Tree_Mergefiles_across_directories.py  # After merging using KDTree, it will stitch multiple excel files across different directories.
@@ -29,6 +30,6 @@ Lectrix Data Analysis software(Master)/
 Developers
 Sanjith Gowda
 Dhulipudi Abhilash
-Adarsh
+Adarsh M C
 Kamalesh Kumar Balamurugan
 Annmon James
