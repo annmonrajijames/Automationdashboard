@@ -54,7 +54,7 @@ def plot_ghps(data,Path):
     ax1.get_yaxis().get_label().set_visible(False)
  
     # Set x-axis label and legend
-    ax1.set_xlabel('Local Time')
+    ax1.set_xlabel('Index')
     ax1.legend(loc='upper left')
     ax2.legend(loc='upper right')
  
@@ -64,7 +64,8 @@ def plot_ghps(data,Path):
     # Format x-axis ticks as hours:minutes:seconds
     # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S')) #for adding time in x axis
     # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y %H:%M:%S'))
-    ax1.set_xticks(range(len(transposed_df)))
+    ax1.set_xticks(range(-2,len(transposed_df)-2))
+    print(range(-2,len(transposed_df)-2))
     ax1.set_xticklabels(transposed_df.index)
 
 
@@ -128,7 +129,7 @@ filtered_df = df[df['File name'].isin(specific_rows)]
 transposed_df = filtered_df.T
 
 # Full file path of the new transposed CSV file
-transposed_output_file_path = r'C:\Users\kamalesh.kb\CodeForAutomation\Graph_analysis\BB3\transposed_specific_analysis.csv'
+transposed_output_file_path = r'C:\Users\kamalesh.kb\CodeForAutomation\Graph_analysis\BB3\Graph_analysis.csv'
 path=r"C:\Users\kamalesh.kb\CodeForAutomation\Graph_analysis\BB3"
 
 
