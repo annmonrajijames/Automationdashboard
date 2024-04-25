@@ -28,7 +28,7 @@ Lectrix Data Analysis software(Master)/
 
 Developers
 Sanjith Gowda
-Dhulpudi Abhilash
+Dhulipudi Abhilash
 Adarsh
 Kamalesh Kumar Balamurugan
 Annmon James
