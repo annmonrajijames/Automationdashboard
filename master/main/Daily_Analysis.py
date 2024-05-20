@@ -19,12 +19,6 @@ from docx.shared import Inches
 from openpyxl import load_workbook, Workbook
 window_size =5
  
- 
-# Path to the folder containing the CSV files
-# path = r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21"
- 
- 
- 
 # List to store DataFrames from each CSV file
 dfs = []
 def haversine(lat1, lon1, lat2, lon2):
@@ -142,9 +136,6 @@ def plot_ghps(data,Path):
     return graph_path # Return the path of the saved graph image
  
  
-###################################
-
- 
 # def analysis_Energy(log_file, km_file):
 def analysis_Energy(log_file):
  
@@ -260,27 +251,6 @@ def analysis_Energy(log_file):
     print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
 
-    
- 
-    # #Added date and time
-    # starting_time= data['localtime'].iloc[-1]
-   
-    # Ending_time= data['localtime'].iloc[0]
-    # print(starting_time)
-    # print(Ending_time)
-
-
- ####################
- #the following code is providing wrong value for SOC_percentage, so skipped it.
-    # Calculate starting and ending SoC in percentage
-    # starting_soc_percentage = (starting_soc / actual_ah) * 100
-    # ending_soc_percentage = (ending_soc / actual_ah) * 100
- 
-    # # Print the results
-    # print("Starting SoC (%): {:.2f}%".format(starting_soc_percentage))
-    # print("Ending SoC (%): {:.2f}%".format(ending_soc_percentage))
- #####################
- 
  
  #Code for SOC_percentage(Starting and Ending SOC)
     starting_soc_percentage = data['SOC_8'].max()
@@ -289,31 +259,12 @@ def analysis_Energy(log_file):
     print("Ending SOC:", ending_soc_percentage)
  
  
-    ##################### KM ---------------------
-    # Convert the 'localtime' column to datetime format
-    # data_KM['localtime'] = pd.to_datetime(data_KM['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
-    # data['localtime'] = pd.to_datetime(data['localtime'])
-   
     # Initialize total distance covered
     total_distance = 0
  
     # Iterate over rows to compute distance covered between consecutive points
     for i in range(len(data) - 1):
-        # print("length--------------->",len(data))
-        # print("i------------------->",i)
-        # print(data['latitude'])
-        # print(data['longitude'])
-        # Get latitude and longitude of consecutive points
-        # lat1, lon1 = data_KM.loc[i - 1, 'latitude'], data_KM.loc[i - 1, 'longitude']
-        # lat2, lon2 = data_KM.loc[i, 'latitude'], data_KM.loc[i, 'longitude']
-        # lat1, lon1 = data.loc[i - 1, 'latitude'], data.loc[i - 1, 'longitude']
-        # lat2, lon2 = data.loc[i, 'latitude'], data.loc[i, 'longitude']
-         # Get latitude and longitude of consecutive points
-        # lat1 = data.iloc[i, data.columns.get_loc('latitude')]
-        # lon1 = data.iloc[i, data.columns.get_loc('longitude')]
-        # lat2 = data.iloc[i + 1, data.columns.get_loc('latitude')]
-        # lon2 = data.iloc[i + 1, data.columns.get_loc('longitude')]
-   
+      
         # Get latitude and longitude of consecutive points
         lat1 = data['latitude'].iloc[i]
         lon1 = data['longitude'].iloc[i]
@@ -345,9 +296,6 @@ def analysis_Energy(log_file):
  
  
     # Check if the mode remains constant or changes
- 
- 
-    #############################
     mode_values = data['Mode_Ack_408094978'].unique()
  
     if len(mode_values) == 1:
@@ -369,10 +317,10 @@ def analysis_Energy(log_file):
                 print(f"Sports mode: {percentage:.2f}%")
             elif mode == 1:
                 print(f"Eco mode: {percentage:.2f}%")
-    ###############################
+    
  
  
-  ##preak current##
+ 
     # Calculate power using PackCurr_6 and PackVol_6
     data_resampled['Power'] = data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
  
@@ -401,9 +349,6 @@ def analysis_Energy(log_file):
     print("total",total_energy_consumed)
     print("total energy regenerated",energy_regenerated)
  
-   
-   
-   
     # Calculate regenerative effectiveness as a percentage
     if total_energy_consumed != 0:
      regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
@@ -427,8 +372,6 @@ def analysis_Energy(log_file):
         speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
         print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
  
- 
-##############################################################################################################################################################################
            
     # Calculate power using PackCurr_6 and PackVol_6
     data_resampled['Power'] = -data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
@@ -476,7 +419,6 @@ def analysis_Energy(log_file):
  
     # Calculate the difference in temperature
     temp_difference = max_temp - min_temp
-    print()
  
     # Get the maximum temperature of FetTemp_8
     max_fet_temp = data_resampled['FetTemp_8'].max()
@@ -517,49 +459,37 @@ def analysis_Energy(log_file):
         lower_bound = speed - window_size
         upper_bound = speed + window_size
         
-        within_window = data_resampled[(data_resampled['MotorSpeed_340920578'] >= lower_bound) & (data_resampled['MotorSpeed_340920578'] <= upper_bound)]
-        within_window['Group'] = (within_window['MotorSpeed_340920578'].diff() > window_size).cumsum()
+
+        within_window = data_resampled[(data_resampled['MotorSpeed_340920578'] >= lower_bound) & (data_resampled['MotorSpeed_340920578'] <= upper_bound)].copy()
+        within_window.loc[:, 'Group'] = (within_window['MotorSpeed_340920578'].diff() > window_size).cumsum()
         continuous_durations = within_window.groupby('Group')['Time_Diff'].sum()
         
         current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
     
         if current_max_duration > max_continuous_duration:
+            print("max_continuous_duration------->",max_continuous_duration)
             max_continuous_duration = current_max_duration
             cruising_rpm = speed
             cruising_speed=speed*0.01606
-   
- 
- 
-    # # Filter rows where SOC is 100%
-    # data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
- 
-    # # Find the lowest cell temperature at 100% SOC
-    # lowest_temp_100_soc = data_100_soc['Temp1_10'].min()
-    # print("Lowest Cell Temperature at 100% SOC:", lowest_temp_100_soc)
- 
-    # # Filter rows where SOC is 100%
-    # data_100_soc = data_resampled[data_resampled['SOC_8'] == 100]
- 
-    # # Find the highest cell temperature at 100% SOC
-    # highest_temp_100_soc = data_100_soc['Temp1_10'].max()
-    # print("highest Cell Temperature at 100% SOC:", highest_temp_100_soc)
- 
-    # temp_difference = highest_temp_100_soc - lowest_temp_100_soc
-    # print("Difference between Highest and Lowest Cell Temperature at 100% SOC:", temp_difference)
- 
-    # Find the maximum BMS temperature in Celsius
-    #max_bms_temp = data_resampled['FetTemp_8'].max()
-    #print("Maximum BMS Temperature in Celsius:", max_bms_temp)
+
+
+        # Find the maximum value in the 'MotorSpeed_340920578' column
+    Max_motor_rpm = data_resampled['MotorSpeed_340920578'].max()
+
+    # Print the maximum motor speed in RPM
+    print("The maximum motor speed in RPM is:", Max_motor_rpm)
+
+    # Convert the maximum motor speed to speed using the given factor
+    peak_speed = Max_motor_rpm * 0.01606
+
+    # Print the maximum speed
+    print("The maximum speed is:", peak_speed)
  
     total_energy_kwh = actual_ah * batteryVoltage / 1000
     print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
  
     total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
     print("Electricity consumption units in kW", (total_energy_kw))
-
-   
-
-    
     
     # Add these variables and logic to ppt_data
    
@@ -601,13 +531,12 @@ def analysis_Energy(log_file):
         "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
         "Electricity consumption units(kW)": total_energy_kw,
         "Cycle Count of battery": cycleCount,
-        "Cruising Rpm": cruising_rpm,
+        "Cruising Speed (Rpm)": cruising_rpm,
         "cruising_speed (km/hr)":cruising_speed,
+        "Maximum Motor speed (RPM)":Max_motor_rpm,
+        "Peak speed (Km/hr)":peak_speed
         }
- 
-   ######################################
-    ######################################
- 
+    
     mode_values = data_resampled['Mode_Ack_408094978'].unique()
     if len(mode_values) == 1:
         mode = mode_values[0]
@@ -633,7 +562,6 @@ def analysis_Energy(log_file):
      # Add calculated parameters to ppt_data
     ppt_data["Idling time percentage"] = idling_percentage
     ppt_data.update(speed_range_percentages)
-################################################################################################# recent data
  
     # Calculate power using PackCurr_6 and PackVol_6
     data_resampled['Power'] = -data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
@@ -723,20 +651,10 @@ def analysis_Energy(log_file):
    
     # Convert to a binary mask indicating consecutive occurrences
     abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
- 
-    #Check if abnormal condition persists for at least 15 seconds
-    #if (abnormal_motor_temp_mask >= 15).any():
-    #print("Abnormal motor temperature detected: NTC has issues - very low temperature at high RPMs")
- 
- 
+
     return total_duration, total_distance, Wh_km, total_soc_consumed,ppt_data
  
- 
- 
-# folder_path = r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21"
- 
- 
-####################
+
    
 # def capture_analysis_output(log_file, km_file, folder_path):
 def capture_analysis_output(log_file,folder_path):
@@ -869,18 +787,10 @@ def capture_analysis_output(log_file,folder_path):
  
  
  
-####################
- 
-#folder_path = "/home/sanjith/Documents/Graphs _ creta/15-51_16-00"
- 
-# Get the list of files in the folder
-#files = os.listdir(folder_path)
+
  
 # Initialize variables to store file paths
 log_file = None
-# km_file = None
- 
- 
  
 main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis"
 
