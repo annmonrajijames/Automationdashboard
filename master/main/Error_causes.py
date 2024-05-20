@@ -13,7 +13,7 @@ from openai import OpenAI
 
 # OPENAI_API_KEY = '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'
 
-folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\main\menu_3_Error_Causes"
+folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis\menu_3_Error_Causes"
 # Global variable to store visibility status of lines
 line_visibility = {}
 # Get the list of files in the folder

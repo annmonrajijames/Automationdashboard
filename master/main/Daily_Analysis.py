@@ -850,7 +850,7 @@ log_file = None
  
  
  
-main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\main\menu_1_Daily_Analysis"
+main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis"
 
  
 def mergeExcel(main_folder_path):
@@ -937,7 +937,7 @@ for mar_subfolder in os.listdir(main_folder_path):
                     log_file = None
                     log_found = False
                     for file in os.listdir(subfolder_path):
-                        if file.startswith('log_withoutanamoly') and file.endswith('.csv'):
+                        if file.startswith('log.') and file.endswith('csv'):
                             log_file = os.path.join(subfolder_path, file)
                             log_found = True
                         if log_found:
