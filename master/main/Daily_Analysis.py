@@ -1,3 +1,4 @@
+from matplotlib.mlab import window_none
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
 import sys
@@ -61,7 +62,7 @@ def adjust_current(row):
         return 0
     else:
         return row['PackCurr_6']
-   
+        
 def plot_ghps(data,Path):
 
 
@@ -253,6 +254,8 @@ def analysis_Energy(log_file):
  
     print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
+
+    
  
     # #Added date and time
     # starting_time= data['localtime'].iloc[-1]
@@ -531,8 +534,13 @@ def analysis_Energy(log_file):
  
     total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
     print("Electricity consumption units in kW", (total_energy_kw))
- 
+
+   
+
+    
+    
     # Add these variables and logic to ppt_data
+   
     ppt_data = {
         "Date and Time": str(start_time_seconds) + " to " + str(end_time_seconds),
         "Byte Beam ID": ByteBeamId,
@@ -571,6 +579,7 @@ def analysis_Energy(log_file):
         "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
         "Electricity consumption units(kW)": total_energy_kw,
         "Cycle Count of battery": cycleCount
+        
         }
  
    ######################################
@@ -850,7 +859,7 @@ log_file = None
  
  
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis"
+main_folder_path = r"\Automationdashboard\master\main\menu_1_Daily_Analysis"
 
  
 def mergeExcel(main_folder_path):
