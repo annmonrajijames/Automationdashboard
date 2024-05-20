@@ -2,7 +2,7 @@ import pandas as pd
 import os
  
 # Define the main folder path (replace with your actual path)
-main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis\B2"
+main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_2_Daily_Analysis\B2"
  
 # Define a list to store row values
 summary_data = []

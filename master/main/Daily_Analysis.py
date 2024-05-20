@@ -17,6 +17,8 @@ from pptx.util import Inches
 from docx import Document
 from docx.shared import Inches
 from openpyxl import load_workbook, Workbook
+window_size =5
+ 
  
 # Path to the folder containing the CSV files
 # path = r"C:\Users\kamalesh.kb\CodeForAutomation\MAIN_FOLDER\MAR_21"
@@ -62,8 +64,11 @@ def adjust_current(row):
         return 0
     else:
         return row['PackCurr_6']
-        
+
+
+    
 def plot_ghps(data,Path):
+
 
 
     if 'localtime' not in data.columns:
@@ -505,6 +510,23 @@ def analysis_Energy(log_file):
    
  
     ByteBeamId= data['id'].iloc[0]
+    
+    max_continuous_duration = 0
+
+    for speed in range(int(data_resampled['MotorSpeed_340920578'].min()), int(data_resampled['MotorSpeed_340920578'].max()) + 1):
+        lower_bound = speed - window_size
+        upper_bound = speed + window_size
+        
+        within_window = data_resampled[(data_resampled['MotorSpeed_340920578'] >= lower_bound) & (data_resampled['MotorSpeed_340920578'] <= upper_bound)]
+        within_window['Group'] = (within_window['MotorSpeed_340920578'].diff() > window_size).cumsum()
+        continuous_durations = within_window.groupby('Group')['Time_Diff'].sum()
+        
+        current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
+    
+        if current_max_duration > max_continuous_duration:
+            max_continuous_duration = current_max_duration
+            cruising_rpm = speed
+            cruising_speed=speed*0.01606
    
  
  
@@ -578,8 +600,9 @@ def analysis_Energy(log_file):
         "Battery Voltage(V)": batteryVoltage,
         "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
         "Electricity consumption units(kW)": total_energy_kw,
-        "Cycle Count of battery": cycleCount
-        
+        "Cycle Count of battery": cycleCount,
+        "Cruising Rpm": cruising_rpm,
+        "cruising_speed (km/hr)":cruising_speed,
         }
  
    ######################################
@@ -859,7 +882,7 @@ log_file = None
  
  
  
-main_folder_path = r"\Automationdashboard\master\main\menu_1_Daily_Analysis"
+main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis"
 
  
 def mergeExcel(main_folder_path):
