@@ -131,7 +131,8 @@ def analysis_Energy(log_file):
     print("Entered analysis energy")
     dayfirst=True
     data = pd.read_csv(log_file)
-   
+    # Remove duplicates based on the "DATETIME" column and keep the first occurrence
+    data = data.drop_duplicates(subset=['DATETIME'], keep='first')
  
     total_duration = 0
     total_distance = 0
@@ -885,6 +886,8 @@ for mar_subfolder in os.listdir(main_folder_path):
                             break
                     if log_found:
                         data = pd.read_csv(log_file)
+                        # Remove duplicates based on the "DATETIME" column and keep the first occurrence
+                        data = data.drop_duplicates(subset=['DATETIME'], keep='first')
                         # # Load the data, setting the second row as the header
                         # data = pd.read_csv('log.csv', header=1)
                         
