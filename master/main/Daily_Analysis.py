@@ -394,7 +394,7 @@ def analysis_Energy(log_file):
     min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
  
     # Retrieve the corresponding cell ID using the index
-    min_cell_id = data_resampled['MinVoltId_5'].loc[min_index]
+    min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
  
     voltage_difference = max_cell_voltage - min_cell_voltage
  
@@ -450,7 +450,7 @@ def analysis_Energy(log_file):
  
    
  
-    InfluxId= data['id'].iloc[0]
+    # InfluxId= data['id'].iloc[0]
     
     max_continuous_duration = 0
 
@@ -493,8 +493,8 @@ def analysis_Energy(log_file):
     # Add these variables and logic to ppt_data
    
     ppt_data = {
-        "Date and localtime": str(start_localtime_seconds) + " to " + str(end_localtime_seconds),
-        "INFLUX ID ": InfluxId,
+        # "Date and localtime": str(start_localtime_seconds) + " to " + str(end_localtime_seconds),
+        # "INFLUX ID ": InfluxId,
         "Total localtime taken for the ride": total_duration,
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala": watt_h,
@@ -585,7 +585,7 @@ def analysis_Energy(log_file):
     min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
  
     # Retrieve the corresponding cell ID using the index
-    min_cell_id = data_resampled['MinVoltId_5'].loc[min_index]
+    min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
  
     voltage_difference = max_cell_voltage - min_cell_voltage
  
@@ -865,7 +865,6 @@ def mergeExcel(main_folder_path):
  
  
 for mar_subfolder in os.listdir(main_folder_path):
-    print("kamal_-------------------------------------->")
     if mar_subfolder.startswith("Mar"):
         mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
         print(mar_subfolder)
