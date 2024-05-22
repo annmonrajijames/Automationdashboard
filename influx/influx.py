@@ -132,7 +132,7 @@ def analysis_Energy(log_file):
     dayfirst=True
     data = pd.read_csv(log_file)
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
-    data = data.drop_duplicates(subset=['DATETIME'], keep='first')
+    # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
  
     total_duration = 0
     total_distance = 0
@@ -215,7 +215,6 @@ def analysis_Energy(log_file):
     print(f"End Local Time: {end_localtime_formatted}")
     ############
     
-    print(start_localtime,end_localtime)
 
     # Calculate the total localtime taken for the ride``
     total_duration = end_localtime - start_localtime
@@ -226,11 +225,12 @@ def analysis_Energy(log_file):
  
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
+    print(data['localtime_Diff'])
  
-    # Set the 'localtime' column as the index
+    #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
  
-    # Resample the data to have one-second intervals and fill missing values with previous ones
+    #Resample the data to have one-second intervals and fill missing values with previous ones
     data_resampled = data.resample('s').ffill()
  
     # Calculate the localtime difference between consecutive rows
@@ -792,7 +792,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx"
+main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\in"
 
  
 def mergeExcel(main_folder_path):
@@ -879,26 +879,38 @@ for mar_subfolder in os.listdir(main_folder_path):
                     log_file = None
                     log_found = False
                     for file in os.listdir(subfolder_path):
+                        print("subfoler_path----------->",subfolder_path)
                         if file.startswith('log.') and file.endswith('csv'):
+                            print("inside0----------------------->")
                             log_file = os.path.join(subfolder_path, file)
-                            log_found = True
+                            print("log_file_old---------->",log_file)
+                            data = pd.read_csv(log_file)
+                             # Convert the 'DATETIME' column from Unix timestamp to the desired datetime format
+                            data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
+                            data['PackCurr [SA: 06]'] = data.apply(adjust_current, axis=1)
+                            # Save the battery data to a new CSV file inside the folder
+                            folder_name=subfolder
+                              # Define the path for the new CSV file
+                            new_csv_path = os.path.join(mar_subfolder_path, folder_name, f'log_file.csv')
+                            
+                            # Save the battery data to a new CSV file inside the folder
+                            data.to_csv(new_csv_path, index=False)
+                            
+                            # Update log_file with the path of the new CSV file
+                            log_file = new_csv_path
+                            print("log_file_old---------->",log_file)
+                            
+                            
                         if log_found:
                             break
-                    if log_found:
-                        data = pd.read_csv(log_file)
+                    
+                        
                         # Remove duplicates based on the "DATETIME" column and keep the first occurrence
-                        data = data.drop_duplicates(subset=['DATETIME'], keep='first')
+                        # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
                         # # Load the data, setting the second row as the header
                         # data = pd.read_csv('log.csv', header=1)
-                        folder_name = f'Battery_2'
-                        
-
-                        # Convert the 'DATETIME' column from Unix timestamp to the desired datetime format
-                        data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
-                        data['PackCurr [SA: 06]'] = data.apply(adjust_current, axis=1)
-                        
-
-                        
+                        folder_name= subfolder
+                        print("folder_name----",folder_name)
                         total_duration = 0
                         total_distance = 0
                         Wh_km = 0
