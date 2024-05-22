@@ -6,8 +6,9 @@ import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
  
 # Assuming 'df' is your dataframe with SOC data
-df = pd.read_csv(r'C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx\log.csv')
-folder_path= r'C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx'
+print("kamal")
+df = pd.read_csv(r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx\Mar\Battery\log_file.csv")
+folder_path= r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx\Mar\Battery"
  
 def adjust_current(row):
     adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
