@@ -201,7 +201,14 @@ def analysis_Energy(log_file):
     ####################s
 
     # Assuming 'data' is your DataFrame and 'DATETIME' is the column of interest
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix')
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix')
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], format='%d-%m-%Y %I:%M:%S %p')
+    # Assuming 'data' is your DataFrame and 'DATETIME' is the column of interest
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S %p')
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S')
+
+
+
 
     # Find the minimum and maximum datetime
     start_localtime = data['DATETIME'].min()
@@ -229,6 +236,15 @@ def analysis_Energy(log_file):
  
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
+    print("issueeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+
+    duplicates = data.index[data.index.duplicated()]
+    print("Duplicate Index Values:", duplicates)
+
+    data = data.groupby(data.index).mean()  # Example: Taking the mean of duplicate values at the same timestamp
+
+    duplicates = data.index[data.index.duplicated()]
+    print("Duplicate Index Values:---------------------------------------->", duplicates)
  
     #Resample the data to have one-second intervals and fill missing values with previous ones
     data_resampled = data.resample('s').ffill()
@@ -898,7 +914,7 @@ for mar_subfolder in os.listdir(main_folder_path):
                             
                             # Update log_file with the path of the new CSV file
                             log_file = new_csv_path
-                            print("log_file_old---------->",log_file)
+                            print("log_file_new---------->",log_file)
                             
                             
                         if log_found:
