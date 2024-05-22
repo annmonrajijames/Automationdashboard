@@ -131,6 +131,7 @@ def analysis_Energy(log_file):
     print("Entered analysis energy")
     dayfirst=True
     data = pd.read_csv(log_file)
+    print(data['DATETIME'])
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
  
@@ -204,9 +205,12 @@ def analysis_Energy(log_file):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix')
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], format='%d-%m-%Y %I:%M:%S %p')
     # Assuming 'data' is your DataFrame and 'DATETIME' is the column of interest
-    # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S %p')
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S %p'
+    print("debug----------------------->")
+    print("data")
+   
     data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %H:%M:%S')
-
+    print("debug----------------------->")
 
 
 
@@ -809,7 +813,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx"
+main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\analysis"
 
  
 def mergeExcel(main_folder_path):
@@ -881,12 +885,11 @@ def mergeExcel(main_folder_path):
  
 
  
- 
 for mar_subfolder in os.listdir(main_folder_path):
     if mar_subfolder.startswith("Mar"):
         mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
         print(mar_subfolder)
-        
+       
         # Iterate over subfolders starting with "Battery" within "Mar" subfolders
         for subfolder in os.listdir(mar_subfolder_path):
             if subfolder.startswith("Battery"):
@@ -896,44 +899,19 @@ for mar_subfolder in os.listdir(main_folder_path):
                     log_file = None
                     log_found = False
                     for file in os.listdir(subfolder_path):
-                        print("subfoler_path----------->",subfolder_path)
                         if file.startswith('log.') and file.endswith('csv'):
-                            print("inside0----------------------->")
                             log_file = os.path.join(subfolder_path, file)
-                            print("log_file_old---------->",log_file)
-                            data = pd.read_csv(log_file)
-                             # Convert the 'DATETIME' column from Unix timestamp to the desired datetime format
-                            data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
-                            data['PackCurr [SA: 06]'] = data.apply(adjust_current, axis=1)
-                            # Save the battery data to a new CSV file inside the folder
-                            folder_name=subfolder
-                              # Define the path for the new CSV file
-                            new_csv_path = os.path.join(mar_subfolder_path, folder_name, f'log_file.csv')
-                            
-                            # Save the battery data to a new CSV file inside the folder
-                            data.to_csv(new_csv_path, index=False)
-                            
-                            # Update log_file with the path of the new CSV file
-                            log_file = new_csv_path
-                            print("log_file_new---------->",log_file)
-                            
-                            
+                            log_found = True
                         if log_found:
                             break
-                    
-                        
-                        # Remove duplicates based on the "DATETIME" column and keep the first occurrence
-                        # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
-                        # # Load the data, setting the second row as the header
-                        # data = pd.read_csv('log.csv', header=1)
-                        folder_name= subfolder
-                        print("folder_name----",folder_name)
+                    if log_found:
+                        data = pd.read_csv(log_file)
+                        print(data)
                         total_duration = 0
                         total_distance = 0
                         Wh_km = 0
                         SOC_consumed = 0
                         mode_values = 0
-
                         
                         total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
                         capture_analysis_output(log_file, subfolder_path)

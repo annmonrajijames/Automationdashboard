@@ -6,9 +6,21 @@ import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
  
 # Assuming 'df' is your dataframe with SOC data
-print("kamal")
-df = pd.read_csv(r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx\Mar\Battery\log_file.csv")
-folder_path= r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx\Mar\Battery"
+# print("kamal")
+df = pd.read_csv(r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\analysis\Mar\Battery\log.csv")
+folder_path= r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\analysis\Mar\Battery"
+
+df['DATETIME'] = pd.to_datetime(df['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
+# Save the battery data to a new CSV file inside the folder
+folder_name="timeConverted"
+    # Define the path for the new CSV file
+    # Save the battery data to a new CSV file inside the folder
+
+new_csv_path = os.path.join(folder_path, folder_name, f'log_file.csv')
+df.to_csv(new_csv_path, index=False)
+df = pd.read_csv(r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\analysis\Mar\Battery\timeConverted\log_file.csv")
+
+
  
 def adjust_current(row):
     adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
@@ -138,7 +150,6 @@ condition_met = False
 while i < len(df) and t2_index > 0:
     t1 = df.iloc[i]['DATETIME']
     print("i--------------->",i)
-    print(df['DATETIME'])
  
  
     t2 = t1 + pd.Timedelta(seconds=Time_window)  # t2 is 60 seconds later than t1
@@ -198,7 +209,8 @@ while i < len(df) and t2_index > 0:
  
  
         # Save the battery data to a new CSV file inside the folder
-        battery_data.to_csv(os.path.join(folder_path, folder_name, f'log_file.csv'), index=False)
+        battery_data.reset_index(inplace=True)  # Reset the index to include 'DATETIME' as a column
+        battery_data.to_csv(os.path.join(folder_path, folder_name, f'log.csv'), index=False)
         # print("Folder and Excel file for Battery", battery_number, "generated----------------->")
         # print("Excel file for", battery_number, "generated----------------->")
        
