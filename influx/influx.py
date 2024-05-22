@@ -205,7 +205,8 @@ def analysis_Energy(log_file):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], format='%d-%m-%Y %I:%M:%S %p')
     # Assuming 'data' is your DataFrame and 'DATETIME' is the column of interest
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S %p')
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S')
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %H:%M:%S')
+
 
 
 
@@ -808,7 +809,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\in"
+main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx"
 
  
 def mergeExcel(main_folder_path):
