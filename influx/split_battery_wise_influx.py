@@ -6,12 +6,12 @@ import matplotlib.dates as mdates
 import mplcursors  # Import mplcursors
  
 # Assuming 'df' is your dataframe with SOC data
-df = pd.read_csv(r'D:\bb data\bytebeam 4\OUTPUT_1\Mar-27\log_file.csv')
-folder_path= r'D:\bb data\bytebeam 4\OUTPUT_1\Mar-27'
+df = pd.read_csv(r'C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx\log.csv')
+folder_path= r'C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx'
  
 def adjust_current(row):
     adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
-    if row['MotorSpeed_340920578'] == 0:
+    if row['MotorSpeed [SA: 02]'] == 0:
         adjust_current.zero_count += 1
     else:
         adjust_current.zero_count = 0
@@ -19,7 +19,7 @@ def adjust_current(row):
     if adjust_current.zero_count >= 10:
         return 0
     else:
-        return row['PackCurr_6']
+        return row['PackCurr [SA: 06]']
    
  
  
@@ -28,37 +28,38 @@ def plot_ghps(data,folder_name):
  
     # Apply the adjustment function to the DataFrame
  
-    # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
-    data['localtime'] = pd.to_datetime(data['localtime'])
-    data.set_index('localtime', inplace=True)
-    data['PackCurr_6'] = data.apply(adjust_current, axis=1)
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+    data.set_index('DATETIME', inplace=True)
+    data['PackCurr [SA: 06]'] = data.apply(adjust_current, axis=1)
    
     # Create a figure and axes for plotting
     fig, ax1 = plt.subplots(figsize=(10, 6))
  
-    # Plot 'PackCurr_6' on primary y-axis
-    line1, = ax1.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
+    # Plot 'PackCurr [SA: 06]' on primary y-axis
+    line1, = ax1.plot(data.index, -data['PackCurr [SA: 06]'], color='blue', label='PackCurr [SA: 06]')
     ax1.set_ylabel('Pack Current (A)', color='blue')
     ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
  
-    # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
+    # Create secondary y-axis for 'MotorSpeed [SA: 02]' (RPM)
     ax2 = ax1.twinx()
-    line2, = ax2.plot(data.index, data['MotorSpeed_340920578'], color='green', label='Motor Speed')
+    line2, = ax2.plot(data.index, data['MotorSpeed [SA: 02]'], color='green', label='Motor Speed')
     ax2.set_ylabel('Motor Speed (RPM)', color='green')
  
-    # Add 'AC_Current_340920579' to primary y-axis
-    line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='lightgray', label='AC Current')
+    # Add 'AC_Current [SA: 03]' to primary y-axis
+    line3, = ax1.plot(data.index, data['AC_Current [SA: 03]'], color='lightgray', label='AC Current')
  
-    # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-    line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='lightgray', label='AC Voltage (x10)')
+    # Add 'AC_Voltage [SA: 04]' scaled to 10x to the left side y-axis
+    line4, = ax1.plot(data.index, data['AC_Voltage [SA: 04]'] * 10, color='lightgray', label='AC Voltage (x10)')
  
-    # Add 'Throttle_408094978' to the left side y-axis
-    line5, = ax1.plot(data.index, data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
+    # Add 'Throttle [SA: 02]' to the left side y-axis
+    line5, = ax1.plot(data.index, data['Throttle [SA: 02]'], color='lightgray', label='Throttle (%)')
  
-        # Add 'Throttle_408094978' to the left side y-axis
-    line6, = ax1.plot(data.index, data['SOC_8'], color='red', label='SOC (%)')
+        # Add 'Throttle [SA: 02]' to the left side y-axis
+    line6, = ax1.plot(data.index, data['SOC [SA: 08]'], color='red', label='SOC (%)')
  
-    # Hide the y-axis label for 'AC_Current_340920579'
+    # Hide the y-axis label for 'AC_Current [SA: 03]'
     ax1.get_yaxis().get_label().set_visible(False)
  
     # Set x-axis label and legend
@@ -93,10 +94,10 @@ def plot_ghps(data,folder_name):
 # Set the threshold for detecting battery change
 threshold = 35  # Example threshold value, adjust as needed
  
-# Convert 'localtime' column to datetime objects
-df['localtime'] = pd.to_datetime(df['localtime'])
+# Convert 'DATETIME' column to datetime objects
+df['DATETIME'] = pd.to_datetime(df['DATETIME'])
 # # Interpolate NaN values in SOC_8 column
-df['SOC_8'] = df['SOC_8'].interpolate(method='linear', limit_direction='both')
+df['SOC [SA: 08]'] = df['SOC [SA: 08]'].interpolate(method='linear', limit_direction='both')
  
  
  
@@ -130,51 +131,21 @@ drop_indices = []
 start_time = None
 condition_met = False
  
-# # Iterate over the DataFrame rows
-# for index, row in df.iterrows():
-#     # Step 1: Create t1 and t2
-#     if start_time is None:
-#         t1 = row['localtime']
-#         t2 = t1 + pd.Timedelta(minutes=5)
-#         start_time = t1
-#     # Step 2: Check if motor speed is NaN or less than 1 between t1 and t2 consistently
-#     if t1 <= row['localtime'] <= t2:
-#         if not (np.isnan(row['MotorSpeed_340920578']) or row['MotorSpeed_340920578'] < 10):
-#             # Reset start_time and flag and move to the next window
-#             start_time = None
-#             condition_met = False
-#         else:
-#             # Check if the condition is met for the entire window
-#             if row['localtime'] == t2:
-#                 condition_met = True
-#     else:
-#         # If the condition is met for the entire window, set SOC to 0 for all indices in the window
-#         if condition_met:
- 
-#             df.loc[(df['localtime'] >= t1) & (df['localtime'] < t2), 'SOC_8'] = 0
- 
-#             print("time", start_time,t2)
-#         # Reset start_time and flag and move to the next window
-#         start_time = None
-#         condition_met = False
-# # Drop the rows from the DataFrame
-# # df = df.drop(drop_indices)
-# # print(drop_indices)
- 
- 
  
  
 # Iterate over the dataframe in steps of 60 seconds
 while i < len(df) and t2_index > 0:
-    t1 = df.iloc[i]['localtime']
+    t1 = df.iloc[i]['DATETIME']
+    print("i--------------->",i)
+    print(df['DATETIME'])
  
  
     t2 = t1 + pd.Timedelta(seconds=Time_window)  # t2 is 60 seconds later than t1
-    # print("t1----------->",t1,"t2------------>",t2)
+    print("t1----------->",t1,"t2------------>",t2)
    
  
     # Find the index of t2
-    t2_index = df[df['localtime'] >= t2].index.min()
+    t2_index = df[df['DATETIME'] >= t2].index.min()
    
  
  
@@ -182,20 +153,20 @@ while i < len(df) and t2_index > 0:
     if pd.isna(t2_index):
     # Find the nearest index
         print("nan value detected")
-        nearest_index = df['localtime'].sub(t2).abs().idxmin()
+        nearest_index = df['DATETIME'].sub(t2).abs().idxmin()
         print("t2_index is NaN. Nearest index:", nearest_index)
         t2_index= nearest_index
  
    
-    # if abs(df.iloc[i]['SOC_8'] - df.iloc[t2_index]['SOC_8']) > threshold or t2_index>(len(df)-500):
-    if abs(df.iloc[i]['SOC_8'] - df.iloc[t2_index]['SOC_8']) > threshold or t2_index == len(df)-1:
+    # if abs(df.iloc[i]['SOC [SA: 08]'] - df.iloc[t2_index]['SOC [SA: 08]']) > threshold or t2_index>(len(df)-500):
+    if abs(df.iloc[i]['SOC [SA: 08]'] - df.iloc[t2_index]['SOC [SA: 08]']) > threshold or t2_index == len(df)-1:
         # Print the time when battery change occurred (using t1 as it's the most recent timestamp)
         print("Battery changed at:", t1)
  
         # Adjust end time to remove 40 seconds after t2_index
-        end_time = df.iloc[t2_index]['localtime']
+        end_time = df.iloc[t2_index]['DATETIME']
         end_time = end_time - pd.Timedelta(seconds=anomaly_window)
-        end_time_index = df[df['localtime'] <= end_time].index.max()
+        end_time_index = df[df['DATETIME'] <= end_time].index.max()
  
  
         # battery_data = df.iloc[start_time_index:end_time_index].copy()  # Data within the adjusted time window
@@ -221,8 +192,8 @@ while i < len(df) and t2_index > 0:
  
  
                 # Save the battery data to a new CSV file inside the folder
-       # battery_data['localtime'] = battery_data.index  # Add 'localtime' column using DataFrame index
-       # battery_data.to_csv(os.path.join(folder_path, folder_name, f'log_file.csv'), index=False)  # Save DataFrame to CSV with 'localtime'
+       # battery_data['DATETIME'] = battery_data.index  # Add 'DATETIME' column using DataFrame index
+       # battery_data.to_csv(os.path.join(folder_path, folder_name, f'log_file.csv'), index=False)  # Save DataFrame to CSV with 'DATETIME'
  
  
         # Save the battery data to a new CSV file inside the folder
@@ -244,10 +215,10 @@ while i < len(df) and t2_index > 0:
         i = t2_index
        
         start_time = t2 + pd.Timedelta(seconds=anomaly_window)
-        start_time_index = df[df['localtime'] <= start_time].index.max()
+        start_time_index = df[df['DATETIME'] <= start_time].index.max()
         if pd.isna(start_time_index):
-            nearest_index = (df['localtime'] - start_time).abs().idxmax()
-            start_time = df.iloc[nearest_index]['localtime']
+            nearest_index = (df['DATETIME'] - start_time).abs().idxmax()
+            start_time = df.iloc[nearest_index]['DATETIME']
             start_time_index = nearest_index
         excelStartTime_index=start_time_index
  
@@ -257,4 +228,3 @@ while i < len(df) and t2_index > 0:
  
     if i==len(df)-1:
         break
- 
