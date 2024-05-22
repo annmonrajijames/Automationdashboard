@@ -7,18 +7,16 @@ Step 3: After selecting the associated input folder to be run, it will show the 
 
 Structure of Input Folder (Folder to be uploaded)
 
-1. Input folder structure for "Daily Analysis"
+1. Input folder structure for "Daily Analysis" (All day's folder has to be inside one main folder and that particular folder has to be chosen (while running the "Daily analysis")
 Root_folder/                                           # Main root directory 
 │
 ├── Mar-13/                                           # A date folder (can be any date)
 │   ├── Battery_1/                                    # A battery folder (can be any battery number)
 │   │   ├── log_file.csv                              # Log file for Battery 1
-│   │   ├── log_withoutanamoly.csv                    # Log file for Battery 1 without anomalies
 │   │   └── merged_analysis.xlsx                      # Merged analysis file for Battery 1
 │   │
 │   ├── Battery_2/                                    # A battery folder (can be any battery number)
 │   │   ├── log_file.csv                              # Log file for Battery 2
-│   │   ├── log_withoutanamoly.csv                    # Log file for Battery 2 without anomalies
 │   │   └── merged_analysis.xlsx                      # Merged analysis file for Battery 2
 │   │
 │   └── ...                                           # Additional batteries as required
@@ -26,12 +24,10 @@ Root_folder/                                           # Main root directory
 ├── Mar-14/                                           # A date folder (can be any date)
 │   ├── Battery_1/                                    # A battery folder (can be any battery number)
 │   │   ├── log_file.csv
-│   │   ├── log_withoutanamoly.csv
 │   │   └── merged_analysis.xls
-│   │\
+│   │
 │   ├── Battery_2/                                    # A battery folder (can be any battery number)
 │   │   ├── log_file.csv
-│   │   ├── log_withoutanamoly.csv
 │   │   └── merged_analysis.xlsx
 │   │
 │   └── ...                                           # Additional batteries as required
@@ -47,14 +43,12 @@ Root_folder/                                          # Main root directory
 ├── Mar-13/                                           
 │   ├── Battery_1/                                    
 │   │   ├── log_file.csv                              
-│   │   ├── log_withoutanomaly.csv                    
 │   │   ├── analysis_Battery_1.pptx                   OUTPUT
 │   │   ├── analysis_Battery_1.xlsx                   OUTPUT
 │   │   └── graph.png                                 OUTPUT
 │   │
 │   ├── Battery_2/                                    
 │   │   ├── log_file.csv                              
-│   │   ├── log_withoutanomaly.csv                    
 │   │   ├── analysis_Battery_2.pptx                   OUTPUT
 │   │   ├── analysis_Battery_2.xlsx                   OUTPUT
 │   │   └── graph.png                                 OUTPUT
@@ -65,14 +59,12 @@ Root_folder/                                          # Main root directory
 ├── Mar-14/                                           
 │   ├── Battery_1/                                    
 │   │   ├── log_file.csv
-│   │   ├── log_withoutanomaly.csv
 │   │   ├── analysis_Battery_1.pptx                  OUTPUT
 │   │   ├── analysis_Battery_1.xlsx                  OUTPUT
 │   │   └── graph.png                                OUTPUT
 │   │\
 │   ├── Battery_2/                                    
 │   │   ├── log_file.csv
-│   │   ├── log_withoutanomaly.csv
 │   │   ├── analysis_Battery_2.pptx                 OUTPUT
 │   │   ├── analysis_Battery_2.xlsx                 OUTPUT
 │   │   └── graph.png                               OUTPUT
