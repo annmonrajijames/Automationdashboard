@@ -127,11 +127,8 @@ def plot_ghps(data,Path):
  
 # def analysis_Energy(log_file, km_file):
 def analysis_Energy(log_file):
- 
-    print("Entered analysis energy")
     dayfirst=True
     data = pd.read_csv(log_file)
-    print(data['DATETIME'])
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
  
@@ -177,14 +174,6 @@ def analysis_Energy(log_file):
         print("Temperature difference: ",CellTempDiff)
  
  
-   
- 
- 
-    # # Check if 'localtime' column exists in data DataFrame
-    # if 'localtime' not in data.columns:
-    #     print("Error: 'localtime' column not found in the DataFrame.")
-    #     return None, None, None, None
-   
     # Drop rows with missing values in 'SOCAh [SA: 08]' column
     data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
  
@@ -197,22 +186,7 @@ def analysis_Energy(log_file):
     # start_localtime_seconds = data['DATETIME'].min().strflocaltime('%d/%m/%Y %H:%M:%S')
     # end_localtime_seconds = data['DATETIME'].max().strflocaltime('%d/%m/%Y %H:%M:%S')
 
-
-
-    ####################s
-
-    # Assuming 'data' is your DataFrame and 'DATETIME' is the column of interest
-    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix')
-    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], format='%d-%m-%Y %I:%M:%S %p')
-    # Assuming 'data' is your DataFrame and 'DATETIME' is the column of interest
-    # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %I:%M:%S %p'
-    print("debug----------------------->")
-    print("data")
-   
     data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %H:%M:%S')
-    print("debug----------------------->")
-
-
 
 
     # Find the minimum and maximum datetime
@@ -241,15 +215,12 @@ def analysis_Energy(log_file):
  
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
-    print("issueeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 
-    duplicates = data.index[data.index.duplicated()]
-    print("Duplicate Index Values:", duplicates)
+    # duplicates = data.index[data.index.duplicated()]
+    # print("Duplicate Index Values:", duplicates)
 
     data = data.groupby(data.index).mean()  # Example: Taking the mean of duplicate values at the same timestamp
 
-    duplicates = data.index[data.index.duplicated()]
-    print("Duplicate Index Values:---------------------------------------->", duplicates)
  
     #Resample the data to have one-second intervals and fill missing values with previous ones
     data_resampled = data.resample('s').ffill()
@@ -265,7 +236,7 @@ def analysis_Energy(log_file):
     watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
     print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
  
-    ###########   starting and ending ah
+    #starting and ending ah
     starting_soc_Ah = data['SOCAh [SA: 08]'].iloc[-1]
     ending_soc_Ah = data['SOCAh [SA: 08]'].iloc[0]
  
@@ -273,7 +244,7 @@ def analysis_Energy(log_file):
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
 
  
- #Code for SOC_percentage(Starting and Ending SOC)
+    #Code for SOC_percentage(Starting and Ending SOC)
     starting_soc_percentage = data['SOC [SA: 08]'].max()
     ending_soc_percentage = data['SOC [SA: 08]'].min()
     print("Starting SOC:", starting_soc_percentage)
@@ -298,7 +269,6 @@ def analysis_Energy(log_file):
  
         # Add distance to total distance covered
         total_distance += distance
-        # print("TotalDistancw----------->",total_distance)
  
     print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
  
@@ -813,7 +783,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\analysis"
+main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx"
 
  
 def mergeExcel(main_folder_path):
@@ -876,7 +846,7 @@ def mergeExcel(main_folder_path):
         else:
             print("No data found in merged_data")
  
-        merged_file_path = os.path.join(directory, 'merged_analysis.xlsx')
+        merged_file_path = os.path.join(directory, 'Merged_analysis.xlsx')
         merged_workbook.save(filename=merged_file_path)
         print("Merged Excel file is ready")
  
@@ -886,7 +856,7 @@ def mergeExcel(main_folder_path):
 
  
 for mar_subfolder in os.listdir(main_folder_path):
-    if mar_subfolder.startswith("Mar"):
+    if mar_subfolder.startswith("mar"):
         mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
         print(mar_subfolder)
        
@@ -906,7 +876,6 @@ for mar_subfolder in os.listdir(main_folder_path):
                             break
                     if log_found:
                         data = pd.read_csv(log_file)
-                        print(data)
                         total_duration = 0
                         total_distance = 0
                         Wh_km = 0
