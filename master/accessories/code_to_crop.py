@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
  
 # Define the paths for input and output
-main_folder_path = r'C:\Users\kamalesh.kb\CodeForAutomation\BB4\OUTPUT_1\Mar-29'
+main_folder_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\accessories\Mar-23'
  
  
  
@@ -132,29 +132,32 @@ for subfolder in os.listdir(main_folder_path):
  
  
             # Check if cropping is needed
-            crop = input("Do you want to crop anomalies? (yes/no): ")
+            crop = input("Do you want to remove anomalies? (yes/no): ")
             if crop.lower() == "yes":
-                # Allow user to input start time and end time after seeing the graph
-                start_time_input = input("Enter start time (format: DD-MM-YYYY HH:MM:SS): ")
-                end_time_input = input("Enter end time (format: DD-MM-YYYY HH:MM:SS): ")
- 
+                # Allow user to input start time and end time for the anomalies after seeing the graph
+                start_time_input = input("Enter start time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
+                end_time_input = input("Enter end time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
+
                 # Convert input strings to datetime
                 start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
                 end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
- 
-                # Filter the data based on user input time range
-                filtered_data = data[(data.index >= start_time) & (data.index <= end_time)]
-               
-                plot_ghps(filtered_data, subfolder) #plotting the filtered data
-               
+
+                # Filter the data to exclude only the anomaly data between user-specified start and end times
+                normal_data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
+
+                # Replot and save the normal data
+                plot_ghps(normal_data, subfolder)  # Plotting the data without the anomalies
+
                 # Define output file path for this Battery folder
-                output_file_path = os.path.join(subfolder_path, f'log_withoutanamoly.csv')
-               
-                # Save the filtered data to CSV in the same folder
-                filtered_data.to_csv(output_file_path, index=False)
- 
+                output_file_path = os.path.join(subfolder_path, 'log_withoutanomaly.csv')
+
+                # Save the normal data to CSV in the same folder
+                normal_data.to_csv(output_file_path, index=False)
+
             else:
-                data.to_csv(os.path.join(subfolder_path, 'log_withoutanamoly.csv'), index=False)
+                # If no cropping is required, save the original data
+                data.to_csv(os.path.join(subfolder_path, 'log.csv'), index=False)
+
                
  
                
