@@ -792,7 +792,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis"
+main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\accessories"
  
  
 def mergeExcel(main_folder_path):
