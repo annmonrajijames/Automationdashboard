@@ -865,37 +865,37 @@ def mergeExcel(main_folder_path):
  
  
  
+# Iterate through each subfolder named like "Mar..."
 for mar_subfolder in os.listdir(main_folder_path):
     if mar_subfolder.startswith("Mar"):
         mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
-        print(mar_subfolder)
-       
-        # Iterate over subfolders starting with "Battery" within "Mar" subfolders
+        
         for subfolder in os.listdir(mar_subfolder_path):
             if subfolder.startswith("Battery"):
                 subfolder_path = os.path.join(mar_subfolder_path, subfolder)
-                print(subfolder)
-                if os.path.isdir(subfolder_path):
-                    log_file = None
-                    log_found = False
-                    for file in os.listdir(subfolder_path):
-                        if file.startswith('log.') and file.endswith('csv'):
-                            log_file = os.path.join(subfolder_path, file)
-                            log_found = True
-                        if log_found:
-                            break
-                    if log_found:
-                        data = pd.read_csv(log_file)
-                        total_duration = 0
-                        total_distance = 0
-                        Wh_km = 0
-                        SOC_consumed = 0
-                        mode_values = 0
- 
-                       
-                        total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
-                        capture_analysis_output(log_file, subfolder_path)
+                
+                log_file_without_anomaly = None
+                log_file_with_anomaly = None
+
+                for file in os.listdir(subfolder_path):
+                    if file == 'log_withoutanomaly.csv':
+                        log_file_without_anomaly = os.path.join(subfolder_path, file)
+                    elif file == 'log.csv':
+                        log_file_with_anomaly = os.path.join(subfolder_path, file)
+                
+                log_file_to_use = log_file_without_anomaly if log_file_without_anomaly else log_file_with_anomaly
+
+                if log_file_to_use:
+                    data = pd.read_csv(log_file_to_use)  # Make sure to read the data here
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
+                    capture_analysis_output(log_file_to_use, subfolder_path)
+                    
+                    # Ensure 'data' is defined and contains the required DataFrame
+                    if 'data' in locals():
+                        graph_path = plot_ghps(data, subfolder_path)  # Use the DataFrame in the plotting function
                     else:
-                        print("Log file or KM file not found in subfolder:", subfolder)
+                        print("Data not available for plotting.")
+                else:
+                    print("No suitable log file found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)
