@@ -5,12 +5,6 @@ import os
 
 # Define the main directory containing all project subfolders
 main_folder = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
-# Define the directory to save copies of all output files
-common_output_dir = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1'
-
-# Ensure the common output directory exists
-if not os.path.exists(common_output_dir):
-    os.makedirs(common_output_dir)
 
 # Get all project folders within the main directory
 project_folders = [os.path.join(main_folder, f) for f in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, f))]
@@ -72,12 +66,7 @@ for project_folder in project_folders:
         # Construct output file name based on the project folder name
         folder_name = os.path.basename(project_folder)
         final_output_path = os.path.join(project_folder, f'{folder_name}_final_merged_output.csv')
-        common_output_path = os.path.join(common_output_dir, f'{folder_name}_final_merged_output.csv')
 
         # Save the final merged dataframe to the current project folder
         all_data_unique.to_csv(final_output_path, index=False)
         print(f"Final merged file saved to {final_output_path}")
-
-        # Save a copy to the common directory
-        all_data_unique.to_csv(common_output_path, index=False)
-        print(f"Copy of final merged file saved to {common_output_path}")
