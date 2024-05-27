@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
  
 # Define the paths for input and output
-main_folder_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\accessories\Mar-23'
+main_folder_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
  
  
  
@@ -112,54 +112,55 @@ def plot_ghps(data,folder_name):
     data['localtime'] = pd.to_datetime(data['localtime'], format='%Y-%m-%d %H:%M:%S.%f')
  
  
-# Iterate through subfolders in the main folder
+# Iterate through all subfolders in the main folder
 for subfolder in os.listdir(main_folder_path):
     subfolder_path = os.path.join(main_folder_path, subfolder)
-    if os.path.isdir(subfolder_path) and subfolder.startswith("Battery"):
-        print("Processing folder:", subfolder)
-       
-        # Find the log file in the subfolder
-        log_file_path = os.path.join(subfolder_path, 'log_file.csv')
-       
-        if os.path.exists(log_file_path):
-            # Read the data from the log file
-            data = pd.read_csv(log_file_path)
-           
-            # Convert 'timestamp' to datetime
-            data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms') + pd.Timedelta(hours=5, minutes=30)
- 
-            plot_ghps(data,subfolder)
- 
- 
-            # Check if cropping is needed
-            crop = input("Do you want to remove anomalies? (yes/no): ")
-            if crop.lower() == "yes":
-                # Allow user to input start time and end time for the anomalies after seeing the graph
-                start_time_input = input("Enter start time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
-                end_time_input = input("Enter end time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
+    print("Subfolder name or Date=", subfolder)
+    if os.path.isdir(subfolder_path):
+        # Iterate through next level of subfolders
+        for deeper_subfolder in os.listdir(subfolder_path):
+            deeper_subfolder_path = os.path.join(subfolder_path, deeper_subfolder)
+            if os.path.isdir(deeper_subfolder_path):
+                # Find the log file in the deepest subfolder
+                log_file_path = os.path.join(deeper_subfolder_path, 'log_km.csv')
+                if os.path.exists(log_file_path):
+                    data = pd.read_csv(log_file_path)
+                
+                    # Convert 'timestamp' to datetime
+                    data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms') + pd.Timedelta(hours=5, minutes=30)
+        
+                    plot_ghps(data,subfolder)
+        
+        
+                    # Check if cropping is needed
+                    crop = input("Do you want to remove anomalies? (yes/no): ")
+                    if crop.lower() == "yes":
+                        # Allow user to input start time and end time for the anomalies after seeing the graph
+                        start_time_input = input("Enter start time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
+                        end_time_input = input("Enter end time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
 
-                # Convert input strings to datetime
-                start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
-                end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
+                        # Convert input strings to datetime
+                        start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
+                        end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
 
-                # Filter the data to exclude only the anomaly data between user-specified start and end times
-                normal_data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
+                        # Filter the data to exclude only the anomaly data between user-specified start and end times
+                        normal_data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
 
-                # Replot and save the normal data
-                plot_ghps(normal_data, subfolder)  # Plotting the data without the anomalies
+                        # Replot and save the normal data
+                        plot_ghps(normal_data, subfolder)  # Plotting the data without the anomalies
 
-                # Define output file path for this Battery folder
-                output_file_path = os.path.join(subfolder_path, 'log_withoutanomaly.csv')
+                        # Define output file path for this Battery folder
+                        output_file_path = os.path.join(subfolder_path, 'log_withoutanomaly.csv')
 
-                # Save the normal data to CSV in the same folder
-                normal_data.to_csv(output_file_path, index=False)
+                        # Save the normal data to CSV in the same folder
+                        normal_data.to_csv(output_file_path, index=False)
 
-            else:
-                # If no cropping is required, save the original data
-                data.to_csv(os.path.join(subfolder_path, 'log.csv'), index=False)
+                    # else: # Priority will be given for log_withoutanomaly.csv in analysis code if both log and log_withoutanomaly files are there. 
+                    #     # If no cropping is required, save the original data
+                    #     data.to_csv(os.path.join(subfolder_path, 'log_km.csv'), index=False)
 
-               
- 
-               
-        else:
-            print("No log file found in folder:", subfolder)
+                    
+        
+                    
+                else:
+                    print("No log file found in folder:", subfolder)
