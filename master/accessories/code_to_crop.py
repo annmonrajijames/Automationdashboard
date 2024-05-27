@@ -28,7 +28,6 @@ def adjust_current(row):
         return row['PackCurr_6']
    
 def plot_ghps(data,folder_name):
-   
     if 'localtime' not in data.columns:
         # Convert the 'timestamp' column from Unix milliseconds to datetime
         data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
@@ -96,8 +95,9 @@ def plot_ghps(data,folder_name):
     # plt.savefig('graph.png')  # Save the plot as an image
     subfolder_path = os.path.join(main_folder_path, folder_name)
     os.makedirs(subfolder_path, exist_ok=True)
-    plt.savefig(os.path.join(subfolder_path, 'graph.png'))  # Save the plot as an image in the specified directory
     plt.show()
+    plt.savefig(os.path.join(subfolder_path, 'graph.png'))  # Save the plot as an image in the specified directory
+    
  
 ################
     if 'localtime' not in data.columns:
@@ -144,23 +144,34 @@ for subfolder in os.listdir(main_folder_path):
                         end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
 
                         # Filter the data to exclude only the anomaly data between user-specified start and end times
-                        normal_data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
+                        filtered_data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
+
+
+                        #the following is the code for checking whether the anamoly data deleted or not
+
+                                                # Filter the DataFrame to check data between start_time and end_time
+                        filtered_data = data[(data['localtime'] <start_time) | (data['localtime'] > end_time)]
+
+                        # Check if filtered_data is empty
+                        if filtered_data.empty:
+                            print("Data between start_time and end_time has been deleted(Anamoly data cropped).")
+                        else:
+                            print("Data still exists between start_time and end_time. Here's a preview:((Anamoly data cropped)- not cropped------------->)")
+                            print(filtered_data.head())  # Display the first few rows of the remaining data
 
                         # Replot and save the normal data
-                        plot_ghps(normal_data, subfolder)  # Plotting the data without the anomalies
+                        plot_ghps(filtered_data, subfolder)  # Plotting the data without the anomalies
 
                         # Define output file path for this Battery folder
                         output_file_path = os.path.join(subfolder_path, 'log_withoutanomaly.csv')
+                        print("subfolder_path----------->",subfolder_path)
 
                         # Save the normal data to CSV in the same folder
-                        normal_data.to_csv(output_file_path, index=False)
+                        filtered_data.to_csv(output_file_path, index=False)
 
                     # else: # Priority will be given for log_withoutanomaly.csv in analysis code if both log and log_withoutanomaly files are there. 
                     #     # If no cropping is required, save the original data
                     #     data.to_csv(os.path.join(subfolder_path, 'log_km.csv'), index=False)
 
-                    
-        
-                    
                 else:
                     print("No log file found in folder:", subfolder)
