@@ -5,7 +5,6 @@ import os
 
 # Define the main directory containing all project subfolders
 main_folder = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
-
 # Define the directory to save copies of all output files
 common_output_dir = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1'
 
@@ -54,6 +53,11 @@ for project_folder in project_folders:
                 }, inplace=True)
 
                 merged_df.drop(columns=['km2_index'], inplace=True)
+
+                # Save the merged_df to the same subfolder as "log_km.csv"
+                merged_df_output_path = os.path.join(subfolder_path, 'log_km.csv')
+                merged_df.to_csv(merged_df_output_path, index=False)
+                print(f"Merged file saved to {merged_df_output_path}")
 
                 # Append the merged dataframe to the list
                 all_merged_dfs.append(merged_df)
