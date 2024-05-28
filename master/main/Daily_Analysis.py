@@ -471,7 +471,6 @@ def analysis_Energy(log_file):
             max_continuous_duration = current_max_duration
             cruising_rpm = speed
             cruising_speed=speed*0.01606
-            
  
  
         # Find the maximum value in the 'MotorSpeed_340920578' column
@@ -537,7 +536,6 @@ def analysis_Energy(log_file):
         "Maximum Motor speed (RPM)":Max_motor_rpm,
         "Peak speed (Km/hr)":peak_speed
         }
- 
    
     mode_values = data_resampled['Mode_Ack_408094978'].unique()
     if len(mode_values) == 1:
@@ -828,6 +826,7 @@ def mergeExcel(main_folder_path):
         file_names = []
         for root, dirs, files in os.walk(directory):
             for name in dirs:
+                # if name.startswith("B"):
                     subdir_path = os.path.join(root, name)
                     for file_name in os.listdir(subdir_path):
                         if file_name.endswith(".xlsx"):
@@ -845,8 +844,6 @@ def mergeExcel(main_folder_path):
  
         merged_workbook = Workbook()
         merged_sheet = merged_workbook.active
-
-        print("['File name']----->",file_names)
  
         # # Use the extracted file names for headers
         # headers = ['File name'] + file_names
@@ -858,7 +855,7 @@ def mergeExcel(main_folder_path):
         else:
             print("No data found in merged_data")
  
-        merged_file_path = os.path.join(directory, 'Analysis.xlsx')
+        merged_file_path = os.path.join(directory, 'ANALYSIS.xlsx')
         merged_workbook.save(filename=merged_file_path)
         print("Merged Excel file is ready")
  
@@ -868,11 +865,6 @@ def mergeExcel(main_folder_path):
  
  
  
-for mar_subfolder in os.listdir(main_folder_path):
-    if mar_subfolder.startswith("Mar"):
-        mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
-        print(mar_subfolder)
-       
 # Iterate through each subfolder in the main folder path
 for root, dirs, files in os.walk(main_folder_path):
     for dir_name in dirs:
@@ -884,7 +876,7 @@ for root, dirs, files in os.walk(main_folder_path):
         for file in os.listdir(subfolder_path):
             if file == 'log_withoutanomaly.csv':
                 log_file_without_anomaly = os.path.join(subfolder_path, file)
-            elif file == 'log.csv':
+            elif file == 'log_km.csv':
                 log_file_with_anomaly = os.path.join(subfolder_path, file)
 
         # Choose the appropriate file to process
