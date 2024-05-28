@@ -54,24 +54,6 @@ def Merge_log_km():
                     merged_df.to_csv(merged_df_output_path, index=False)
                     print(f"Merged file saved to {merged_df_output_path}")
 
-                    # Append the merged dataframe to the list
-                    all_merged_dfs.append(merged_df)
-
-        # Concatenate all dataframes from the list for the current project
-        if all_merged_dfs:
-            all_data = pd.concat(all_merged_dfs)
-            # Sort by 'localtime' and remove duplicates if needed
-            all_data_sorted = all_data.sort_values(by='localtime')
-            all_data_unique = all_data_sorted.drop_duplicates(subset='localtime', keep='first')
-
-            # Construct output file name based on the project folder name
-            folder_name = os.path.basename(project_folder)
-            final_output_path = os.path.join(project_folder, f'{folder_name}_final_merged_output.csv')
-
-            # Save the final merged dataframe to the current project folder
-            all_data_unique.to_csv(final_output_path, index=False)
-            print(f"Final merged file saved to {final_output_path}")
-
 def crop_data():
     import os
     import pandas as pd
