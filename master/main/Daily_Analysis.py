@@ -792,7 +792,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\accessories"
+main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
  
  
 def mergeExcel(main_folder_path):
@@ -826,7 +826,7 @@ def mergeExcel(main_folder_path):
         file_names = []
         for root, dirs, files in os.walk(directory):
             for name in dirs:
-                if name.startswith("B"):
+                # if name.startswith("B"):
                     subdir_path = os.path.join(root, name)
                     for file_name in os.listdir(subdir_path):
                         if file_name.endswith(".xlsx"):
@@ -865,37 +865,37 @@ def mergeExcel(main_folder_path):
  
  
  
-# Iterate through each subfolder named like "Mar..."
-for mar_subfolder in os.listdir(main_folder_path):
-    if mar_subfolder.startswith("Mar"):
-        mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
-        
-        for subfolder in os.listdir(mar_subfolder_path):
-            if subfolder.startswith("Battery"):
-                subfolder_path = os.path.join(mar_subfolder_path, subfolder)
-                
-                log_file_without_anomaly = None
-                log_file_with_anomaly = None
+# Iterate through each subfolder in the main folder path
+for root, dirs, files in os.walk(main_folder_path):
+    for dir_name in dirs:
+        subfolder_path = os.path.join(root, dir_name)
+        log_file_without_anomaly = None
+        log_file_with_anomaly = None
 
-                for file in os.listdir(subfolder_path):
-                    if file == 'log_withoutanomaly.csv':
-                        log_file_without_anomaly = os.path.join(subfolder_path, file)
-                    elif file == 'log.csv':
-                        log_file_with_anomaly = os.path.join(subfolder_path, file)
-                
-                log_file_to_use = log_file_without_anomaly if log_file_without_anomaly else log_file_with_anomaly
+        # Check within the directory for specific files
+        for file in os.listdir(subfolder_path):
+            if file == 'log_withoutanomaly.csv':
+                log_file_without_anomaly = os.path.join(subfolder_path, file)
+            elif file == 'log.csv':
+                log_file_with_anomaly = os.path.join(subfolder_path, file)
 
-                if log_file_to_use:
-                    data = pd.read_csv(log_file_to_use)  # Make sure to read the data here
-                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
-                    capture_analysis_output(log_file_to_use, subfolder_path)
-                    
-                    # Ensure 'data' is defined and contains the required DataFrame
-                    if 'data' in locals():
-                        graph_path = plot_ghps(data, subfolder_path)  # Use the DataFrame in the plotting function
-                    else:
-                        print("Data not available for plotting.")
+        # Choose the appropriate file to process
+        log_file_to_use = log_file_without_anomaly if log_file_without_anomaly else log_file_with_anomaly
+
+        if log_file_to_use:
+            print(f"Processing file: {log_file_to_use}")  # Debug print to verify files being processed
+            try:
+                data = pd.read_csv(log_file_to_use)  # Read the data
+                total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
+                capture_analysis_output(log_file_to_use, os.path.dirname(log_file_to_use))
+
+                if 'data' in locals():
+                    graph_path = plot_ghps(data, os.path.dirname(log_file_to_use))
                 else:
-                    print("No suitable log file found in subfolder:", subfolder)
- 
+                    print("Data not available for plotting.")
+            except Exception as e:
+                print(f"Failed to process {log_file_to_use}: {str(e)}")
+        else:
+            print(f"No suitable log file found in subfolder: {subfolder_path}")
+
 mergeExcel(main_folder_path)
