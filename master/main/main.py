@@ -81,7 +81,7 @@ def run_script():
         try:
             if script_name == "Daily_Analysis":
                 #output_directory = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1"
-                subprocess.run(["python", "Daily_Analysis.py"], check=True)
+                subprocess.run(["python", "Complete_Daily_Analysis.py"], check=True)
                 reset_gui()
                 #save_output(output_directory)
             elif script_name == "Battery based - ANALYSIS":

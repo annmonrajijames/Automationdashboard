@@ -3,9 +3,11 @@ from scipy.spatial import KDTree
 import numpy as np
 import os
 
-def Merge_log_km():
+main_folder = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
+
+def Merge_log_km(main_folder):
     # Define the main directory containing all project subfolders
-    main_folder = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
+    
 
     # Get all project folders within the main directory
     project_folders = [os.path.join(main_folder, f) for f in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, f))]
@@ -54,7 +56,7 @@ def Merge_log_km():
                     merged_df.to_csv(merged_df_output_path, index=False)
                     print(f"Merged file saved to {merged_df_output_path}")
 
-def crop_data():
+def crop_data(main_folder_path):
     import os
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -66,7 +68,7 @@ def crop_data():
     warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
     # Define the paths for input and output
-    main_folder_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
+    main_folder_path = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
 
 
 
@@ -155,8 +157,6 @@ def crop_data():
         plt.savefig(os.path.join(deeper_subfolder_path, 'graph.png'))  # Save the plot as an image in the specified directory
         plt.show()
         
-
-    ################
         if 'localtime' not in data.columns:
             # Convert the 'timestamp' column from Unix milliseconds to datetime
             data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
@@ -167,15 +167,17 @@ def crop_data():
 
         # Convert 'localtime' column to datetime
         data['localtime'] = pd.to_datetime(data['localtime'], format='%Y-%m-%d %H:%M:%S.%f')
+        
 
 
     # Iterate through all subfolders in the main folder
     for subfolder in os.listdir(main_folder_path):
         subfolder_path = os.path.join(main_folder_path, subfolder)
-        print("Subfolder name or Date=", subfolder)
+        print("Subfolder name or Date of Ride=", subfolder)
         if os.path.isdir(subfolder_path):
             # Iterate through next level of subfolders
             for deeper_subfolder in os.listdir(subfolder_path):
+                print("Ride=", deeper_subfolder)
                 deeper_subfolder_path = os.path.join(subfolder_path, deeper_subfolder)
                 if os.path.isdir(deeper_subfolder_path):
                     # Find the log file in the deepest subfolder
@@ -198,8 +200,8 @@ def crop_data():
                                 end_time_input = input("Enter end time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
 
                                 # Convert input strings to datetime
-                                start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
-                                end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
+                                start_time = pd.to_datetime(start_time_input, format='%Y-%m-%d %H:%M:%S.%f')
+                                end_time = pd.to_datetime(end_time_input, format='%Y-%m-%d %H:%M:%S.%f')
 
                                 # Filter the data to exclude only the anomaly data between user-specified start and end times
                                 data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
@@ -217,7 +219,7 @@ def crop_data():
                         print("No log file found in folder:", subfolder)
 
     
-def analysis():
+def analysis(main_folder_path):
     from matplotlib.mlab import window_none
     import pandas as pd
     from math import radians, sin, cos, sqrt, atan2
@@ -358,8 +360,6 @@ def analysis():
     
     # def analysis_Energy(log_file, km_file):
     def analysis_Energy(log_file):
-    
-        print("Entered analysis energy")
         dayfirst=True
         data = pd.read_csv(log_file)
     
@@ -497,7 +497,7 @@ def analysis():
     
             # Add distance to total distance covered
             total_distance += distance
-            # print("TotalDistancw----------->",total_distance)
+           
     
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
     
@@ -835,10 +835,9 @@ def analysis():
         min_temp_id = data_resampled['MinTempId_7'].loc[min_temp_index]
         # Calculate the difference in temperature
         temp_difference = max_temp - min_temp
-        print("temp_difference------------------------>",temp_difference)
-        print("Total distance------------------------->",total_distance)
+        print("temp_difference: ",temp_difference)
+        print("Total distance: ",total_distance)
     
-        # Print the information
         print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
         print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
         print("Difference in Temperature:", temp_difference, "C")
@@ -879,7 +878,6 @@ def analysis():
     # def capture_analysis_output(log_file, km_file, folder_path):
     def capture_analysis_output(log_file,folder_path):
         try:
-            # Capture print statements
             analysis_output = io.StringIO()
             output_file = "analysis_results.docx"
     
@@ -1012,7 +1010,7 @@ def analysis():
     # Initialize variables to store file paths
     log_file = None
     
-    main_folder_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard"
+    
     
     
     def mergeExcel(main_folder_path):
@@ -1122,6 +1120,6 @@ def analysis():
 
 
 
-Merge_log_km()
-crop_data()
-analysis()
+Merge_log_km(main_folder)
+crop_data(main_folder)
+analysis(main_folder)

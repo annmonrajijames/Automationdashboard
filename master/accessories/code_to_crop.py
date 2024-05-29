@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
 # Define the paths for input and output
-main_folder_path = r'C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard'
+main_folder_path = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
 
 
 
@@ -111,14 +111,14 @@ def plot_ghps(data,folder_name):
     # Convert 'localtime' column to datetime
     data['localtime'] = pd.to_datetime(data['localtime'], format='%Y-%m-%d %H:%M:%S.%f')
 
-
 # Iterate through all subfolders in the main folder
 for subfolder in os.listdir(main_folder_path):
     subfolder_path = os.path.join(main_folder_path, subfolder)
-    print("Subfolder name or Date=", subfolder)
+    print("Subfolder name or Date of Ride=", subfolder)
     if os.path.isdir(subfolder_path):
         # Iterate through next level of subfolders
         for deeper_subfolder in os.listdir(subfolder_path):
+            print("Ride=", deeper_subfolder)
             deeper_subfolder_path = os.path.join(subfolder_path, deeper_subfolder)
             if os.path.isdir(deeper_subfolder_path):
                 # Find the log file in the deepest subfolder
@@ -141,8 +141,8 @@ for subfolder in os.listdir(main_folder_path):
                             end_time_input = input("Enter end time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
 
                             # Convert input strings to datetime
-                            start_time = pd.to_datetime(start_time_input, format='%d-%m-%Y %H:%M:%S')
-                            end_time = pd.to_datetime(end_time_input, format='%d-%m-%Y %H:%M:%S')
+                            start_time = pd.to_datetime(start_time_input, format='%Y-%m-%d %H:%M:%S.%f')
+                            end_time = pd.to_datetime(end_time_input, format='%Y-%m-%d %H:%M:%S.%f')
 
                             # Filter the data to exclude only the anomaly data between user-specified start and end times
                             data = data[(data['localtime'] < start_time) | (data['localtime'] > end_time)]
