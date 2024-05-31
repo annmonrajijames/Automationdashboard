@@ -7,8 +7,7 @@ main_folder = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Aut
 
 def Merge_log_km(main_folder):
     # Define the main directory containing all project subfolders
-    
-
+    print("Merging Log and Km")
     # Get all project folders within the main directory
     project_folders = [os.path.join(main_folder, f) for f in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, f))]
 
@@ -57,6 +56,7 @@ def Merge_log_km(main_folder):
                     print(f"Merged file saved to {merged_df_output_path}")
 
 def crop_data(main_folder_path):
+    print("Crop out the anomaly")
     import os
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -73,18 +73,18 @@ def crop_data(main_folder_path):
 
 
 
-    #################
-    def adjust_current(row):
-        adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
-        if row['MotorSpeed_340920578'] == 0:
-            adjust_current.zero_count += 1
-        else:
-            adjust_current.zero_count = 0
+    # #################
+    # def adjust_current(row):
+    #     adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
+    #     if row['MotorSpeed_340920578'] == 0:
+    #         adjust_current.zero_count += 1
+    #     else:
+    #         adjust_current.zero_count = 0
 
-        if adjust_current.zero_count >= 10:
-            return 0
-        else:
-            return row['PackCurr_6']
+    #     if adjust_current.zero_count >= 10:
+    #         return 0
+    #     else:
+    #         return row['PackCurr_6']
 
     def plot_ghps(data,folder_name):
         if 'localtime' not in data.columns:
@@ -97,11 +97,9 @@ def crop_data(main_folder_path):
 
         # Convert 'localtime' column to datetime
         data['localtime'] = pd.to_datetime(data['localtime'], format='%Y-%m-%d %H:%M:%S.%f')
-
-
         data['localtime'] = pd.to_datetime(data['localtime'])
         data.set_index('localtime', inplace=True)
-        data['PackCurr_6'] = data.apply(adjust_current, axis=1)
+        # data['PackCurr_6'] = data.apply(adjust_current, axis=1)
 
         # Create a figure and axes for plotting
         fig, ax1 = plt.subplots(figsize=(10, 6))
