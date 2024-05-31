@@ -3,13 +3,13 @@ from scipy.spatial import KDTree
 import numpy as np
 import os
 
-main_folder = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
+main_folder_path = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
 
-def Merge_log_km(main_folder):
-    # Define the main directory containing all project subfolders
+def Merge_log_km(main_folder_path):
     print("Merging Log and Km")
+
     # Get all project folders within the main directory
-    project_folders = [os.path.join(main_folder, f) for f in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, f))]
+    project_folders = [os.path.join(main_folder_path, f) for f in os.listdir(main_folder_path) if os.path.isdir(os.path.join(main_folder_path, f))]
 
     # Process each project folder
     for project_folder in project_folders:
@@ -21,11 +21,12 @@ def Merge_log_km(main_folder):
 
             # Check if the path is indeed a directory
             if os.path.isdir(subfolder_path):
+                log_km_file = os.path.join(subfolder_path, 'log_km.csv')
                 log_file = os.path.join(subfolder_path, 'log.csv')
                 km_file = os.path.join(subfolder_path, 'km.csv')
 
-                # Check if both files exist in the subfolder
-                if os.path.exists(log_file) and os.path.exists(km_file):
+                # Check if 'log_km.csv' does not exist and both 'log.csv' and 'km.csv' exist
+                if not os.path.exists(log_km_file) and os.path.exists(log_file) and os.path.exists(km_file):
                     # Load the CSV files
                     log_df = pd.read_csv(log_file)
                     km_df = pd.read_csv(km_file)
@@ -51,9 +52,18 @@ def Merge_log_km(main_folder):
                     merged_df.drop(columns=['km2_index'], inplace=True)
 
                     # Save the merged_df to the same subfolder as "log_km.csv"
-                    merged_df_output_path = os.path.join(subfolder_path, 'log_km.csv')
+                    merged_df_output_path = log_km_file
                     merged_df.to_csv(merged_df_output_path, index=False)
                     print(f"Merged file saved to {merged_df_output_path}")
+                else:
+                    if os.path.exists(log_km_file):
+                        print(f"'log_km.csv' already exists in folder: {subfolder}")
+                    if not os.path.exists(log_file):
+                        print(f"'log.csv' not found in folder: {subfolder}")
+                    if not os.path.exists(km_file):
+                        print(f"'km.csv' not found in folder: {subfolder}")
+
+
 
 def crop_data(main_folder_path):
     print("Crop out the anomaly")
@@ -66,25 +76,6 @@ def crop_data(main_folder_path):
 
     # Disable the SettingWithCopyWarning
     warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
-
-    # Define the paths for input and output
-    main_folder_path = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
-
-
-
-
-    # #################
-    # def adjust_current(row):
-    #     adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
-    #     if row['MotorSpeed_340920578'] == 0:
-    #         adjust_current.zero_count += 1
-    #     else:
-    #         adjust_current.zero_count = 0
-
-    #     if adjust_current.zero_count >= 10:
-    #         return 0
-    #     else:
-    #         return row['PackCurr_6']
 
     def plot_ghps(data,folder_name):
         if 'localtime' not in data.columns:
@@ -179,8 +170,9 @@ def crop_data(main_folder_path):
                 deeper_subfolder_path = os.path.join(subfolder_path, deeper_subfolder)
                 if os.path.isdir(deeper_subfolder_path):
                     # Find the log file in the deepest subfolder
+                    log_withoutanomaly_path = os.path.join(deeper_subfolder_path, 'log_withoutanomaly.csv')
                     log_file_path = os.path.join(deeper_subfolder_path, 'log_km.csv')
-                    if os.path.exists(log_file_path):
+                    if not os.path.exists(log_withoutanomaly_path) and  os.path.exists(log_file_path):
                         data = pd.read_csv(log_file_path)
                     
                         # Convert 'timestamp' to datetime
@@ -214,7 +206,10 @@ def crop_data(main_folder_path):
                                 # Save the final filtered data to CSV in the same folder
                                 data.to_csv(output_file_path, index=False)
                     else:
-                        print("No log file found in folder:", subfolder)
+                        if os.path.exists(log_withoutanomaly_path):
+                            print("Log without anomaly already exists for folder:", deeper_subfolder)
+                        print("No log file found in folder:", deeper_subfolder)
+
 
     
 def analysis(main_folder_path):
@@ -282,9 +277,6 @@ def analysis(main_folder_path):
     
     
     def plot_ghps(data,Path):
-    
-    
-    
         if 'localtime' not in data.columns:
             # Convert the 'timestamp' column from Unix milliseconds to datetime
             data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
@@ -1118,6 +1110,6 @@ def analysis(main_folder_path):
 
 
 
-Merge_log_km(main_folder)
-crop_data(main_folder)
-analysis(main_folder)
+Merge_log_km(main_folder_path)
+crop_data(main_folder_path)
+analysis(main_folder_path)
