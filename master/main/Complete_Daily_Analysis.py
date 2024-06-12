@@ -514,7 +514,7 @@ def analysis(main_folder_path):
             if mode == 3:
                 print("Mode is Custom mode.")
             elif mode == 2:
-                print("Mode is Sports mode.")
+                print("Mode is Power mode.")
             elif mode == 1:
                 print("Mode is Eco mode.")
         else:
@@ -524,7 +524,7 @@ def analysis(main_folder_path):
                 if mode == 3:
                     print(f"Custom mode: {percentage:.2f}%")
                 elif mode == 2:
-                    print(f"Sports mode: {percentage:.2f}%")
+                    print(f"Power mode: {percentage:.2f}%")
                 elif mode == 1:
                     print(f"Eco mode: {percentage:.2f}%")
     
@@ -658,6 +658,8 @@ def analysis(main_folder_path):
     
         #For battery Analysis
         cycleCount= data_resampled['CycleCount_7'].max()
+
+        SOH = data_resampled['SOH_8'].max()
     
     
     
@@ -713,6 +715,7 @@ def analysis(main_folder_path):
             "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
+            "SOH": SOH,
             "Total distance covered (km)": total_distance,
             "Total energy consumption(WH/KM)": watt_h / total_distance,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
@@ -753,7 +756,7 @@ def analysis(main_folder_path):
             if mode == 3:
                 ppt_data["Mode"] = "Custom mode"
             elif mode == 2:
-                ppt_data["Mode"] = "Sports mode"
+                ppt_data["Mode"] = "Power mode"
             elif mode == 1:
                 ppt_data["Mode"] = "Eco mode"
         else:
@@ -764,7 +767,7 @@ def analysis(main_folder_path):
                 if mode == 3:
                     mode_strings.append(f"Custom mode\n{percentage:.2f}%")
                 elif mode == 2:
-                    mode_strings.append(f"Sports mode\n{percentage:.2f}%")
+                    mode_strings.append(f"Power mode\n{percentage:.2f}%")
                 elif mode == 1:
                     mode_strings.append(f"Eco mode\n{percentage:.2f}%")
             ppt_data["Mode"] = "\n".join(mode_strings)
