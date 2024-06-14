@@ -232,6 +232,7 @@ def analysis(main_folder_path):
     from docx import Document
     from docx.shared import Inches
     from openpyxl import load_workbook, Workbook
+    from collections import defaultdict
     window_size =5
     
     # List to store DataFrames from each CSV file
@@ -471,6 +472,7 @@ def analysis(main_folder_path):
     
         # Initialize total distance covered
         total_distance = 0
+        distance_per_mode = defaultdict(float)
     
         # Iterate over rows to compute distance covered between consecutive points
         for i in range(len(data) - 1):
@@ -487,7 +489,10 @@ def analysis(main_folder_path):
     
             # Add distance to total distance covered
             total_distance += distance
-           
+
+              # Add distance to distance per mode
+            mode = data['Mode_Ack_408094978'].iloc[i]
+            distance_per_mode[mode] += distance
     
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
     
@@ -529,7 +534,31 @@ def analysis(main_folder_path):
                     print(f"Eco mode: {percentage:.2f}%")
     
     
-    
+        ######################################
+       # Function to calculate Wh/km for a given mode
+        def calculate_wh_per_km(data, mode, distance):
+            mode_data = data[data['Mode_Ack_408094978'] == mode]
+            if mode_data.empty or distance == 0:
+                return 0  # Return 0 if there's no data for the given mode or distance is 0
+            watt_h_mode = abs((mode_data['PackCurr_6'] * mode_data['PackVol_6'] * mode_data['Time_Diff']).sum()) / 3600
+            return abs(watt_h_mode / distance)
+
+        # Calculate Wh/km for each mode
+        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
+        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
+
+        # Calculate Wh/km for the entire ride
+        watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600
+        wh_per_km_total = abs(watt_h / total_distance)
+
+        # Print the results
+        print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
+        print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
+        print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
+        print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
+
+        ######################################
     
         # Calculate power using PackCurr_6 and PackVol_6
         data_resampled['Power'] = data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
@@ -702,6 +731,8 @@ def analysis(main_folder_path):
     
         total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
         print("Electricity consumption units in kW", (total_energy_kw))
+
+        print("wh/km----------->",wh_per_km_total)
     
         # Add these variables and logic to ppt_data
     
@@ -717,9 +748,12 @@ def analysis(main_folder_path):
             "Ending SoC (%)": ending_soc_percentage,
             "SOH": SOH,
             "Total distance covered (km)": total_distance,
-            "Total energy consumption(WH/KM)": watt_h / total_distance,
+            "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "Mode": "",
+            "Wh/km for CUSTOM mode": wh_per_km_CUSTOM_mode,
+            "Wh/km for POWER mode": wh_per_km_POWER_mode,
+            "Wh/km for ECO mode": wh_per_km_ECO_mode,
             "Peak Power(kW)": peak_power,
             "Average Power(kW)": average_power,
             "Total Energy Regenerated(kWh)": energy_regenerated,
@@ -730,7 +764,6 @@ def analysis(main_folder_path):
             "Minimum Temperature(C)": min_temp,
             "Maximum Temperature(C)": max_temp,
             "Difference in Temperature(C)": max_temp- min_temp,
-    
             "Maximum Fet Temperature-BMS(C)": max_fet_temp,
             "Maximum Afe Temperature-BMS(C)": max_afe_temp,
             "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
