@@ -545,8 +545,11 @@ def analysis(main_folder_path):
 
         # Calculate Wh/km for each mode
         wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
+        print("Custom mode distance-------------->",distance_per_mode[3])
         wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+        print("POWER mode distance-------------->",distance_per_mode[2])
         wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
+        print("ECO mode distance-------------->",distance_per_mode[1])
 
         # Calculate Wh/km for the entire ride
         watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600
@@ -741,7 +744,7 @@ def analysis(main_folder_path):
             "Byte Beam ID": ByteBeamId,
             "Total time taken for the ride": total_duration,
             "Actual Ampere-hours (Ah)": actual_ah,
-            "Actual Watt-hours (Wh)- Calculated_UsingFormala": watt_h,
+            "Actual Watt-hours (Wh)- Calculated_UsingFormala- P= VI": watt_h,
             "Starting SoC (Ah)": starting_soc_Ah,
             "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
@@ -751,9 +754,12 @@ def analysis(main_folder_path):
             "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "Mode": "",
-            "Wh/km for CUSTOM mode": wh_per_km_CUSTOM_mode,
-            "Wh/km for POWER mode": wh_per_km_POWER_mode,
-            "Wh/km for ECO mode": wh_per_km_ECO_mode,
+            "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
+            "Distance travelled in Custom mode":distance_per_mode[3],
+            "Wh/km in POWER mode": wh_per_km_POWER_mode,
+            "Distance travelled in POWER mode":distance_per_mode[2],
+            "Wh/km in ECO mode": wh_per_km_ECO_mode,
+            "Distance travelled in ECO mode":distance_per_mode[1],
             "Peak Power(kW)": peak_power,
             "Average Power(kW)": average_power,
             "Total Energy Regenerated(kWh)": energy_regenerated,
@@ -774,7 +780,7 @@ def analysis(main_folder_path):
             "lowest cell temp(C)": min_cell_temp,
             "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
             "Battery Voltage(V)": batteryVoltage,
-            "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
+            "Total energy charged(kWh)- Calculated_Using_BatteryData": total_energy_kwh,
             "Electricity consumption units(kW)": total_energy_kw,
             "Cycle Count of battery": cycleCount,
             "Cruising Speed (Rpm)": cruising_rpm,
