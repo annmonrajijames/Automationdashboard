@@ -537,9 +537,11 @@ def analysis(main_folder_path):
         ######################################
        # Function to calculate Wh/km for a given mode
         def calculate_wh_per_km(data, mode, distance):
+            if distance < 1:
+                return 0  # Return 0 if distance is less than 1 km
             mode_data = data[data['Mode_Ack_408094978'] == mode]
-            if mode_data.empty or distance == 0:
-                return 0  # Return 0 if there's no data for the given mode or distance is 0
+            if mode_data.empty:
+                return 0  # Return 0 if there's no data for the given mode
             watt_h_mode = abs((mode_data['PackCurr_6'] * mode_data['PackVol_6'] * mode_data['Time_Diff']).sum()) / 3600
             return abs(watt_h_mode / distance)
 
@@ -715,6 +717,11 @@ def analysis(main_folder_path):
                 max_continuous_duration = current_max_duration
                 cruising_rpm = speed
                 cruising_speed=speed*0.01606
+
+                if cruising_speed >1:
+                    cruise_speed=cruising_speed
+                else :
+                    cruise_speed =0
     
     
             # Find the maximum value in the 'MotorSpeed_340920578' column
@@ -784,7 +791,7 @@ def analysis(main_folder_path):
             "Electricity consumption units(kW)": total_energy_kw,
             "Cycle Count of battery": cycleCount,
             "Cruising Speed (Rpm)": cruising_rpm,
-            "cruising_speed (km/hr)":cruising_speed,
+            "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed
             }
