@@ -783,7 +783,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx"
+main_folder_path = r"C:\Users\kamalesh.kb\influx"
 
  
 def mergeExcel(main_folder_path):
@@ -846,7 +846,7 @@ def mergeExcel(main_folder_path):
         else:
             print("No data found in merged_data")
  
-        merged_file_path = os.path.join(directory, 'Merged_analysis.xlsx')
+        merged_file_path = os.path.join(directory, 'Analysis.xlsx')
         merged_workbook.save(filename=merged_file_path)
         print("Merged Excel file is ready")
  
@@ -856,7 +856,7 @@ def mergeExcel(main_folder_path):
 
  
 for mar_subfolder in os.listdir(main_folder_path):
-    if mar_subfolder.startswith("mar"):
+    if mar_subfolder.startswith("Jun"):
         mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
         print(mar_subfolder)
        

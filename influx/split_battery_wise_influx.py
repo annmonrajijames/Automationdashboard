@@ -58,7 +58,7 @@ def plot_ghps(data, folder_name, folder_path):
 def process_files(main_folder_path):
     for mar_subfolder in os.listdir(main_folder_path):
         print(mar_subfolder)
-        if mar_subfolder.startswith("mar"):
+        if mar_subfolder.startswith("Jun"):
             mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
             log_file_path = os.path.join(mar_subfolder_path, 'log.csv')
             print(log_file_path)
@@ -123,5 +123,5 @@ def process_files(main_folder_path):
                     if i == len(df) - 1:
                         break
 
-main_folder_path = r"C:\Users\Kamalesh.kb\Downloads\Daily_analysis_data\influx"
+main_folder_path = r"C:\Users\kamalesh.kb\influx"
 process_files(main_folder_path)
