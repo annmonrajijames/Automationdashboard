@@ -186,8 +186,8 @@ def crop_data(main_folder_path):
                             crop = input("Do you want to remove anomalies? (yes/no): ")
                             if crop.lower() == "yes":
                                 # Allow user to input start time and end time for the anomalies after seeing the graph
-                                start_time_input = input("Enter start time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
-                                end_time_input = input("Enter end time of anomaly (format: DD-MM-YYYY HH:MM:SS): ")
+                                start_time_input = input("Enter start time of anomaly (format: 2024-04-02 12:59:00.000): ")
+                                end_time_input = input("Enter end time of anomaly (format: 2024-04-02 12:59:00.000): ")
 
                                 # Convert input strings to datetime
                                 start_time = pd.to_datetime(start_time_input, format='%Y-%m-%d %H:%M:%S.%f')
@@ -468,8 +468,11 @@ def analysis(main_folder_path):
         ending_soc_percentage = data['SOC_8'].min()
         print("Starting SOC:", starting_soc_percentage)
         print("Ending SOC:", ending_soc_percentage)
-    
-    
+
+        average_current =data_resampled['PackCurr_6'].mean()
+        avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
+        avg_speed =avg_motor_rpm * 0.01606
+
         # Initialize total distance covered
         total_distance = 0
         distance_per_mode = defaultdict(float)
@@ -571,6 +574,10 @@ def analysis(main_folder_path):
         # Find the peak power
         peak_power = data_resampled['Power'].min()
         print("Peak Power:", peak_power)
+
+        peak_current= abs(data_resampled['PackCurr_6'].min())
+        print("peak_current", peak_current)
+
     
         # Calculate the average power
         average_power = abs(data_resampled['Power'].mean())
@@ -756,10 +763,10 @@ def analysis(main_folder_path):
             "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
+            "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "SOH": SOH,
             "Total distance covered (km)": total_distance,
             "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
-            "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "Mode": "",
             "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
             "Distance travelled in Custom mode":distance_per_mode[3],
@@ -767,6 +774,8 @@ def analysis(main_folder_path):
             "Distance travelled in POWER mode":distance_per_mode[2],
             "Wh/km in ECO mode": wh_per_km_ECO_mode,
             "Distance travelled in ECO mode":distance_per_mode[1],
+            "peak_current":peak_current,
+            "average_current":average_current,
             "Peak Power(kW)": peak_power,
             "Average Power(kW)": average_power,
             "Total Energy Regenerated(kWh)": energy_regenerated,
@@ -793,7 +802,8 @@ def analysis(main_folder_path):
             "Cruising Speed (Rpm)": cruising_rpm,
             "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
-            "Peak speed (Km/hr)":peak_speed
+            "Peak speed (Km/hr)":peak_speed,
+            "average_speed":avg_speed
             }
     
         mode_values = data_resampled['Mode_Ack_408094978'].unique()
