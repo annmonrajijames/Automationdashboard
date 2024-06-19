@@ -207,7 +207,7 @@ def analysis_Energy(log_file):
     total_hours = total_duration.seconds // 3600
     total_minutes = (total_duration.seconds % 3600) // 60
  
-    print(f"Total localtime taken for the ride: {int(total_hours):02d}:{int(total_minutes):02d}")
+    print(f"Total time taken for the ride: {int(total_hours):02d}:{int(total_minutes):02d}")
  
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
@@ -237,8 +237,8 @@ def analysis_Energy(log_file):
     print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
  
     #starting and ending ah
-    starting_soc_Ah = data['SOCAh [SA: 08]'].iloc[-1]
-    ending_soc_Ah = data['SOCAh [SA: 08]'].iloc[0]
+    starting_soc_Ah = data['SOCAh [SA: 08]'].iloc[0]
+    ending_soc_Ah = data['SOCAh [SA: 08]'].iloc[-1]
  
     print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
@@ -318,6 +318,8 @@ def analysis_Energy(log_file):
     # Find the peak power
     peak_power = data_resampled['Power'].min()
     print("Peak Power:", peak_power)
+
+    average_current =data_resampled['PackCurr [SA: 06]'].mean()
    
     # Calculate the average power
     average_power = abs(data_resampled['Power'].mean())
@@ -466,12 +468,16 @@ def analysis_Energy(log_file):
 
         # Find the maximum value in the 'MotorSpeed [SA: 02]' column
     Max_motor_rpm = data_resampled['MotorSpeed [SA: 02]'].max()
+    
+    avg_motor_rpm =data_resampled['MotorSpeed [SA: 02]'].mean()
 
     # Print the maximum motor speed in RPM
     print("The maximum motor speed in RPM is:", Max_motor_rpm)
 
     # Convert the maximum motor speed to speed using the given factor
     peak_speed = Max_motor_rpm * 0.01606
+
+    avg_speed =avg_motor_rpm * 0.01606
 
     # Print the maximum speed
     print("The maximum speed is:", peak_speed)
@@ -500,6 +506,7 @@ def analysis_Energy(log_file):
         "Mode": "",
         "Peak Power(kW)": peak_power,
         "Average Power(kW)": average_power,
+        "average_current":average_current,
         "Total Energy Regenerated(kWh)": energy_regenerated,
         "Regenerative Effectiveness(%)": regenerative_effectiveness,
         "Highest Cell Voltage(V)": max_cell_voltage,
@@ -525,7 +532,8 @@ def analysis_Energy(log_file):
         "Cruising Speed (Rpm)": cruising_rpm,
         "cruising_speed (km/hr)":cruising_speed,
         "Maximum Motor speed (RPM)":Max_motor_rpm,
-        "Peak speed (Km/hr)":peak_speed
+        "Peak speed (Km/hr)":peak_speed,
+        "avg_speed (km/hr)":avg_speed,
         }
     
     mode_values = data_resampled['Mode_Ack [SA: 02]'].unique()
@@ -560,6 +568,11 @@ def analysis_Energy(log_file):
     # Find the peak power
     peak_power = data_resampled['Power'].max()
     print("Peak Power:", peak_power)
+
+    average_current =data_resampled['PackCurr [SA: 06]'].mean()
+    
+
+
  
     # Get the maximum cell voltage
     max_cell_voltage = data_resampled['MaxCellVol [SA: 05]'].max()
@@ -836,9 +849,9 @@ def mergeExcel(main_folder_path):
         merged_workbook = Workbook()
         merged_sheet = merged_workbook.active
  
-        # Use the extracted file names for headers
-        headers = ['File name'] + file_names
-        merged_sheet.append(headers)
+        # # Use the extracted file names for headers
+        # headers = ['File name'] + file_names
+        # merged_sheet.append(headers)
  
         if merged_data:
             for key, values in merged_data.items():
