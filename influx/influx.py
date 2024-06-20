@@ -66,7 +66,14 @@ def adjust_current(row):
 
     
 def plot_ghps(data,Path):
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
     # Create a figure and axes for plotting
+    
+    data.set_index('DATETIME', inplace=True)
+
+    
     fig, ax1 = plt.subplots(figsize=(10, 6))
  
     # Plot 'PackCurr [SA: 06]' on primary y-axis
@@ -105,22 +112,26 @@ def plot_ghps(data,Path):
  
     # Format x-axis ticks as hours:minutes:seconds
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+
+    # Format x-axis ticks as year-month-day hours:minutes:seconds
+    #ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
+
  
     # Set grid lines lighter
     ax1.grid(True, linestyle=':', linewidth=0.5, color='gray')
     ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
+    
  
     # Enable cursor to display values on graphs
     mplcursors.cursor([line1, line2, line3, line4, line5,line6])
- 
     # Save the plot as an image or display it
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
-    # plt.savefig('graph.png')  # Save the plot as an image
 
+    
     os.makedirs(Path, exist_ok=True)
     graph_path = os.path.join(Path, 'graph.png')
     plt.savefig(os.path.join(Path, 'graph.png'))  # Save the plot as an image in the specified directory
-    # plt.show()
+    plt.show()
 
     return graph_path # Return the path of the saved graph image
  
@@ -131,7 +142,10 @@ def analysis_Energy(log_file):
     data = pd.read_csv(log_file)
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
- 
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
+    print(data['DATETIME'])
     total_duration = 0
     total_distance = 0
     Wh_km = 0
@@ -185,7 +199,7 @@ def analysis_Energy(log_file):
     # # Calculate the start localtime and end localtime with formatting
     # start_localtime_seconds = data['DATETIME'].min().strflocaltime('%d/%m/%Y %H:%M:%S')
     # end_localtime_seconds = data['DATETIME'].max().strflocaltime('%d/%m/%Y %H:%M:%S')
-
+    data['DATETIME'] = data['DATETIME'].astype(str)
     data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %H:%M:%S')
 
 
@@ -493,20 +507,20 @@ def analysis_Energy(log_file):
     ppt_data = {
         # "Date and localtime": str(start_localtime_seconds) + " to " + str(end_localtime_seconds),
         # "INFLUX ID ": InfluxId,
-        "Total localtime taken for the ride": total_duration,
+        "Total Time taken for the ride": total_duration,
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala": watt_h,
         "Starting SoC (Ah)": starting_soc_Ah,
         "Ending SoC (Ah)": ending_soc_Ah,
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
+        "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Total distance covered (km)": total_distance,
         "Total energy consumption(WH/KM)": watt_h / total_distance,
-        "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Mode": "",
         "Peak Power(kW)": peak_power,
         "Average Power(kW)": average_power,
-        "average_current":average_current,
+        "Average_current":abs(average_current),
         "Total Energy Regenerated(kWh)": energy_regenerated,
         "Regenerative Effectiveness(%)": regenerative_effectiveness,
         "Highest Cell Voltage(V)": max_cell_voltage,
@@ -515,7 +529,6 @@ def analysis_Energy(log_file):
         "Minimum Temperature(C)": min_temp,
         "Maximum Temperature(C)": max_temp,
         "Difference in Temperature(C)": max_temp- min_temp,
- 
         "Maximum Fet Temperature-BMS(C)": max_fet_temp,
         "Maximum Afe Temperature-BMS(C)": max_afe_temp,
         "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
@@ -691,20 +704,20 @@ def capture_analysis_output(log_file,folder_path):
         table_slide_layout = prs.slide_layouts[5]
         slide = prs.slides.add_slide(table_slide_layout)
         shapes = slide.shapes
-        title_shape = shapes.title
-        title_shape.text = "Analysis Results:"
+        # title_shape = shapes.title
+        # title_shape.text = "Results:"
  
-        # Centering the title horizontally
-        title_shape.left = Inches(0.5)
-        title_shape.top = Inches(0.5)  # Adjust as needed
+        # # Centering the title horizontally
+        # title_shape.left = Inches(0.5)
+        # title_shape.top = Inches(0.5)  # Adjust as needed
  
-        # Setting the font size of the title
-        title_shape.text_frame.paragraphs
+        # # Setting the font size of the title
+        # title_shape.text_frame.paragraphs
  
         # Define maximum number of rows per slide
         max_rows_per_slide = 13
         # Add some space between title and table
-        title_shape.top = Inches(0.5)
+        # title_shape.top = Inches(0.5)
  
         table = shapes.add_table(max_rows_per_slide + 1, cols, Inches(1), Inches(1.5), Inches(8), Inches(5)).table
         table.columns[0].width = Inches(4)
@@ -742,6 +755,7 @@ def capture_analysis_output(log_file,folder_path):
             # Increment row index
             row_index += 1
 
+        
         graph_path= plot_ghps(data,subfolder_path)
  
         # Add image slide with title and properly scaled image
@@ -796,7 +810,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx"
+main_folder_path = r"C:\Users\kamalesh.kb\Jun_19"
 
  
 def mergeExcel(main_folder_path):
@@ -869,7 +883,7 @@ def mergeExcel(main_folder_path):
 
  
 for mar_subfolder in os.listdir(main_folder_path):
-    if mar_subfolder.startswith("Jun"):
+    if mar_subfolder.startswith("Jun_19"):
         mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
         print(mar_subfolder)
        
