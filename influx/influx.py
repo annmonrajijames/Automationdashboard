@@ -18,6 +18,7 @@ from pptx.util import Inches
 from docx import Document
 from docx.shared import Inches
 from openpyxl import load_workbook, Workbook
+from matplotlib.widgets import CheckButtons
 window_size =5
 
 
@@ -141,6 +142,20 @@ def plot_ghps(data,Path):
     mplcursors.cursor([line1, line2, line3, line4, line5,line6])
     # Save the plot as an image or display it
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
+
+     # Create checkboxes
+    rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
+    labels = ('Pack Current (A)','Motor Speed (RPM)','AC_Current','AC_voltage','Throttle','SOC')
+    lines = [line1,line2, line3, line4, line5, line6]
+    visibility = [line.get_visible() for line in lines]
+    check = CheckButtons(rax, labels, visibility)
+
+    def func(label):
+        index = labels.index(label)
+        lines[index].set_visible(not lines[index].get_visible())
+        plt.draw()
+
+    check.on_clicked(func)
 
     
     os.makedirs(Path, exist_ok=True)
