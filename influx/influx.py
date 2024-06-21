@@ -67,108 +67,53 @@ def adjust_current(row):
 
     
 def plot_ghps(data,Path):
-    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
-    # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
+  
+    import plotly.graph_objs as go
+    from plotly.subplots import make_subplots
 
     # Convert Unix epoch time to datetime, assuming the original timezone is UTC
     data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
-
     # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata') #convertinng to IST
-
+    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
     # Format the datetime as string, including milliseconds
-    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]        #Converting to string
-
+    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
     # If you need the datetime back as pandas datetime type without timezone info
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
-    # print(data['DATETIME'])
-
-    # Create a figure and axes for plotting
-    
     data.set_index('DATETIME', inplace=True)
 
     speed = data['MotorSpeed [SA: 02]'] * 0.0106
 
-   
-    
-    fig, ax1 = plt.subplots(figsize=(10, 6))
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    line7, = ax1.plot(data.index, speed, color='grey', label='Speed')
- 
-    # Plot 'PackCurr [SA: 06]' on primary y-axis
-    line1, = ax1.plot(data.index, -data['PackCurr [SA: 06]'], color='blue', label='PackCurr [SA: 06]')
-    ax1.set_ylabel('Pack Current (A)', color='blue')
-    ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
- 
-    # Create secondary y-axis for 'MotorSpeed [SA: 02]' (RPM)
-    ax2 = ax1.twinx()
-    line2, = ax2.plot(data.index, data['MotorSpeed [SA: 02]'], color='green', label='Motor Speed')
-    ax2.set_ylabel('Motor Speed (RPM)', color='green')
- 
-    # Add 'AC_Current [SA: 03]' to primary y-axis
-    line3, = ax1.plot(data.index, data['AC_Current [SA: 03]'], color='red', label='AC Current')
- 
-    # Add 'AC_Voltage [SA: 04]' scaled to 10x to the left side y-axis
-    line4, = ax1.plot(data.index, data['AC_Voltage [SA: 04]'] * 10, color='yellow', label='AC Voltage (x10)')
- 
-    # Add 'Throttle [SA: 02]' to the left side y-axis
-    line5, = ax1.plot(data.index, data['Throttle [SA: 02]'], color='orange', label='Throttle (%)')
+    fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='PackCurr [SA: 06]', line=dict(color='blue')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed', line=dict(color='green')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='orange')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='black')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed', line=dict(color='grey')), secondary_y=False)
 
-    # Add 'Throttle [SA: 02]' to the left side y-axis
-    line6, = ax1.plot(data.index, data['SOC [SA: 08]'], color='black', label='SOC (%)')
- 
+    fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
+                      xaxis_title='Local localtime',
+                      yaxis_title='Pack Current (A)',
+                      yaxis2_title='Motor Speed (RPM)')
 
-    # Hide the y-axis label for 'AC_Current [SA: 03]'
-    ax1.get_yaxis().get_label().set_visible(False)
- 
-    # Set x-axis label and legend
-    ax1.set_xlabel('Local localtime')
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper right')
- 
-    # Add a title to the plot
-    plt.title('Battery Pack, Motor Data, and Throttle')
- 
-    # Format x-axis ticks as hours:minutes:seconds
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+    fig.update_xaxes(tickformat='%H:%M:%S')
 
-    # Format x-axis ticks as year-month-day hours:minutes:seconds
-    #ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
-
- 
-    # Set grid lines lighter
-    ax1.grid(True, linestyle=':', linewidth=0.5, color='gray')
-    ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
-    
- 
-    # Enable cursor to display values on graphs
-    mplcursors.cursor([line1, line2, line3, line4, line5,line6,line7])
-    # Save the plot as an image or display it
-    plt.tight_layout()  # Adjust layout to prevent clipping of labels
-
-     # Create checkboxes
-    rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('Pack Current (A)','Motor Speed (RPM)','AC_Current','AC_voltage','Throttle','SOC','Speed(Km/hr)')
-    lines = [line1,line2, line3, line4, line5, line6,line7]
-    visibility = [line.get_visible() for line in lines]
-    check = CheckButtons(rax, labels, visibility)
-
-    def func(label):
-        index = labels.index(label)
-        lines[index].set_visible(not lines[index].get_visible())
-        plt.draw()
-
-    check.on_clicked(func)
-
-    
+    # Save the plot as an HTML file
     os.makedirs(Path, exist_ok=True)
-    graph_path = os.path.join(Path, 'graph.png')
-    plt.savefig(os.path.join(Path, 'graph.png'))  # Save the plot as an image in the specified directory
-    plt.show()
+    graph_path = os.path.join(Path, 'graph.html')
+    fig.write_html(graph_path)
 
-    return graph_path # Return the path of the saved graph image
+    return graph_path  # Return the path of the saved graph image
+
+# Example usage:
+# data = pd.read_csv('your_data.csv')
+# Path = 'path/to/save'
+# plot_ghps(data, Path)
+
  
  
 # def analysis_Energy(log_file, km_file):
