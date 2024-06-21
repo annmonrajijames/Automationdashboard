@@ -679,13 +679,11 @@ def capture_analysis_output(log_file,folder_path):
         with redirect_stdout(analysis_output):
             #total_duration, total_distance, Wh_km, total_soc_consumed, ppt_data = analysis_Energy(log_file, km_file)
             analysis_output = analysis_output.getvalue()
- 
         # Extract folder name from folder_path
         folder_name = os.path.basename(folder_path)
  
         # Create a new PowerPoint presentation
         prs = Presentation()
- 
         # Add title slide with 'Selawik' style
         title_slide_layout = prs.slide_layouts[0]
         slide = prs.slides.add_slide(title_slide_layout)
@@ -723,7 +721,6 @@ def capture_analysis_output(log_file,folder_path):
  
         # Initialize row index
         row_index = 1
- 
         # Iterate over data and populate the table
         for key, value in ppt_data.items():
             # Check if current slide has reached maximum rows
@@ -751,8 +748,7 @@ def capture_analysis_output(log_file,folder_path):
             # Increment row index
             row_index += 1
 
-        
-        graph_path= plot_ghps(data,subfolder_path)
+        # graph_path= plot_ghps(data,folder_path)
  
         # Add image slide with title and properly scaled image
         slide_layout = prs.slide_layouts[5]
@@ -762,18 +758,17 @@ def capture_analysis_output(log_file,folder_path):
         for shape in slide.shapes:
             if shape.is_placeholder:
                 slide.shapes._spTree.remove(shape._element)
- 
-        # Add the title
-        title_shape = slide.shapes.add_textbox(Inches(1), Inches(0.5), prs.slide_width - Inches(2), Inches(1))
-        title_shape.text = "Graph Analysis"
- 
+        # print("After function")
+        # # Add the title
+        # title_shape = slide.shapes.add_textbox(Inches(1), Inches(0.5), prs.slide_width - Inches(2), Inches(1))
+        # title_shape.text = "Graph Analysis"
+        # print("After function 2")
         # Add the image and adjust its position and size
-        graph_width = prs.slide_width - Inches(1)
-        graph_height = prs.slide_height - Inches(2)
-        left = (prs.slide_width - graph_width) / 2
-        top = (prs.slide_height - graph_height) / 2 + Inches(1)
-        pic = slide.shapes.add_picture(graph_path, left, top, width=graph_width, height=graph_height)
- 
+        # graph_width = prs.slide_width - Inches(1)
+        # graph_height = prs.slide_height - Inches(2)
+        # left = (prs.slide_width - graph_width) / 2
+        # top = (prs.slide_height - graph_height) / 2 + Inches(1)
+        # pic = slide.shapes.add_picture(graph_path, left, top, width=graph_width, height=graph_height)
         # Save the presentation
         output_file_name = f"{folder_path}/analysis_{folder_name}.pptx"
         prs.save(output_file_name)
