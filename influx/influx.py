@@ -70,19 +70,19 @@ def plot_ghps(data,Path):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
 
-        # Convert Unix epoch time to datetime, assuming the original timezone is UTC
+    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
     data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
 
     # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')
+    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata') #convertinng to IST
 
     # Format the datetime as string, including milliseconds
-    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
+    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]        #Converting to string
 
     # If you need the datetime back as pandas datetime type without timezone info
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
-    print(data['DATETIME'])
+    # print(data['DATETIME'])
 
     # Create a figure and axes for plotting
     
@@ -157,11 +157,15 @@ def analysis_Energy(log_file):
     data = pd.read_csv(log_file)
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
+
+
+#Uncomment the following two lines if DateTime is already in IST.
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
     # Convert Unix epoch time to datetime, assuming the original timezone is UTC
     data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
+    # print(data['DATETIME'])
 
     # Convert to your desired timezone (e.g., 'Asia/Kolkata')
     data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')
