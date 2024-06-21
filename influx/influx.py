@@ -87,13 +87,13 @@ def plot_ghps(data,Path):
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='PackCurr [SA: 06]', line=dict(color='blue')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed', line=dict(color='green')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='orange')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='black')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed', line=dict(color='grey')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
 
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
@@ -141,7 +141,7 @@ def analysis_Energy(log_file):
     # If you need the datetime back as pandas datetime type without timezone info
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
-    print(data['DATETIME'])
+    
     total_duration = 0
     total_distance = 0
     Wh_km = 0
@@ -365,15 +365,15 @@ def analysis_Energy(log_file):
     idling_percentage = (idling_localtime / len(data)) * 100
     print("Idling localtime percentage:", idling_percentage)
  
-    # Calculate localtime spent in specific speed ranges
+    # Calculate Time spent in specific speed ranges
     speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
     speed_range_percentages = {}
  
     for range_ in speed_ranges:
         speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.016 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.016 < range_[1])).sum()
         speed_range_percentage = (speed_range_localtime / len(data)) * 100
-        speed_range_percentages[f"localtime spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
-        print(f"localtime spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
+        speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
+        print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
  
            
     # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
@@ -871,43 +871,55 @@ def mergeExcel(main_folder_path):
  
         merged_file_path = os.path.join(directory, 'Analysis.xlsx')
         merged_workbook.save(filename=merged_file_path)
-        print("Merged Excel file is ready")
+        print("Analysis file is ready")
  
     if __name__ == '__main__':
         main(main_folder_path)
  
 
- 
-for mar_subfolder in os.listdir(main_folder_path):
-    if mar_subfolder.startswith("Jun_19"):
-        mar_subfolder_path = os.path.join(main_folder_path, mar_subfolder)
-        print(mar_subfolder)
-       
-        # Iterate over subfolders starting with "Battery" within "Mar" subfolders
-        for subfolder in os.listdir(mar_subfolder_path):
-            if subfolder.startswith("Battery"):
-                subfolder_path = os.path.join(mar_subfolder_path, subfolder)
-                print(subfolder)
-                if os.path.isdir(subfolder_path):
-                    log_file = None
-                    log_found = False
-                    for file in os.listdir(subfolder_path):
-                        if file.startswith('log.') and file.endswith('csv'):
-                            log_file = os.path.join(subfolder_path, file)
-                            log_found = True
-                        if log_found:
-                            break
-                    if log_found:
+
+
+# Iterate over immediate subfolders of main_folder_path
+for subfolder_1 in os.listdir(main_folder_path):
+    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+    
+    # Check if subfolder_1 is a directory
+    if os.path.isdir(subfolder_1_path):
+        
+        # Iterate over subfolders within subfolder_1
+        for subfolder in os.listdir(subfolder_1_path):
+            subfolder_path = os.path.join(subfolder_1_path, subfolder)
+            
+            # Check if subfolder starts with "Battery" and is a directory
+            if os.path.isdir(subfolder_path):                
+                log_file = None
+                log_found = False
+                
+                # Iterate through files in the subfolder
+                for file in os.listdir(subfolder_path):
+                    if file.startswith('log.') and file.endswith('.csv'):
+                        log_file = os.path.join(subfolder_path, file)
+                        log_found = True
+                        break  # Stop searching once the log file is found
+                
+                # Process the log file if found
+                if log_found:
+                    print(f"Processing log file: {log_file}")
+                    try:
                         data = pd.read_csv(log_file)
-                        total_duration = 0
-                        total_distance = 0
-                        Wh_km = 0
-                        SOC_consumed = 0
-                        mode_values = 0
-                        
-                        total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
-                        capture_analysis_output(log_file, subfolder_path)
-                    else:
-                        print("Log file or KM file not found in subfolder:", subfolder)
+                        # Process your data here
+                    except Exception as e:
+                        print(f"Error processing {log_file}: {e}")
+
+                    total_duration = 0
+                    total_distance = 0
+                    Wh_km = 0
+                    SOC_consumed = 0
+                    mode_values = 0
+                    
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
+                    capture_analysis_output(log_file, subfolder_path)
+                else:
+                    print("Log file or KM file not found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)
