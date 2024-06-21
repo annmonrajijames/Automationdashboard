@@ -89,8 +89,13 @@ def plot_ghps(data,Path):
     
     data.set_index('DATETIME', inplace=True)
 
+    speed = data['MotorSpeed [SA: 02]'] * 0.0106
+
+   
     
     fig, ax1 = plt.subplots(figsize=(10, 6))
+
+    line7, = ax1.plot(data.index, speed, color='grey', label='Speed')
  
     # Plot 'PackCurr [SA: 06]' on primary y-axis
     line1, = ax1.plot(data.index, -data['PackCurr [SA: 06]'], color='blue', label='PackCurr [SA: 06]')
@@ -139,14 +144,14 @@ def plot_ghps(data,Path):
     
  
     # Enable cursor to display values on graphs
-    mplcursors.cursor([line1, line2, line3, line4, line5,line6])
+    mplcursors.cursor([line1, line2, line3, line4, line5,line6,line7])
     # Save the plot as an image or display it
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
 
      # Create checkboxes
     rax = plt.axes([0.8, 0.1, 0.15, 0.3])  # Adjust position to the right after the graph
-    labels = ('Pack Current (A)','Motor Speed (RPM)','AC_Current','AC_voltage','Throttle','SOC')
-    lines = [line1,line2, line3, line4, line5, line6]
+    labels = ('Pack Current (A)','Motor Speed (RPM)','AC_Current','AC_voltage','Throttle','SOC','Speed(Km/hr)')
+    lines = [line1,line2, line3, line4, line5, line6,line7]
     visibility = [line.get_visible() for line in lines]
     check = CheckButtons(rax, labels, visibility)
 
