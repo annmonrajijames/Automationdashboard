@@ -101,7 +101,7 @@ def plot_ghps(data,Path,maxCellTemp):
 
     # Save the plot as an HTML file
     os.makedirs(Path, exist_ok=True)
-    graph_path = os.path.join(Path, 'graph.html')
+    graph_path = os.path.join(Path, 'Analysis.html')
     fig.write_html(graph_path)
 
 
@@ -854,30 +854,13 @@ def capture_analysis_output(log_file,folder_path):
         print("excel_output_file",excel_output_file)
         print("Excel generated!")
 
+        df = pd.read_excel(excel_output_file, sheet_name="Analysis Results")
 
-        wb = openpyxl.load_workbook(excel_output_file)
-        ws = wb.active
-
-        # Transpose the data
-        transposed_data = []
-        for col in range(1, ws.max_column + 1):
-            transposed_data.append([ws.cell(row=row, column=col).value for row in range(1, ws.max_row + 1)])
-
-        # Clear existing data in the worksheet
-        ws.delete_rows(1, ws.max_row)
-
-        # Write the transposed data back to the worksheet
-        for row in transposed_data:
-            ws.append(row)
-
-        # Save the modified Excel workbook
-        transposed_excel_output_file = f"{folder_path}/transposed_analysis_{folder_name}.xlsx"
-        wb.save(transposed_excel_output_file)
-        print("Transposed Excel generated:", transposed_excel_output_file)
-
- 
-
-        df = pd.read_excel(transposed_excel_output_file, sheet_name="Analysis Results")
+        # Transpose the DataFrame
+        transposed_df = df.T
+        transposed_df.columns = transposed_df.iloc[0]
+        transposed_df = transposed_df[1:]
+        
 
         # Define columns to plot, including the new ones
         columns_to_plot = [
@@ -905,7 +888,7 @@ def capture_analysis_output(log_file,folder_path):
 
         # Plotting the data as a bar graph
         plt.figure(figsize=(15, 10))  # Adjust figure size as needed
-        bars = plt.bar(columns_to_plot, df.iloc[0][columns_to_plot], color=colors)
+        bars = plt.bar(columns_to_plot, transposed_df.iloc[0][columns_to_plot], color=colors)
 
         # Add labels and title
         plt.xlabel('Metrics')
@@ -921,7 +904,7 @@ def capture_analysis_output(log_file,folder_path):
         plt.legend(legend_handles, legend_labels)
 
         # Save the plot as an image (optional)
-        plot_file = f"{folder_path}/metrics_bar_plot.png"
+        plot_file = f"{folder_path}/Analysis.png"
         plt.savefig(plot_file)
         print(f"Bar plot saved: {plot_file}")
 
@@ -930,9 +913,6 @@ def capture_analysis_output(log_file,folder_path):
 
     except Exception as e:
         print("Error:", e)
- 
- 
- 
  
 
  
