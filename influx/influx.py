@@ -365,7 +365,7 @@ def analysis_Energy(log_file):
     idling_localtime = ((data['MotorSpeed [SA: 02]'] <= 0) | data['MotorSpeed [SA: 02]'].isna()).sum()
     print("data length localtime",len(data))
     idling_percentage = (idling_localtime / len(data)) * 100
-    print("Idling localtime percentage:", idling_percentage)
+    print("Idling time percentage:", idling_percentage)
  
     # Calculate Time spent in specific speed ranges
     speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
@@ -477,6 +477,11 @@ def analysis_Energy(log_file):
             cruising_rpm = speed
             cruising_speed=speed*0.01606
 
+            if cruising_speed >1:
+                cruise_speed=cruising_speed
+            else :
+                cruise_speed =0
+
 
         # Find the maximum value in the 'MotorSpeed [SA: 02]' column
     Max_motor_rpm = data_resampled['MotorSpeed [SA: 02]'].max()
@@ -515,13 +520,13 @@ def analysis_Energy(log_file):
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Total distance covered (km)": total_distance,
-        "Total energy consumption(WH/KM)": watt_h / total_distance,
+        "Energy consumption Rate(WH/KM)": watt_h / total_distance,
         "Peak Power(kW)": peak_power,
         "Average Power(kW)": average_power,
         "Average_current":abs(average_current),
-        "Total Energy Regenerated(kWh)": energy_regenerated,
+        "Total Energy Regenerated(Wh)": energy_regenerated,
         "Regenerative Effectiveness(%)": regenerative_effectiveness,
-        "avg_speed (km/hr)":avg_speed,
+        "Avg_speed (km/hr)":avg_speed,
         "Highest Cell Voltage(V)": max_cell_voltage,
         "Lowest Cell Voltage(V)": min_cell_voltage,
         "Difference in Cell Voltage(V)": voltage_difference,
@@ -542,7 +547,7 @@ def analysis_Energy(log_file):
         "Electricity consumption units(kW)": total_energy_kw,
         "Cycle Count of battery": cycleCount,
         "Cruising Speed (Rpm)": cruising_rpm,
-        "cruising_speed (km/hr)":cruising_speed,
+        "cruising_speed (km/hr)":cruise_speed,
         "Maximum Motor speed (RPM)":Max_motor_rpm,
         "Peak speed (Km/hr)":peak_speed,
         }
@@ -570,7 +575,7 @@ def analysis_Energy(log_file):
         ppt_data["Mode"] = "\n".join(mode_strings)
  
      # Add calculated parameters to ppt_data
-    ppt_data["Idling localtime percentage"] = idling_percentage
+    ppt_data["Idling time percentage"] = idling_percentage
     ppt_data.update(speed_range_percentages)
  
     # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
@@ -803,7 +808,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\Jun_19"
+main_folder_path = r"C:\Users\kamalesh.kb\influx_21"
 
  
 def mergeExcel(main_folder_path):
