@@ -299,6 +299,9 @@ def analysis_Energy(data,subfolder_path):
  
         # Add distance to total distance covered
         total_distance += distance
+
+        mode = data['Mode_Ack [SA: 02]'].iloc[i]
+        distance_per_mode[mode] += distance
  
     print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
  
@@ -338,6 +341,34 @@ def analysis_Energy(data,subfolder_path):
                 print(f"Sports mode: {percentage:.2f}%")
             elif mode == 1:
                 print(f"Eco mode: {percentage:.2f}%")
+
+    def calculate_wh_per_km(data_resampled, mode, total_distance):
+        if total_distance < 1:
+            return 0  # Return 0 if distance is less than 1 km
+        mode_data = data_resampled[data_resampled['Mode_Ack [SA: 02]'] == mode]
+        if mode_data.empty:
+            return 0  # Return 0 if there's no data for the given mode
+        watt_h_mode = abs((mode_data['PackCurr [SA: 06]'] * mode_data['PackVol [SA: 06]'] * mode_data['localtime_Diff']).sum()) / 3600
+        print("watt hr per mode-------------------->",watt_h_mode)
+        return abs(watt_h_mode / total_distance)
+
+    # Calculate Wh/km for each mode
+    wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
+    print("Custom mode distance-------------->",distance_per_mode[3])
+    wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+    print("POWER mode distance-------------->",distance_per_mode[2])
+    wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
+    print("ECO mode distance-------------->",distance_per_mode[1])
+
+    # Calculate Wh/km for the entire ride
+    watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600
+    wh_per_km_total = abs(watt_h / total_distance)
+
+    # Print the results
+    print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
+    print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
+    print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
+    print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
     
  
  
@@ -534,7 +565,13 @@ def analysis_Energy(data,subfolder_path):
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
-        "Mode": "",        
+        "Mode": "", 
+        "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
+        "Distance travelled in Custom mode":distance_per_mode[3],
+        "Wh/km in POWER mode": wh_per_km_POWER_mode,
+        "Distance travelled in POWER mode":distance_per_mode[2],
+        "Wh/km in ECO mode": wh_per_km_ECO_mode,
+        "Distance travelled in ECO mode":distance_per_mode[1],       
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Total distance covered (km)": total_distance,
@@ -592,32 +629,7 @@ def analysis_Energy(data,subfolder_path):
                 mode_strings.append(f"Eco mode\n{percentage:.2f}%")
         ppt_data["Mode"] = "\n".join(mode_strings)
  
-    def calculate_wh_per_km(data, mode, distance):
-            if distance < 1:
-                return 0  # Return 0 if distance is less than 1 km
-            mode_data = data[data['Mode_Ack [SA: 02]'] == mode]
-            if mode_data.empty:
-                return 0  # Return 0 if there's no data for the given mode
-            watt_h_mode = abs((mode_data['PackCurr_6'] * mode_data['PackVol_6'] * mode_data['localtime_Diff']).sum()) / 3600
-            return abs(watt_h_mode / distance)
-
-    # Calculate Wh/km for each mode
-    wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
-    print("Custom mode distance-------------->",distance_per_mode[3])
-    wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
-    print("POWER mode distance-------------->",distance_per_mode[2])
-    wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
-    print("ECO mode distance-------------->",distance_per_mode[1])
-
-    # Calculate Wh/km for the entire ride
-    watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600
-    wh_per_km_total = abs(watt_h / total_distance)
-
-    # Print the results
-    print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
-    print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
-    print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
-    print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
+    
 
      # Add calculated parameters to ppt_data
     ppt_data["Idling time percentage"] = idling_percentage
