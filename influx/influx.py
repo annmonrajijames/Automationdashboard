@@ -19,6 +19,9 @@ from docx import Document
 from docx.shared import Inches
 from openpyxl import load_workbook, Workbook
 from matplotlib.widgets import CheckButtons
+from collections import defaultdict
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 window_size =5
 
 
@@ -68,13 +71,14 @@ def adjust_current(row):
     
 def plot_ghps(data,Path,maxCellTemp):
 
-  
-    import plotly.graph_objs as go
-    from plotly.subplots import make_subplots
-
-    # data.set_index('DATETIME', inplace=True)
+    
 
     speed = data['MotorSpeed [SA: 02]'] * 0.0106
+
+    data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
+
+
+
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
@@ -100,6 +104,13 @@ def plot_ghps(data,Path,maxCellTemp):
     graph_path = os.path.join(Path, 'graph.html')
     fig.write_html(graph_path)
 
+
+# Resetting index to default integer index
+    data.reset_index(inplace=True)
+
+    # data.set_index('DATETIME', inplace=False)
+
+
     return graph_path  # Return the path of the saved graph image
 
 # Example usage:
@@ -112,6 +123,7 @@ def plot_ghps(data,Path,maxCellTemp):
 # def analysis_Energy(log_file, km_file):
 def analysis_Energy(data,subfolder_path):
     dayfirst=True
+
     # data = pd.read_csv(log_file)
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
@@ -121,6 +133,17 @@ def analysis_Energy(data,subfolder_path):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     
+    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
+    # Convert to your desired timezone (e.g., 'Asia/Kolkata')
+    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
+    # Format the datetime as string, including milliseconds
+    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
+    # If you need the datetime back as pandas datetime type without timezone info
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+    
+    # data.set_index('DATETIME', inplace=True)
+
     total_duration = 0
     total_distance = 0
     Wh_km = 0
@@ -259,7 +282,8 @@ def analysis_Energy(data,subfolder_path):
  
     # Initialize total distance covered
     total_distance = 0
- 
+    distance_per_mode = defaultdict(float)
+
     # Iterate over rows to compute distance covered between consecutive points
     for i in range(len(data) - 1):
       
@@ -568,6 +592,33 @@ def analysis_Energy(data,subfolder_path):
                 mode_strings.append(f"Eco mode\n{percentage:.2f}%")
         ppt_data["Mode"] = "\n".join(mode_strings)
  
+    def calculate_wh_per_km(data, mode, distance):
+            if distance < 1:
+                return 0  # Return 0 if distance is less than 1 km
+            mode_data = data[data['Mode_Ack [SA: 02]'] == mode]
+            if mode_data.empty:
+                return 0  # Return 0 if there's no data for the given mode
+            watt_h_mode = abs((mode_data['PackCurr_6'] * mode_data['PackVol_6'] * mode_data['localtime_Diff']).sum()) / 3600
+            return abs(watt_h_mode / distance)
+
+    # Calculate Wh/km for each mode
+    wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
+    print("Custom mode distance-------------->",distance_per_mode[3])
+    wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+    print("POWER mode distance-------------->",distance_per_mode[2])
+    wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
+    print("ECO mode distance-------------->",distance_per_mode[1])
+
+    # Calculate Wh/km for the entire ride
+    watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600
+    wh_per_km_total = abs(watt_h / total_distance)
+
+    # Print the results
+    print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
+    print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
+    print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
+    print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
+
      # Add calculated parameters to ppt_data
     ppt_data["Idling time percentage"] = idling_percentage
     ppt_data.update(speed_range_percentages)
@@ -906,14 +957,6 @@ for subfolder_1 in os.listdir(main_folder_path):
                     except Exception as e:
                         print(f"Error processing {log_file}: {e}")
 
-                    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
-                    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
-                    # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-                    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
-                    # Format the datetime as string, including milliseconds
-                    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
-                    # If you need the datetime back as pandas datetime type without timezone info
-                    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
                     total_duration = 0
                     total_distance = 0
