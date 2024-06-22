@@ -94,6 +94,8 @@ def plot_ghps(data,Path):
     fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='orange')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='black')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['PackVol [SA: 06]'], name='PackVoltage', line=dict(color='Green')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
 
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
@@ -504,21 +506,22 @@ def analysis_Energy(log_file):
         # "Date and localtime": str(start_localtime_seconds) + " to " + str(end_localtime_seconds),
         # "INFLUX ID ": InfluxId,
         "Total Time taken for the ride": total_duration,
-        "Actual Ampere-hours (Ah)": actual_ah,
-        "Actual Watt-hours (Wh)- Calculated_UsingFormala": watt_h,
         "Starting SoC (Ah)": starting_soc_Ah,
         "Ending SoC (Ah)": ending_soc_Ah,
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
+        "Mode": "",        
+        "Actual Ampere-hours (Ah)": actual_ah,
+        "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Total distance covered (km)": total_distance,
         "Total energy consumption(WH/KM)": watt_h / total_distance,
-        "Mode": "",
         "Peak Power(kW)": peak_power,
         "Average Power(kW)": average_power,
         "Average_current":abs(average_current),
         "Total Energy Regenerated(kWh)": energy_regenerated,
         "Regenerative Effectiveness(%)": regenerative_effectiveness,
+        "avg_speed (km/hr)":avg_speed,
         "Highest Cell Voltage(V)": max_cell_voltage,
         "Lowest Cell Voltage(V)": min_cell_voltage,
         "Difference in Cell Voltage(V)": voltage_difference,
@@ -542,7 +545,6 @@ def analysis_Energy(log_file):
         "cruising_speed (km/hr)":cruising_speed,
         "Maximum Motor speed (RPM)":Max_motor_rpm,
         "Peak speed (Km/hr)":peak_speed,
-        "avg_speed (km/hr)":avg_speed,
         }
     
     mode_values = data_resampled['Mode_Ack [SA: 02]'].unique()
@@ -748,7 +750,7 @@ def capture_analysis_output(log_file,folder_path):
             # Increment row index
             row_index += 1
 
-        # graph_path= plot_ghps(data,folder_path)
+        # plot_ghps(data,folder_path)
  
         # Add image slide with title and properly scaled image
         slide_layout = prs.slide_layouts[5]
@@ -914,6 +916,7 @@ for subfolder_1 in os.listdir(main_folder_path):
                     
                     total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
                     capture_analysis_output(log_file, subfolder_path)
+                    plot_ghps(data,subfolder_path)
                 else:
                     print("Log file or KM file not found in subfolder:", subfolder)
  
