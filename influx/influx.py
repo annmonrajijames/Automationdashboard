@@ -66,27 +66,17 @@ def adjust_current(row):
 
 
     
-def plot_ghps(data,Path):
+def plot_ghps(data,Path,maxCellTemp):
 
   
     import plotly.graph_objs as go
     from plotly.subplots import make_subplots
 
-    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
-    # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
-    # Format the datetime as string, including milliseconds
-    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
-    # If you need the datetime back as pandas datetime type without timezone info
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-
-    data.set_index('DATETIME', inplace=True)
+    # data.set_index('DATETIME', inplace=True)
 
     speed = data['MotorSpeed [SA: 02]'] * 0.0106
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-
     fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
@@ -96,6 +86,7 @@ def plot_ghps(data,Path):
     fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['PackVol [SA: 06]'], name='PackVoltage', line=dict(color='Green')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data[maxCellTemp], name='MaximumCellTemperature', line=dict(color='orange')), secondary_y=True)
 
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
@@ -119,9 +110,9 @@ def plot_ghps(data,Path):
  
  
 # def analysis_Energy(log_file, km_file):
-def analysis_Energy(log_file):
+def analysis_Energy(data,subfolder_path):
     dayfirst=True
-    data = pd.read_csv(log_file)
+    # data = pd.read_csv(log_file)
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
 
@@ -129,20 +120,6 @@ def analysis_Energy(log_file):
 #Uncomment the following two lines if DateTime is already in IST.
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-
-    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
-    # print(data['DATETIME'])
-
-    # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')
-
-    # Format the datetime as string, including milliseconds
-    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
-
-    # If you need the datetime back as pandas datetime type without timezone info
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-
     
     total_duration = 0
     total_distance = 0
@@ -184,7 +161,24 @@ def analysis_Energy(log_file):
         #Difference between Maximum and Minimum cell Temperature
         CellTempDiff= max_cell_temp-min_cell_temp
         print("Temperature difference: ",CellTempDiff)
- 
+
+    
+    # Maximum cell temperature calculation
+    temp_columns_max = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
+    max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+    max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
+    # print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+
+    # Find which column (cell) has the maximum temperature
+    max_cell_column = data[temp_columns_max].idxmax(axis=1)
+
+    # Print the result
+    print(f"\nOverall maximum value of cell temperature: {max_cell_temp}")
+    print(f"Cell with maximum temperature:------------------------------> {max_cell_column[max_cell_column.idxmax()]}")
+    print(max_cell_column[max_cell_column.idxmax()])
+
+
+    plot_ghps(data,subfolder_path,max_cell_column[max_cell_column.idxmax()])
  
     # Drop rows with missing values in 'SOCAh [SA: 08]' column
     data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
@@ -842,7 +836,6 @@ def mergeExcel(main_folder_path):
         file_names = []
         for root, dirs, files in os.walk(directory):
             for name in dirs:
-                if name.startswith("B"):
                     subdir_path = os.path.join(root, name)
                     for file_name in os.listdir(subdir_path):
                         if file_name.endswith(".xlsx"):
@@ -913,15 +906,24 @@ for subfolder_1 in os.listdir(main_folder_path):
                     except Exception as e:
                         print(f"Error processing {log_file}: {e}")
 
+                    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
+                    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
+                    # Convert to your desired timezone (e.g., 'Asia/Kolkata')
+                    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
+                    # Format the datetime as string, including milliseconds
+                    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
+                    # If you need the datetime back as pandas datetime type without timezone info
+                    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
                     total_duration = 0
                     total_distance = 0
                     Wh_km = 0
                     SOC_consumed = 0
                     mode_values = 0
                     
-                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file)
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
                     capture_analysis_output(log_file, subfolder_path)
-                    plot_ghps(data,subfolder_path)
+                    
                 else:
                     print("Log file or KM file not found in subfolder:", subfolder)
  
