@@ -851,11 +851,85 @@ def capture_analysis_output(log_file,folder_path):
         # Save the Excel workbook
         excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"
         wb.save(excel_output_file)
+        print("excel_output_file",excel_output_file)
         print("Excel generated!")
+
+
+        wb = openpyxl.load_workbook(excel_output_file)
+        ws = wb.active
+
+        # Transpose the data
+        transposed_data = []
+        for col in range(1, ws.max_column + 1):
+            transposed_data.append([ws.cell(row=row, column=col).value for row in range(1, ws.max_row + 1)])
+
+        # Clear existing data in the worksheet
+        ws.delete_rows(1, ws.max_row)
+
+        # Write the transposed data back to the worksheet
+        for row in transposed_data:
+            ws.append(row)
+
+        # Save the modified Excel workbook
+        transposed_excel_output_file = f"{folder_path}/transposed_analysis_{folder_name}.xlsx"
+        wb.save(transposed_excel_output_file)
+        print("Transposed Excel generated:", transposed_excel_output_file)
+
  
+
+        df = pd.read_excel(transposed_excel_output_file, sheet_name="Analysis Results")
+
+        # Define columns to plot, including the new ones
+        columns_to_plot = [
+            'Wh/km in CUSTOM mode',
+            'Distance travelled in Custom mode',
+            'Wh/km in POWER mode',
+            'Distance travelled in POWER mode',
+            'Wh/km in ECO mode',
+            'Distance travelled in ECO mode',
+            'Idling time percentage',
+            'Time spent in 0-10 km/h',
+            'Time spent in 10-20 km/h',
+            'Time spent in 20-30 km/h',
+            'Time spent in 30-40 km/h',
+            'Time spent in 40-50 km/h',
+            'Time spent in 50-60 km/h',
+            'Time spent in 60-70 km/h',
+            'Time spent in 70-80 km/h',
+            'Time spent in 80-90 km/h'
+        ]
+
+        # Define colors for the new columns in pairs or groups
+        colors = ['blue', 'blue', 'red', 'red', 'green', 'green', 'green', 'green', 
+                  'green', 'green', 'green', 'red', 'red', 'red', 'red', 'red']
+
+        # Plotting the data as a bar graph
+        plt.figure(figsize=(15, 10))  # Adjust figure size as needed
+        bars = plt.bar(columns_to_plot, df.iloc[0][columns_to_plot], color=colors)
+
+        # Add labels and title
+        plt.xlabel('Metrics')
+        plt.ylabel('Values')
+        plt.title('Bar Graph of Metrics')
+
+        # Customize x-axis labels rotation
+        plt.xticks(rotation=15, ha='right')
+
+        # Add legend for colors
+        legend_labels = ['CUSTOM mode', 'POWER mode', 'ECO mode']
+        legend_handles = [plt.Rectangle((0,0),1,1, color=color) for color in ['blue', 'red', 'green']]
+        plt.legend(legend_handles, legend_labels)
+
+        # Save the plot as an image (optional)
+        plot_file = f"{folder_path}/metrics_bar_plot.png"
+        plt.savefig(plot_file)
+        print(f"Bar plot saved: {plot_file}")
+
+        # Show the plot (optional)
+        plt.show()
+
     except Exception as e:
         print("Error:", e)
- 
  
  
  
