@@ -428,7 +428,7 @@ def analysis(main_folder_path):
     
         print(start_time,end_time)
     
-        # Calculate the total time taken for the ride``
+        # Calculate the total time taken for the ride
         total_duration = end_time - start_time
         total_hours = total_duration.seconds // 3600
         total_minutes = (total_duration.seconds % 3600) // 60
@@ -437,16 +437,25 @@ def analysis(main_folder_path):
     
         # Calculate the time difference between consecutive rows
         data['Time_Diff'] = data['localtime'].diff().dt.total_seconds().fillna(0)
-    
+
+        print("before")
         # Set the 'localtime' column as the index
         data.set_index('localtime', inplace=True)
-    
+        print("after1")
+
+
+        # Remove duplicate timestamps
+        data = data[~data.index.duplicated(keep='first')]
+
         # Resample the data to have one-second intervals and fill missing values with previous ones
         data_resampled = data.resample('s').ffill()
+        print("after2")
     
         # Calculate the time difference between consecutive rows
         data_resampled['Time_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
-    
+        print("after3")
+
+
         # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
         actual_ah = abs((data_resampled['PackCurr_6'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
         print("Actual Ampere-hours (Ah): {:.2f}".format(actual_ah))
@@ -758,7 +767,7 @@ def analysis(main_folder_path):
             "Byte Beam ID": ByteBeamId,
             "Total time taken for the ride": total_duration,
             "Actual Ampere-hours (Ah)": actual_ah,
-            "Actual Watt-hours (Wh)- Calculated_UsingFormala- P= VI": watt_h,
+            "Actual Watt-hours (Wh)- Calculated_UsingFormala-'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
             "Starting SoC (Ah)": starting_soc_Ah,
             "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
@@ -776,8 +785,8 @@ def analysis(main_folder_path):
             "Distance travelled in ECO mode":distance_per_mode[1],
             "peak_current":peak_current,
             "average_current":abs(average_current),
-            "Peak Power(kW)": peak_power,
-            "Average Power(kW)": average_power,
+            "Peak Power(W)": peak_power,
+            "Average Power(W)": average_power,
             "Total Energy Regenerated(Wh)": energy_regenerated,
             "Regenerative Effectiveness(%)": regenerative_effectiveness,
             "Highest Cell Voltage(V)": max_cell_voltage,
@@ -1124,7 +1133,7 @@ def analysis(main_folder_path):
     
             merged_file_path = os.path.join(directory, 'ANALYSIS.xlsx')
             merged_workbook.save(filename=merged_file_path)
-            print("Merged Excel file is ready")
+            print("Analysis file is ready")
     
         if __name__ == '__main__':
             main(main_folder_path)
