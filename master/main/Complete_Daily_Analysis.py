@@ -540,28 +540,49 @@ def analysis(main_folder_path):
         print ("Total SOC consumed:{:.2f}".format (total_soc_consumed),"%")
     
     
+        ######################################
         # Check if the mode remains constant or changes
-        mode_values = data['Mode_Ack_408094978'].unique()
-    
-        if len(mode_values) == 1:
-            # Mode remains constant throughout the log file
-            mode = mode_values[0]
-            if mode == 3:
-                print("Mode is Custom mode.")
-            elif mode == 2:
-                print("Mode is Power mode.")
-            elif mode == 1:
-                print("Mode is Eco mode.")
-        else:
-            # Mode changes throughout the log file
-            mode_counts = data['Mode_Ack_408094978'].value_counts(normalize=True) * 100
-            for mode, percentage in mode_counts.items():
-                if mode == 3:
-                    print(f"Custom mode: {percentage:.2f}%")
-                elif mode == 2:
-                    print(f"Power mode: {percentage:.2f}%")
-                elif mode == 1:
-                    print(f"Eco mode: {percentage:.2f}%")
+
+        # Assuming 'data' is your DataFrame
+# Remove rows where 'Mode_Ack_408094978' is empty or NaN
+        total_rows=len(data)
+        print("total_rows1---------->",total_rows)
+        data = data[data['Mode_Ack_408094978'].notna() & (data['Mode_Ack_408094978'] != '')]
+        
+
+        # mode_values = data['Mode_Ack_408094978'].unique()
+
+        # if len(mode_values) == 1:
+        #     # Mode remains constant throughout the log file
+        #     mode = mode_values[0]
+        #     if mode == 3:
+        #         print("Custom mode -100%")
+        #     elif mode == 2:
+        #         print("Power mode -100%")
+        #     elif mode == 1:
+        #         print("Eco mode - 100% ")
+        # else:
+        #     # Mode changes throughout the log file
+        #     total_rows = len(data)
+        #     print("total_rows2---------->",total_rows)
+        #     mode_counts = data['Mode_Ack_408094978'].value_counts()
+
+        #     # Exclude mode 0 or empty from total_rows calculation
+        #     total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
+        #     print("total_rows3---------->",total_rows)
+        #     # total_rows -= mode_counts.get(' ', 0)  # Subtract rows where mode is empty string (if any)
+        #     # print("total_rows3---------->",total_rows)
+
+        #     for mode, count in mode_counts.items():
+        #         if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
+        #             percentage = (count / total_rows) * 100
+        #             if mode == 3:
+        #                 print(f"Custom mode: {percentage:.2f}%")
+        #             elif mode == 2:
+        #                 print(f"Power mode: {percentage:.2f}%")
+        #             elif mode == 1:
+        #                 print(f"Eco mode: {percentage:.2f}%")
+
     
     
         ######################################
@@ -833,27 +854,45 @@ def analysis(main_folder_path):
             "Average_speed":avg_speed
             }
     
-        mode_values = data_resampled['Mode_Ack_408094978'].unique()
+          # Check if the mode remains constant or changes
+        mode_values = data['Mode_Ack_408094978'].unique()
+
         if len(mode_values) == 1:
+            # Mode remains constant throughout the log file
             mode = mode_values[0]
             if mode == 3:
-                ppt_data["Mode"] = "Custom mode"
+                print("Mode is Custom mode.")
+                ppt_data["Mode"] = "Custom mode: 100%"
             elif mode == 2:
-                ppt_data["Mode"] = "Power mode"
+                print("Mode is Power mode.")
+                ppt_data["Mode"] = "Power mode: 100%"
             elif mode == 1:
-                ppt_data["Mode"] = "Eco mode"
+                print("Mode is Eco mode.")
+                ppt_data["Mode"] = "Eco mode: 100%"
+                
         else:
             # Mode changes throughout the log file
-            mode_counts = data_resampled['Mode_Ack_408094978'].value_counts(normalize=True) * 100
+            total_rows = len(data)
+            mode_counts = data['Mode_Ack_408094978'].value_counts()
             mode_strings = []  # Initialize list to store mode strings
-            for mode, percentage in mode_counts.items():
-                if mode == 3:
-                    mode_strings.append(f"Custom mode\n{percentage:.2f}%")
-                elif mode == 2:
-                    mode_strings.append(f"Power mode\n{percentage:.2f}%")
-                elif mode == 1:
-                    mode_strings.append(f"Eco mode\n{percentage:.2f}%")
-            ppt_data["Mode"] = "\n".join(mode_strings)
+
+            # Exclude mode 0 or empty from total_rows calculation
+            total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
+            total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
+
+            for mode, count in mode_counts.items():
+                if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
+                    percentage = (count / total_rows) * 100
+                    if mode == 3:
+                        print(f"Custom mode: {percentage:.2f}%")
+                        mode_strings.append(f"Custom mode\n{percentage:.2f}%")
+                    elif mode == 2:
+                        print(f"Power mode: {percentage:.2f}%")
+                        mode_strings.append(f"Power mode\n{percentage:.2f}%")
+                    elif mode == 1:
+                        print(f"Eco mode: {percentage:.2f}%")
+                        mode_strings.append(f"Eco mode\n{percentage:.2f}%")
+                ppt_data["Mode"] = "\n".join(mode_strings)
     
         # Add calculated parameters to ppt_data
         ppt_data["Idling time percentage"] = idling_percentage
