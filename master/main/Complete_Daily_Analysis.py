@@ -223,11 +223,6 @@ def crop_data(main_folder_path):
 
     
 def analysis(main_folder_path):
-    # from mpl_toolkits.basemap import Basemap
-    # from matplotlib.mlab import window_none
-    # import sys
-    # from PIL import Image
-    # from docx import Document
     window_size =5
     
     # List to store DataFrames from each CSV file
@@ -360,7 +355,6 @@ def analysis(main_folder_path):
         total_duration = 0
         total_distance = 0
         Wh_km = 0
-        SOC_consumed = 0
     
         if (data['SOC_8'] > 90).any():
             # Maximum cell temperature calculation
@@ -477,9 +471,6 @@ def analysis(main_folder_path):
         avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
         avg_speed =avg_motor_rpm * 0.01606
 
-        # Initialize total distance covered
-        total_distance = 0
-        distance_per_mode = defaultdict(float)
     
         # Iterate over rows to compute distance covered between consecutive points
         for i in range(len(data) - 1):
@@ -497,74 +488,47 @@ def analysis(main_folder_path):
             # Add distance to total distance covered
             total_distance += distance
 
-              # Add distance to distance per mode
-            mode = data['Mode_Ack_408094978'].iloc[i]
-            distance_per_mode[mode] += distance
-    
-        print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
-
+              
 
 ###############
         data_resampled['Speed_kmh'] = data_resampled['MotorSpeed_340920578'] * 0.016
         
         # Convert Speed to m/s
         data_resampled['Speed_ms'] = data_resampled['Speed_kmh'] / 3.6
-
-        # Initialize variables to keep track of cumulative distance and energy
-        cumulative_distance = 0
-        cumulative_energy = 0
-
-        # # Iterate through each row in the DataFrame
-        # for index, row in data_resampled.iterrows():
-        #     # Only calculate if the motor speed is greater than or equal to 100 RPM
-
-        #     if row['MotorSpeed_340920578'] >= 100:
-        #         # Calculate the distance traveled in this interval
-        #         distance_interval = row['Speed_ms'] * row['Time_Diff']
-        #         energy_interval = -row['PackCurr_6'] * row['PackVol_6'] * row['Time_Diff'] / 3600  # Convert to Wh
-
-        #         # Add the distance and energy traveled in this interval to the cumulative values
-        #         cumulative_distance += distance_interval
-        #         cumulative_energy += energy_interval
-
-
-        #         # Check if the cumulative distance is greater than or equal to 10 meters
-        #         if cumulative_distance >= 10:
-        #             # Calculate Wh/km for every 100 meters
-        #             data_resampled.at[index, 'Wh_per_100m'] = (cumulative_energy / (cumulative_distance / 100)) * 10  # Convert to Wh/km
-
-        #             # Reset cumulative distance and energy for the next 100 meters
-        #             cumulative_distance = 0
-        #             cumulative_energy = 0
-        #         else:
-        #             # Set Wh_per_100m to NaN for intervals less than 100 meters
-        #             data_resampled.at[index, 'Wh_per_100m'] = float('nan')
-        #     else:
-        #         # Set Wh_per_100m to NaN when motor speed is less than 100 RPM
-        #         data_resampled.at[index, 'Wh_per_100m'] = float('nan')
-
-        # print("Cumulative distance------------->",cumulative_distance)
-        # print("Cumulative Energy------------->",cumulative_energy)
-        # # Fill NaN values in 'Wh_per_100m' with 0
-        # # data_resampled['Wh_per_100m'].fillna(0, inplace=True)
+        
+        # Initialize total distance covered
+        distance_per_mode = defaultdict(float)
 
         total_distance_with_RPM = 0
 
         for index, row in data_resampled.iterrows():
             if row['MotorSpeed_340920578'] >= 100:
+
                 distance_interval = row['Speed_ms'] * row['Time_Diff']
+                # Calculate the distance traveled in this interval
                 total_distance_with_RPM += distance_interval
 
+                # Add distance to distance per mode
+                mode = row['Mode_Ack_408094978']
+
+                distance_per_mode[mode] += distance_interval
+                # print("mode------------------------------->",mode)
+                # print("distance_per_mode------------------>",distance_per_mode)
+
+        
         # print(f"Total Distance Covered: {total_distance} meters")
         Distance_with_RPM= total_distance_with_RPM / 1000
         print(f"Distance covered:---------------->: {Distance_with_RPM} Kms")
+
+
+       
 ###############
 
 
     
         ##############   Wh/Km
-        Wh_km = abs(watt_h / total_distance)
-        print("WH/KM:{:.2f}". format (watt_h / total_distance))
+        Wh_km = abs(watt_h / Distance_with_RPM)
+        print("WH/KM:{:.2f}". format (watt_h / Distance_with_RPM))
     
         # Assuming 'data' is your DataFrame with 'SOC_8' column
         initial_soc = data['SOC_8'].iloc[-1]  # Initial SOC percentage
@@ -612,16 +576,16 @@ def analysis(main_folder_path):
             return abs(watt_h_mode / distance)
 
         # Calculate Wh/km for each mode
-        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
-        print("Custom mode distance-------------->",distance_per_mode[3])
-        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
-        print("POWER mode distance-------------->",distance_per_mode[2])
-        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
-        print("ECO mode distance-------------->",distance_per_mode[1])
+        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3]/1000)
+        print("Custom mode distance-------------->",distance_per_mode[3]/1000)
+        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2]/1000)
+        print("POWER mode distance-------------->",distance_per_mode[2]/1000)
+        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1]/1000)
+        print("ECO mode distance-------------->",distance_per_mode[1]/1000)
 
         # Calculate Wh/km for the entire ride
         watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600
-        wh_per_km_total = abs(watt_h / total_distance)
+        wh_per_km_total = abs(watt_h / Distance_with_RPM)
 
         # Print the results
         print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
@@ -821,24 +785,24 @@ def analysis(main_folder_path):
             "Byte Beam ID": ByteBeamId,
             "Total time taken for the ride": total_duration,
             "Actual Ampere-hours (Ah)": actual_ah,
-            "Actual Watt-hours (Wh)- Calculated_UsingFormala-'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
+            "Actual Watt-hours Consumed(Wh)- Calculated_UsingFormala-'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
             "Starting SoC (Ah)": starting_soc_Ah,
             "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "SOH": SOH,
-            "Total distance covered (km)": total_distance,
-            "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
+            "Total distance covered (km)": Distance_with_RPM,
+            "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / Distance_with_RPM,
             "Mode": "",
             "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
-            "Distance travelled in Custom mode":distance_per_mode[3],
+            "Distance travelled in Custom mode":distance_per_mode[3]/1000,
             "Wh/km in POWER mode": wh_per_km_POWER_mode,
-            "Distance travelled in POWER mode":distance_per_mode[2],
+            "Distance travelled in POWER mode":distance_per_mode[2]/1000,
             "Wh/km in ECO mode": wh_per_km_ECO_mode,
-            "Distance travelled in ECO mode":distance_per_mode[1],
-            "peak_current":peak_current,
-            "average_current":abs(average_current),
+            "Distance travelled in ECO mode":distance_per_mode[1]/1000,
+            "Peak_current":peak_current,
+            "Average_current":abs(average_current),
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             "Total Energy Regenerated(Wh)": energy_regenerated,
@@ -866,7 +830,7 @@ def analysis(main_folder_path):
             "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed,
-            "average_speed":avg_speed
+            "Average_speed":avg_speed
             }
     
         mode_values = data_resampled['Mode_Ack_408094978'].unique()
@@ -948,7 +912,7 @@ def analysis(main_folder_path):
         # Calculate the difference in temperature
         temp_difference = max_temp - min_temp
         print("temp_difference: ",temp_difference)
-        print("Total distance: ",total_distance)
+        print("Total distance: ",Distance_with_RPM)
     
         print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
         print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
@@ -982,19 +946,21 @@ def analysis(main_folder_path):
     
         # Convert to a binary mask indicating consecutive occurrences
         abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
+
+        print("analysis function ended")
     
-        return total_duration, total_distance, Wh_km, total_soc_consumed,ppt_data
+        return total_duration, Wh_km, total_soc_consumed,ppt_data
     
-    
-    
+    print("analysis function ended out")
+
     # def capture_analysis_output(log_file, km_file, folder_path):
     def capture_analysis_output(log_file,folder_path):
         try:
+            print("capture_analysis function 1")
             analysis_output = io.StringIO()
             output_file = "analysis_results.docx"
     
             with redirect_stdout(analysis_output):
-                #total_duration, total_distance, Wh_km, total_soc_consumed, ppt_data = analysis_Energy(log_file, km_file)
                 analysis_output = analysis_output.getvalue()
     
             # Extract folder name from folder_path
@@ -1216,7 +1182,7 @@ def analysis(main_folder_path):
                 print(f"Processing file: {log_file_to_use}")  # Debug print to verify files being processed
                 try:
                     data = pd.read_csv(log_file_to_use)  # Read the data
-                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
+                    total_duration, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
                     capture_analysis_output(log_file_to_use, os.path.dirname(log_file_to_use))
 
                     if 'data' in locals():
