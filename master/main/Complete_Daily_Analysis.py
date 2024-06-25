@@ -1,7 +1,24 @@
 import pandas as pd
 from scipy.spatial import KDTree
 import numpy as np
-import os
+import os    
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import mplcursors  # Import mplcursors
+import warnings
+from math import radians, sin, cos, sqrt, atan2
+import io
+import openpyxl
+from contextlib import redirect_stdout
+from pptx.util import Inches, Pt  # Correcting the import statement
+from pptx import Presentation
+from pptx.util import Inches
+from docx.shared import Inches
+from openpyxl import load_workbook, Workbook
+from collections import defaultdict
+
+
+
 
 main_folder_path = r'C:\Users\kamalesh.kb\Bytebeam_Analysis\Automationdashboard\master\main\daily_analysis'
 
@@ -67,13 +84,6 @@ def Merge_log_km(main_folder_path):
 
 def crop_data(main_folder_path):
     print("Crop out the anomaly")
-    import os
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import mplcursors  # Import mplcursors
-    import warnings
-
     # Disable the SettingWithCopyWarning
     warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
@@ -213,26 +223,11 @@ def crop_data(main_folder_path):
 
     
 def analysis(main_folder_path):
-    from matplotlib.mlab import window_none
-    import pandas as pd
-    from math import radians, sin, cos, sqrt, atan2
-    import sys
-    import io
-    import openpyxl
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.basemap import Basemap
-    from PIL import Image
-    import os
-    import matplotlib.dates as mdates
-    import mplcursors  # Import mplcursors
-    from contextlib import redirect_stdout
-    from pptx.util import Inches, Pt  # Correcting the import statement
-    from pptx import Presentation
-    from pptx.util import Inches
-    from docx import Document
-    from docx.shared import Inches
-    from openpyxl import load_workbook, Workbook
-    from collections import defaultdict
+    # from mpl_toolkits.basemap import Basemap
+    # from matplotlib.mlab import window_none
+    # import sys
+    # from PIL import Image
+    # from docx import Document
     window_size =5
     
     # List to store DataFrames from each CSV file
