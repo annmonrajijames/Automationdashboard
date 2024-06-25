@@ -195,6 +195,11 @@ def analysis_Energy(data,subfolder_path):
     # Find which column (cell) has the maximum temperature
     max_cell_column = data[temp_columns_max].idxmax(axis=1)
 
+    print(data[temp_columns_max].dtypes)
+
+
+    # print(max_cell_column)
+
     # Print the result
     print(f"\nOverall maximum value of cell temperature: {max_cell_temp}")
     print(f"Cell with maximum temperature:------------------------------> {max_cell_column[max_cell_column.idxmax()]}")
@@ -576,8 +581,8 @@ def analysis_Energy(data,subfolder_path):
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Total distance covered (km)": total_distance,
         "Energy consumption Rate(WH/KM)": watt_h / total_distance,
-        "Peak Power(kW)": peak_power,
-        "Average Power(kW)": average_power,
+        "Peak Power(W)": peak_power,
+        "Average Power(W)": average_power,
         "Average_current":abs(average_current),
         "Total Energy Regenerated(Wh)": energy_regenerated,
         "Regenerative Effectiveness(%)": regenerative_effectiveness,
@@ -862,14 +867,8 @@ def capture_analysis_output(log_file,folder_path):
         transposed_df = transposed_df[1:]
         
 
-        # Define columns to plot, including the new ones
-        columns_to_plot = [
-            'Wh/km in CUSTOM mode',
-            'Distance travelled in Custom mode',
-            'Wh/km in POWER mode',
-            'Distance travelled in POWER mode',
-            'Wh/km in ECO mode',
-            'Distance travelled in ECO mode',
+             # Define columns to plot for idling and speed metrics
+        idling_speed_columns = [
             'Idling time percentage',
             'Time spent in 0-10 km/h',
             'Time spent in 10-20 km/h',
@@ -882,34 +881,51 @@ def capture_analysis_output(log_file,folder_path):
             'Time spent in 80-90 km/h'
         ]
 
-        # Define colors for the new columns in pairs or groups
-        colors = ['blue', 'blue', 'red', 'red', 'green', 'green', 'green', 'green', 
-                  'green', 'green', 'green', 'red', 'red', 'red', 'red', 'red']
+        # Define columns to plot for Wh/km and distance metrics
+        wh_distance_columns = [
+            'Wh/km in CUSTOM mode',
+            'Distance travelled in Custom mode',
+            'Wh/km in POWER mode',
+            'Distance travelled in POWER mode',
+            'Wh/km in ECO mode',
+            'Distance travelled in ECO mode'
+        ]
 
-        # Plotting the data as a bar graph
-        plt.figure(figsize=(15, 10))  # Adjust figure size as needed
-        bars = plt.bar(columns_to_plot, transposed_df.iloc[0][columns_to_plot], color=colors)
+        # Define colors for idling and speed metrics
+        idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red', 'red']
 
-        # Add labels and title
-        plt.xlabel('Metrics')
-        plt.ylabel('Values')
-        plt.title('Bar Graph of Metrics')
+        # Define colors for Wh/km and distance metrics
+        wh_distance_colors = ['blue', 'blue', 'red', 'red', 'green', 'green']
 
-        # Customize x-axis labels rotation
-        plt.xticks(rotation=15, ha='right')
+        # Function to plot and save idling and speed metrics
+        def plot_idling_speed_metrics():
+            plt.figure(figsize=(15, 6))  # Increase figure size
+            plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            plt.xlabel('Metrics')
+            plt.ylabel('Values')
+            plt.title('Time spent in each speed interval')
+            plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
+            plot_file = f"{folder_path}/idling_speed_bar_plot.png"
+            plt.savefig(plot_file)
+            plt.show()
+            print(f"Idling and speed bar plot saved: {plot_file}")
 
-        # Add legend for colors
-        legend_labels = ['CUSTOM mode', 'POWER mode', 'ECO mode']
-        legend_handles = [plt.Rectangle((0,0),1,1, color=color) for color in ['blue', 'red', 'green']]
-        plt.legend(legend_handles, legend_labels)
+        # Function to plot and save Wh/km and distance metrics
+        def plot_wh_distance_metrics():
+            plt.figure(figsize=(15, 6))  # Increase figure size
+            plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
+            plt.xlabel('Metrics')
+            plt.ylabel('Values')
+            plt.title('Bar Graph of Wh/km and Distance Travelled')
+            plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
+            plot_file = f"{folder_path}/wh_distance_bar_plot.png"
+            plt.savefig(plot_file)
+            plt.show()
+            print(f"Wh/km and distance bar plot saved: {plot_file}")
 
-        # Save the plot as an image (optional)
-        plot_file = f"{folder_path}/Analysis.png"
-        plt.savefig(plot_file)
-        print(f"Bar plot saved: {plot_file}")
-
-        # Show the plot (optional)
-        plt.show()
+        # Generate and save the plots
+        plot_idling_speed_metrics()
+        plot_wh_distance_metrics()
 
     except Exception as e:
         print("Error:", e)
@@ -919,7 +935,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx_21"
+main_folder_path = r"C:\Users\kamalesh.kb\influx_analysis"
 
  
 def mergeExcel(main_folder_path):
@@ -982,6 +998,7 @@ def mergeExcel(main_folder_path):
             print("No data found in merged_data")
  
         merged_file_path = os.path.join(directory, 'Analysis.xlsx')
+        print
         merged_workbook.save(filename=merged_file_path)
         print("Analysis file is ready")
  
