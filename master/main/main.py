@@ -19,11 +19,11 @@ def choose_folder():
         new_folder_entry.config(state=tk.NORMAL)
         # Determine destination folder based on the selected analysis type
         if app_data['selected_option'] == "Daily_Analysis":
-            destination_folder = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis"
-        elif app_data['selected_option'] == "Battery based - ANALYSIS":
-            destination_folder = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_2_Battery_Analysis"
-        elif app_data['selected_option'] == "Error Reasoning":
-            destination_folder = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_3_Error_Causes"
+            destination_folder = r"C:\Users\kamalesh.kb\Bytebeam_Analysis\Automationdashboard\master\main\daily_analysis"
+        # elif app_data['selected_option'] == "Battery based - ANALYSIS":
+        #     destination_folder = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_2_Battery_Analysis"
+        # elif app_data['selected_option'] == "Error Reasoning":
+        #     destination_folder = r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_3_Error_Causes"
         else:
             messagebox.showerror("Error", "No valid analysis type selected for file operations.")
             return
@@ -130,9 +130,9 @@ def clear_directory_contents(directory):
 def cleanup_directories():
     """ Clears all files and folders in specified directories after operations are completed. """
     directories = [
-        r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis",
-        r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_2_Battery_Analysis",
-        r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_3_Error_Causes",
+        r"C:\Users\kamalesh.kb\Bytebeam_Analysis\Automationdashboard\master\main\daily_analysis",
+        # r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_2_Battery_Analysis",
+        # r"C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_3_Error_Causes",
         # r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_1",
         # r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_2",
         # r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\Automationdashboard\OUTPUT_3"

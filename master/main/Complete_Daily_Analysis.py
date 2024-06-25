@@ -3,7 +3,7 @@ from scipy.spatial import KDTree
 import numpy as np
 import os
 
-main_folder_path = r'C:\Users\Kamalesh.kb\Desktop\Lectrix_Data_Analysis_Version_1\Automationdashboard\master\main\menu_1_Daily_Analysis'
+main_folder_path = r'C:\Users\kamalesh.kb\Bytebeam_Analysis\Automationdashboard\master\main\daily_analysis'
 
 def Merge_log_km(main_folder_path):
     print("Merging Log and Km")
@@ -441,7 +441,7 @@ def analysis(main_folder_path):
         print("before")
         # Set the 'localtime' column as the index
         data.set_index('localtime', inplace=True)
-        print("after1")
+        
 
 
         # Remove duplicate timestamps
@@ -449,11 +449,11 @@ def analysis(main_folder_path):
 
         # Resample the data to have one-second intervals and fill missing values with previous ones
         data_resampled = data.resample('s').ffill()
-        print("after2")
+        
     
         # Calculate the time difference between consecutive rows
         data_resampled['Time_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
-        print("after3")
+        
 
 
         # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
@@ -507,6 +507,65 @@ def analysis(main_folder_path):
             distance_per_mode[mode] += distance
     
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
+
+
+###############
+        data_resampled['Speed_kmh'] = data_resampled['MotorSpeed_340920578'] * 0.016
+        
+        # Convert Speed to m/s
+        data_resampled['Speed_ms'] = data_resampled['Speed_kmh'] / 3.6
+
+        # Initialize variables to keep track of cumulative distance and energy
+        cumulative_distance = 0
+        cumulative_energy = 0
+
+        # # Iterate through each row in the DataFrame
+        # for index, row in data_resampled.iterrows():
+        #     # Only calculate if the motor speed is greater than or equal to 100 RPM
+
+        #     if row['MotorSpeed_340920578'] >= 100:
+        #         # Calculate the distance traveled in this interval
+        #         distance_interval = row['Speed_ms'] * row['Time_Diff']
+        #         energy_interval = -row['PackCurr_6'] * row['PackVol_6'] * row['Time_Diff'] / 3600  # Convert to Wh
+
+        #         # Add the distance and energy traveled in this interval to the cumulative values
+        #         cumulative_distance += distance_interval
+        #         cumulative_energy += energy_interval
+
+
+        #         # Check if the cumulative distance is greater than or equal to 10 meters
+        #         if cumulative_distance >= 10:
+        #             # Calculate Wh/km for every 100 meters
+        #             data_resampled.at[index, 'Wh_per_100m'] = (cumulative_energy / (cumulative_distance / 100)) * 10  # Convert to Wh/km
+
+        #             # Reset cumulative distance and energy for the next 100 meters
+        #             cumulative_distance = 0
+        #             cumulative_energy = 0
+        #         else:
+        #             # Set Wh_per_100m to NaN for intervals less than 100 meters
+        #             data_resampled.at[index, 'Wh_per_100m'] = float('nan')
+        #     else:
+        #         # Set Wh_per_100m to NaN when motor speed is less than 100 RPM
+        #         data_resampled.at[index, 'Wh_per_100m'] = float('nan')
+
+        # print("Cumulative distance------------->",cumulative_distance)
+        # print("Cumulative Energy------------->",cumulative_energy)
+        # # Fill NaN values in 'Wh_per_100m' with 0
+        # # data_resampled['Wh_per_100m'].fillna(0, inplace=True)
+
+        total_distance_with_RPM = 0
+
+        for index, row in data_resampled.iterrows():
+            if row['MotorSpeed_340920578'] >= 100:
+                distance_interval = row['Speed_ms'] * row['Time_Diff']
+                total_distance_with_RPM += distance_interval
+
+        # print(f"Total Distance Covered: {total_distance} meters")
+        Distance_with_RPM= total_distance_with_RPM / 1000
+        print(f"Distance covered:---------------->: {Distance_with_RPM} Kms")
+###############
+
+
     
         ##############   Wh/Km
         Wh_km = abs(watt_h / total_distance)
