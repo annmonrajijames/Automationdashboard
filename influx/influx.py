@@ -85,8 +85,8 @@ def plot_ghps(data,Path,maxCellTemp):
     fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='orange')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='black')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='Black')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='Red')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['PackVol [SA: 06]'], name='PackVoltage', line=dict(color='Green')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
@@ -94,6 +94,7 @@ def plot_ghps(data,Path,maxCellTemp):
     fig.add_trace(go.Scatter(x=data.index, y=data['FetTemp [SA: 08]'], name='BMS temperature (FET)', line=dict(color='orange')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['MCU_Temperature [SA: 03]'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
 
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
@@ -243,6 +244,8 @@ def analysis_Energy(data,subfolder_path):
 
 
     ##################
+    data['Power'] = data['PackCurr [SA: 06]'] * data['PackVol [SA: 06]']
+
 
     plot_ghps(data,subfolder_path,max_column)
  
@@ -283,7 +286,7 @@ def analysis_Energy(data,subfolder_path):
  
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
-    print(data['localtime_Diff'])
+    # print(data['localtime_Diff'])
  
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
@@ -954,11 +957,19 @@ def capture_analysis_output(log_file,folder_path):
         # Function to plot and save idling and speed metrics
         def plot_idling_speed_metrics():
             plt.figure(figsize=(15, 6))  # Increase figure size
-            plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            bars = plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            # plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
             plt.xlabel('Metrics')
             plt.ylabel('Values')
             plt.title('Time_each speed interval')
             plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
+
+
+             # Annotate bars with values
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
+
             plot_file = f"{folder_path}/idling_speed_bar_plot.png"
             plt.savefig(plot_file)
             plt.show()
@@ -967,11 +978,19 @@ def capture_analysis_output(log_file,folder_path):
         # Function to plot and save Wh/km and distance metrics
         def plot_wh_distance_metrics():
             plt.figure(figsize=(15, 6))  # Increase figure size
-            plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
+            bars = plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            # plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
             plt.xlabel('Metrics')
             plt.ylabel('Values')
             plt.title('Bar Graph of Wh/km and Distance Travelled')
             plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
+
+
+            # Annotate bars with values
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
+
             plot_file = f"{folder_path}/wh_distance_bar_plot.png"
             plt.savefig(plot_file)
             plt.show()
