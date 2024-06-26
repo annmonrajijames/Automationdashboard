@@ -91,6 +91,9 @@ def plot_ghps(data,Path,maxCellTemp):
     fig.add_trace(go.Scatter(x=data.index, y=data['PackVol [SA: 06]'], name='PackVoltage', line=dict(color='Green')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data[maxCellTemp], name='MaximumCellTemperature', line=dict(color='orange')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['FetTemp [SA: 08]'], name='BMS temperature (FET)', line=dict(color='orange')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['MCU_Temperature [SA: 03]'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
 
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
@@ -463,15 +466,15 @@ def analysis_Energy(data,subfolder_path):
     idling_percentage = (idling_localtime / len(data)) * 100
     print("Idling time percentage:", idling_percentage)
  
-    # Calculate Time spent in specific speed ranges
+    # Calculate Time_specific speed ranges
     speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
     speed_range_percentages = {}
  
     for range_ in speed_ranges:
         speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.016 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.016 < range_[1])).sum()
         speed_range_percentage = (speed_range_localtime / len(data)) * 100
-        speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
-        print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
+        speed_range_percentages[f"Time_{range_[0]}-{range_[1]} km/h(%)"] = speed_range_percentage
+        print(f"Time_{range_[0]}-{range_[1]} km/h(%): {speed_range_percentage:.2f}%")
  
            
     # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
@@ -614,11 +617,11 @@ def analysis_Energy(data,subfolder_path):
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Mode": "", 
         "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
-        "Distance travelled in Custom mode":distance_per_mode[3],
+        "Distance_Custom mode":distance_per_mode[3],
         "Wh/km in POWER mode": wh_per_km_POWER_mode,
-        "Distance travelled in POWER mode":distance_per_mode[2],
+        "Distance_POWER mode":distance_per_mode[2],
         "Wh/km in ECO mode": wh_per_km_ECO_mode,
-        "Distance travelled in ECO mode":distance_per_mode[1],       
+        "Distance_ECO mode":distance_per_mode[1],       
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Total distance covered (km)": total_distance,
@@ -921,29 +924,29 @@ def capture_analysis_output(log_file,folder_path):
              # Define columns to plot for idling and speed metrics
         idling_speed_columns = [
             'Idling time percentage',
-            'Time spent in 0-10 km/h',
-            'Time spent in 10-20 km/h',
-            'Time spent in 20-30 km/h',
-            'Time spent in 30-40 km/h',
-            'Time spent in 40-50 km/h',
-            'Time spent in 50-60 km/h',
-            'Time spent in 60-70 km/h',
-            'Time spent in 70-80 km/h',
-            'Time spent in 80-90 km/h'
+            'Time_0-10 km/h(%)',
+            'Time_10-20 km/h(%)',
+            'Time_20-30 km/h(%)',
+            'Time_30-40 km/h(%)',
+            'Time_40-50 km/h(%)',
+            'Time_50-60 km/h(%)',
+            'Time_60-70 km/h(%)',
+            'Time_70-80 km/h(%)',
+            # 'Time_80-90 km/h'
         ]
 
         # Define columns to plot for Wh/km and distance metrics
         wh_distance_columns = [
             'Wh/km in CUSTOM mode',
-            'Distance travelled in Custom mode',
+            'Distance_Custom mode',
             'Wh/km in POWER mode',
-            'Distance travelled in POWER mode',
+            'Distance_POWER mode',
             'Wh/km in ECO mode',
-            'Distance travelled in ECO mode'
+            'Distance_ECO mode'
         ]
 
         # Define colors for idling and speed metrics
-        idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red', 'red']
+        idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red']
 
         # Define colors for Wh/km and distance metrics
         wh_distance_colors = ['blue', 'blue', 'red', 'red', 'green', 'green']
@@ -954,7 +957,7 @@ def capture_analysis_output(log_file,folder_path):
             plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
             plt.xlabel('Metrics')
             plt.ylabel('Values')
-            plt.title('Time spent in each speed interval')
+            plt.title('Time_each speed interval')
             plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
             plot_file = f"{folder_path}/idling_speed_bar_plot.png"
             plt.savefig(plot_file)
