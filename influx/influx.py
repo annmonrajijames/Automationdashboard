@@ -362,28 +362,32 @@ def analysis_Energy(data,subfolder_path):
     print ("Total SOC consumed:{:.2f}".format (total_soc_consumed),"%")
  
  
-    # Check if the mode remains constant or changes
-    mode_values = data['Mode_Ack [SA: 02]'].unique()
+    # # Check if the mode remains constant or changes
+    # mode_values = data['Mode_Ack [SA: 02]'].unique()
  
-    if len(mode_values) == 1:
-        # Mode remains constant throughout the 
-        mode = mode_values[0]
-        if mode == 3:
-            print("Mode is Custom mode.")
-        elif mode == 2:
-            print("Mode is Sports mode.")
-        elif mode == 1:
-            print("Mode is Eco mode.")
-    else:
-        # Mode changes throughout the log file
-        mode_counts = data['Mode_Ack [SA: 02]'].value_counts(normalize=True) * 100
-        for mode, percentage in mode_counts.items():
-            if mode == 3:
-                print(f"Custom mode: {percentage:.2f}%")
-            elif mode == 2:
-                print(f"Sports mode: {percentage:.2f}%")
-            elif mode == 1:
-                print(f"Eco mode: {percentage:.2f}%")
+    total_rows=len(data)
+    print("total_rows1---------->",total_rows)
+    data = data[data['Mode_Ack [SA: 02]'].notna() & (data['Mode_Ack [SA: 02]'] != '')]
+
+    # if len(mode_values) == 1:
+    #     # Mode remains constant throughout the 
+    #     mode = mode_values[0]
+    #     if mode == 3:
+    #         print("Mode is Custom mode.")
+    #     elif mode == 2:
+    #         print("Mode is Sports mode.")
+    #     elif mode == 1:
+    #         print("Mode is Eco mode.")
+    # else:
+    #     # Mode changes throughout the log file
+    #     mode_counts = data['Mode_Ack [SA: 02]'].value_counts(normalize=True) * 100
+    #     for mode, percentage in mode_counts.items():
+    #         if mode == 3:
+    #             print(f"Custom mode: {percentage:.2f}%")
+    #         elif mode == 2:
+    #             print(f"Sports mode: {percentage:.2f}%")
+    #         elif mode == 1:
+    #             print(f"Eco mode: {percentage:.2f}%")
 
     def calculate_wh_per_km(data_resampled, mode, total_distance):
         if total_distance < 1:
@@ -651,25 +655,34 @@ def analysis_Energy(data,subfolder_path):
         }
     
     mode_values = data_resampled['Mode_Ack [SA: 02]'].unique()
-    if len(mode_values) == 1:
+    if len(mode_values) == 1:   # Mode remains constant throughout the log file
         mode = mode_values[0]
         if mode == 3:
-            ppt_data["Mode"] = "Custom mode"
+            ppt_data["Mode"] = "Custom mode: 100%"
         elif mode == 2:
-            ppt_data["Mode"] = "Sports mode"
+            ppt_data["Mode"] = "Sports mode: 100%"
         elif mode == 1:
-            ppt_data["Mode"] = "Eco mode"
+            ppt_data["Mode"] = "Eco mode: 100%"
     else:
         # Mode changes throughout the log file
-        mode_counts = data_resampled['Mode_Ack [SA: 02]'].value_counts(normalize=True) * 100
+        # mode_counts = data_resampled['Mode_Ack [SA: 02]'].value_counts(normalize=True) * 100
+        total_rows = len(data)
+        mode_counts = data['Mode_Ack [SA: 02]'].value_counts()
         mode_strings = []  # Initialize list to store mode strings
-        for mode, percentage in mode_counts.items():
-            if mode == 3:
-                mode_strings.append(f"Custom mode\n{percentage:.2f}%")
-            elif mode == 2:
-                mode_strings.append(f"Sports mode\n{percentage:.2f}%")
-            elif mode == 1:
-                mode_strings.append(f"Eco mode\n{percentage:.2f}%")
+        
+         # Exclude mode 0 or empty from total_rows calculation
+        total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
+        total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
+
+        for mode,count, percentage in mode_counts.items():
+            if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
+                percentage = (count / total_rows) * 100
+                if mode == 3:
+                    mode_strings.append(f"Custom mode\n{percentage:.2f}%")
+                elif mode == 2:
+                    mode_strings.append(f"Sports mode\n{percentage:.2f}%")
+                elif mode == 1:
+                    mode_strings.append(f"Eco mode\n{percentage:.2f}%")
         ppt_data["Mode"] = "\n".join(mode_strings)
  
     
