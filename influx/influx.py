@@ -186,27 +186,62 @@ def analysis_Energy(data,subfolder_path):
         print("Temperature difference: ",CellTempDiff)
 
     
-    # Maximum cell temperature calculation
-    temp_columns_max = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
-    max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
-    max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
-    # print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+    # # Maximum cell temperature calculation
+    # temp_columns_max = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
+    # max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+    # max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
+    # # print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
 
-    # Find which column (cell) has the maximum temperature
-    max_cell_column = data[temp_columns_max].idxmax(axis=1)
+    # # Find which column (cell) has the maximum temperature
+    # max_cell_column = data[temp_columns_max].idxmax(axis=1)
 
-    print(data[temp_columns_max].dtypes)
-
-
-    # print(max_cell_column)
-
-    # Print the result
-    print(f"\nOverall maximum value of cell temperature: {max_cell_temp}")
-    print(f"Cell with maximum temperature:------------------------------> {max_cell_column[max_cell_column.idxmax()]}")
-    print(max_cell_column[max_cell_column.idxmax()])
+    # print(data[temp_columns_max].dtypes)
 
 
-    plot_ghps(data,subfolder_path,max_cell_column[max_cell_column.idxmax()])
+    # # print(max_cell_column)
+
+    # # Print the result
+    # print(f"\nOverall maximum value of cell temperature: {max_cell_temp}")
+    # print(f"Cell with maximum temperature:------------------------------> {max_cell_column[max_cell_column.idxmax()]}")
+    # print(max_cell_column[max_cell_column.idxmax()])
+
+    # Assuming `data` is your DataFrame containing temperature columns
+
+
+    ##################
+    # Assuming `data` is your DataFrame containing temperature columns
+
+    # Define the temperature columns
+    temp_columns = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
+
+    # Find the maximum temperature value among columns
+    max_values = data[temp_columns].max()
+
+    # Determine which column(s) have the maximum temperature
+    max_columns_multiple = max_values[max_values == max_values.max()].index
+
+    # If there are multiple columns with the same maximum temperature,
+    # choose the column with the highest occurrence
+    if len(max_columns_multiple) > 1:
+        max_occurrence_counts = data[max_columns_multiple].apply(lambda x: x.value_counts().get(max_values.max(), 0))
+        max_column = max_occurrence_counts.idxmax()
+    else:
+        max_column = max_columns_multiple[0]
+
+    # Determine the maximum temperature occurrence in the selected column
+    max_occurrence = data[max_column].value_counts().idxmax()
+
+    # Print the results
+    print(f"Overall maximum value of cell temperature: {max_values.max()}")
+    print(f"Column(s) with maximum temperature: {max_columns_multiple}")
+    print(f"Column with the highest occurrence: {max_column}")
+    print(f"Maximum occurrence temperature: {max_occurrence}")
+
+
+
+    ##################
+
+    plot_ghps(data,subfolder_path,max_column)
  
     # Drop rows with missing values in 'SOCAh [SA: 08]' column
     data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
@@ -252,12 +287,15 @@ def analysis_Energy(data,subfolder_path):
 
     # duplicates = data.index[data.index.duplicated()]
     # print("Duplicate Index Values:", duplicates)
-
-    data = data.groupby(data.index).mean()  # Example: Taking the mean of duplicate values at the same timestamp
-
+    
+    # data = data.groupby(data.index).mean()  # Example: Taking the mean of duplicate values at the same timestamp
+    
+    # Keep the first value in each group of duplicates
+    data = data.groupby(data.index).first()
  
     #Resample the data to have one-second intervals and fill missing values with previous ones
     data_resampled = data.resample('s').ffill()
+    
  
     # Calculate the localtime difference between consecutive rows
     data_resampled['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
@@ -935,7 +973,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\analysis\Jun_21"
+main_folder_path = r"C:\Users\kamalesh.kb\influx\25_6"
 
  
 def mergeExcel(main_folder_path):
