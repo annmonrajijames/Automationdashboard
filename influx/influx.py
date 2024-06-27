@@ -95,7 +95,8 @@ def plot_ghps(data,Path,maxCellTemp):
     fig.add_trace(go.Scatter(x=data.index, y=data['FetTemp [SA: 08]'], name='BMS temperature (FET)', line=dict(color='orange')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['MCU_Temperature [SA: 03]'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
+    # fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['DeltaCellVoltage'], name='DeltaCellVoltage', line=dict(color='Purple')), secondary_y=True)
 
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
@@ -106,7 +107,7 @@ def plot_ghps(data,Path,maxCellTemp):
 
     # Save the plot as an HTML file
     os.makedirs(Path, exist_ok=True)
-    graph_path = os.path.join(Path, 'Analysis.html')
+    graph_path = os.path.join(Path, 'Log.html')
     fig.write_html(graph_path)
 
 
@@ -246,6 +247,28 @@ def analysis_Energy(data,subfolder_path):
 
     ##################
     data['Power'] = data['PackCurr [SA: 06]'] * data['PackVol [SA: 06]']
+
+    # Specify the columns of interest
+    columns_of_interest = [
+        'CellVol01 [SA: 01]', 'CellVol02 [SA: 01]', 'CellVol03 [SA: 01]', 'CellVol04 [SA: 01]',
+        'CellVol05 [SA: 02]', 'CellVol06 [SA: 02]', 'CellVol07 [SA: 02]', 'CellVol08 [SA: 02]',
+        'CellVol09 [SA: 03]', 'CellVol10 [SA: 03]', 'CellVol11 [SA: 03]', 'CellVol12 [SA: 03]',
+        'CellVol13 [SA: 04]', 'CellVol14 [SA: 04]', 'CellVol15 [SA: 04]', 'CellVol16 [SA: 04]'
+    ]
+
+    # Create an empty list to store computed differences
+    differences = []
+
+    # Iterate through each row and compute max, min, and their difference for each row
+    for index, row in data[columns_of_interest].iterrows():
+        max_value = row.max()
+        min_value = row.min()
+        difference = max_value - min_value
+        
+        differences.append(difference)  # Append the computed difference to the list
+
+    # Add the differences list as a new column 'CellDifference' in the DataFrame
+    data['DeltaCellVoltage'] = differences
 
 
     plot_ghps(data,subfolder_path,max_column)
@@ -984,7 +1007,7 @@ def capture_analysis_output(log_file,folder_path):
 
             # Insert plots into the Excel worksheet
             img_idling_speed = Image(plot_file)
-            ws.add_image(img_idling_speed, 'F2')  # Adjust the cell location as needed
+            ws.add_image(img_idling_speed, 'F35')  # Adjust the cell location as needed
 
         # Function to plot and save Wh/km and distance metrics
         def plot_wh_distance_metrics():
@@ -1009,7 +1032,7 @@ def capture_analysis_output(log_file,folder_path):
 
             # Insert plots into the Excel worksheet
             img_wh_distance = Image(f"{folder_path}/wh_distance_bar_plot.png")
-            ws.add_image(img_wh_distance, 'F35')  # Adjust the cell location as needed
+            ws.add_image(img_wh_distance, 'F2')  # Adjust the cell location as needed
 
 
         # Generate and save the plots
@@ -1031,7 +1054,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx_a1"
+main_folder_path = r"C:\Users\kamalesh.kb\influx_a"
 
  
 def mergeExcel(main_folder_path):
