@@ -3,23 +3,22 @@ from tkinter import filedialog
 import subprocess
 import os
 
-def open_file():
-    global file_path
-    file_path = filedialog.askopenfilename()
+def open_folder():
+    global folder_path
+    folder_path = filedialog.askdirectory()
 
 def run_script():
     script = file_var.get()
-    # Get the directory where GUI2.py is located
     dir_path = os.path.dirname(os.path.realpath(__file__))
     script_path = os.path.join(dir_path, script)
-    if script and file_path:
-        subprocess.run(['python', script_path, file_path], check=True)
+    if script and folder_path:
+        subprocess.run(['python', script_path, folder_path], check=True)
 
 app = tk.Tk()
 app.title("Run Python Scripts")
 
-# Global variable to store the file path
-file_path = ""
+# Global variable to store the folder path
+folder_path = ""
 
 # Dropdown for selecting the Python script
 file_var = tk.StringVar(app)
@@ -32,9 +31,9 @@ scripts = {
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.pack(pady=10)
 
-# Button to choose the file
-file_button = tk.Button(app, text="Choose File", command=open_file)
-file_button.pack(pady=10)
+# Button to choose the folder
+folder_button = tk.Button(app, text="Choose Folder", command=open_folder)
+folder_button.pack(pady=10)
 
 # Button to run the script
 run_button = tk.Button(app, text="Run", command=run_script)
