@@ -1,23 +1,13 @@
-import pandas as pd
+import sys
 
-def calculate_mode_percentage(file_path):
-    # Load the CSV file
-    data = pd.read_csv(file_path)
-    
-    # Ensure the 'Mode_Ack_408094978' column is present
-    if 'Mode_Ack_408094978' not in data.columns:
-        print("Column 'Mode_Ack_408094978' is missing from the data.")
-        return
-    
-    # Count the occurrences of each mode and calculate the percentage
-    mode_counts = data['Mode_Ack_408094978'].value_counts(normalize=True) * 100
-    
-    # Print the results
-    for mode, percentage in mode_counts.items():
-        print(f"Mode {mode}: {percentage:.2f}%")
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python test.py <input_file_path>")
+        sys.exit(1)
 
-# Define the path to the CSV file
-file_path = r"C:\Lectrix_company\work\Git_Projects\Automationdashboard\master\accessories\Mar-23\Battery_4\log_withoutanomaly.csv"
+    input_file_path = sys.argv[1]
+    print(f"Processing file: {input_file_path}")
+    # Add your code here to handle the input file
 
-# Call the function
-calculate_mode_percentage(file_path)
+if __name__ == "__main__":
+    main()
