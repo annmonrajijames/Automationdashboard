@@ -660,7 +660,8 @@ def analysis_Energy(data,subfolder_path):
         "Peak speed (Km/hr)":peak_speed,
         }
     
-    mode_values = data_resampled['Mode_Ack [SA: 02]'].unique()
+    mode_values = data_resampled['Mode_Ack [SA: 02]'].unique() #If Mode_Ack [SA: 02] has values [1, 2, 2, 3, 1], unique() will return array([1, 2, 3]).
+
     if len(mode_values) == 1:   # Mode remains constant throughout the log file
         mode = mode_values[0]
         if mode == 3:
@@ -680,7 +681,7 @@ def analysis_Energy(data,subfolder_path):
         total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
         total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
 
-        for mode,count, percentage in mode_counts.items():
+        for mode,count in mode_counts.items():
             if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
                 percentage = (count / total_rows) * 100
                 if mode == 3:
@@ -1008,7 +1009,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx\25_6"
+main_folder_path = r"C:\Users\kamalesh.kb\influx\26_6"
 
  
 def mergeExcel(main_folder_path):
