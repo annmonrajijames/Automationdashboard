@@ -18,6 +18,7 @@ from pptx.util import Inches
 from docx import Document
 from docx.shared import Inches
 from openpyxl import load_workbook, Workbook
+from openpyxl.drawing.image import Image
 from matplotlib.widgets import CheckButtons
 from collections import defaultdict
 import plotly.graph_objs as go
@@ -137,14 +138,14 @@ def analysis_Energy(data,subfolder_path):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     
-    # Convert Unix epoch time to datetime, assuming the original timezone is UTC
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
-    # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-    data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
-    # Format the datetime as string, including milliseconds
-    data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
-    # If you need the datetime back as pandas datetime type without timezone info
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+    # # Convert Unix epoch time to datetime, assuming the original timezone is UTC
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
+    # # Convert to your desired timezone (e.g., 'Asia/Kolkata')
+    # data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
+    # # Format the datetime as string, including milliseconds
+    # data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
+    # # If you need the datetime back as pandas datetime type without timezone info
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     
     # data.set_index('DATETIME', inplace=True)
 
@@ -260,24 +261,29 @@ def analysis_Energy(data,subfolder_path):
     # # Calculate the start localtime and end localtime with formatting
     # start_localtime_seconds = data['DATETIME'].min().strflocaltime('%d/%m/%Y %H:%M:%S')
     # end_localtime_seconds = data['DATETIME'].max().strflocaltime('%d/%m/%Y %H:%M:%S')
-    data['DATETIME'] = data['DATETIME'].astype(str)
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d %H:%M:%S')
-
-
+    # data['DATETIME'] = data['DATETIME'].astype(str)
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d  %H:%M:%S')
+      
+    # Convert the DATETIME column to datetime objects
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     # Find the minimum and maximum datetime
     start_localtime = data['DATETIME'].min()
     end_localtime = data['DATETIME'].max()
 
-    # Format the start and end times
-    start_localtime_formatted = start_localtime.strftime('%d/%m/%Y %H:%M:%S')
-    end_localtime_formatted = end_localtime.strftime('%d/%m/%Y %H:%M:%S')
+    print(start_localtime)
+    print(end_localtime)
 
-    print(f"Start Local Time: {start_localtime_formatted}")
-    print(f"End Local Time: {end_localtime_formatted}")
-    ############
+    # # Format the start and end times
+    # start_localtime_formatted = start_localtime.strftime('%d/%m/%Y %H:%M:%S')
+    # end_localtime_formatted = end_localtime.strftime('%d/%m/%Y %H:%M:%S')
+
+    # print(f"Start Local Time: {start_localtime_formatted}")
+    # print(f"End Local Time: {end_localtime_formatted}")
+    # ############
     
 
     # Calculate the total localtime taken for the ride``
+    print("---------------")
     total_duration = end_localtime - start_localtime
     total_hours = total_duration.seconds // 3600
     total_minutes = (total_duration.seconds % 3600) // 60
@@ -381,7 +387,7 @@ def analysis_Energy(data,subfolder_path):
     #     if mode == 3:
     #         print("Mode is Custom mode.")
     #     elif mode == 2:
-    #         print("Mode is Sports mode.")
+    #         print("Mode is Power mode.")
     #     elif mode == 1:
     #         print("Mode is Eco mode.")
     # else:
@@ -391,7 +397,7 @@ def analysis_Energy(data,subfolder_path):
     #         if mode == 3:
     #             print(f"Custom mode: {percentage:.2f}%")
     #         elif mode == 2:
-    #             print(f"Sports mode: {percentage:.2f}%")
+    #             print(f"Power mode: {percentage:.2f}%")
     #         elif mode == 1:
     #             print(f"Eco mode: {percentage:.2f}%")
 
@@ -610,7 +616,7 @@ def analysis_Energy(data,subfolder_path):
     # Add these variables and logic to ppt_data
    
     ppt_data = {
-        "Date and localtime": str(start_localtime_formatted) + " to " + str(end_localtime_formatted),
+        "Date and localtime": str(start_localtime) + " to " + str(end_localtime),
         # "INFLUX ID ": InfluxId,
         "Total Time taken for the ride": total_duration,
         "Starting SoC (Ah)": starting_soc_Ah,
@@ -618,6 +624,7 @@ def analysis_Energy(data,subfolder_path):
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
+        "Energy consumption Rate(WH/KM)": watt_h / total_distance,
         "Mode": "", 
         "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
         "Distance_Custom mode":distance_per_mode[3],
@@ -628,7 +635,6 @@ def analysis_Energy(data,subfolder_path):
         "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Total distance covered (km)": total_distance,
-        "Energy consumption Rate(WH/KM)": watt_h / total_distance,
         "Peak Power(W)": peak_power,
         "Average Power(W)": average_power,
         "Average_current":abs(average_current),
@@ -667,7 +673,7 @@ def analysis_Energy(data,subfolder_path):
         if mode == 3:
             ppt_data["Mode"] = "Custom mode: 100%"
         elif mode == 2:
-            ppt_data["Mode"] = "Sports mode: 100%"
+            ppt_data["Mode"] = "Power mode: 100%"
         elif mode == 1:
             ppt_data["Mode"] = "Eco mode: 100%"
     else:
@@ -687,7 +693,7 @@ def analysis_Energy(data,subfolder_path):
                 if mode == 3:
                     mode_strings.append(f"Custom mode\n{percentage:.2f}%")
                 elif mode == 2:
-                    mode_strings.append(f"Sports mode\n{percentage:.2f}%")
+                    mode_strings.append(f"Power mode\n{percentage:.2f}%")
                 elif mode == 1:
                     mode_strings.append(f"Eco mode\n{percentage:.2f}%")
         ppt_data["Mode"] = "\n".join(mode_strings)
@@ -1009,7 +1015,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx"
+main_folder_path = r"C:\Users\kamalesh.kb\influx_a1"
 
  
 def mergeExcel(main_folder_path):
@@ -1072,7 +1078,6 @@ def mergeExcel(main_folder_path):
             print("No data found in merged_data")
  
         merged_file_path = os.path.join(directory, 'Analysis.xlsx')
-        print
         merged_workbook.save(filename=merged_file_path)
         print("Analysis file is ready")
  
