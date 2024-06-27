@@ -610,7 +610,7 @@ def analysis_Energy(data,subfolder_path):
     # Add these variables and logic to ppt_data
    
     ppt_data = {
-        # "Date and localtime": str(start_localtime_seconds) + " to " + str(end_localtime_seconds),
+        "Date and localtime": str(start_localtime_formatted) + " to " + str(end_localtime_formatted),
         # "INFLUX ID ": InfluxId,
         "Total Time taken for the ride": total_duration,
         "Starting SoC (Ah)": starting_soc_Ah,
@@ -1009,7 +1009,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx\26_6"
+main_folder_path = r"C:\Users\kamalesh.kb\influx"
 
  
 def mergeExcel(main_folder_path):
@@ -1082,49 +1082,49 @@ def mergeExcel(main_folder_path):
 
 
 
-# # Iterate over immediate subfolders of main_folder_path
-# for subfolder_1 in os.listdir(main_folder_path):
-#     subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+# Iterate over immediate subfolders of main_folder_path
+for subfolder_1 in os.listdir(main_folder_path):
+    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
     
-#     # Check if subfolder_1 is a directory
-#     if os.path.isdir(subfolder_1_path):
+    # Check if subfolder_1 is a directory
+    if os.path.isdir(subfolder_1_path):
         
-# Iterate over subfolders within subfolder_1
-for subfolder in os.listdir(main_folder_path):
-    subfolder_path = os.path.join(main_folder_path, subfolder)
-    
-    # Check if subfolder starts with "Battery" and is a directory
-    if os.path.isdir(subfolder_path):                
-        log_file = None
-        log_found = False
-        
-        # Iterate through files in the subfolder
-        for file in os.listdir(subfolder_path):
-            if file.startswith('log.') and file.endswith('.csv'):
-                log_file = os.path.join(subfolder_path, file)
-                log_found = True
-                break  # Stop searching once the log file is found
-        
-        # Process the log file if found
-        if log_found:
-            print(f"Processing log file: {log_file}")
-            try:
-                data = pd.read_csv(log_file)
-                # Process your data here
-            except Exception as e:
-                print(f"Error processing {log_file}: {e}")
+        # Iterate over subfolders within subfolder_1
+        for subfolder in os.listdir(subfolder_1_path):
+            subfolder_path = os.path.join(subfolder_1_path, subfolder)
+            
+            # Check if subfolder starts with "Battery" and is a directory
+            if os.path.isdir(subfolder_path):                
+                log_file = None
+                log_found = False
+                
+                # Iterate through files in the subfolder
+                for file in os.listdir(subfolder_path):
+                    if file.startswith('log.') and file.endswith('.csv'):
+                        log_file = os.path.join(subfolder_path, file)
+                        log_found = True
+                        break  # Stop searching once the log file is found
+                
+                # Process the log file if found
+                if log_found:
+                    print(f"Processing log file: {log_file}")
+                    try:
+                        data = pd.read_csv(log_file)
+                        # Process your data here
+                    except Exception as e:
+                        print(f"Error processing {log_file}: {e}")
 
 
-            total_duration = 0
-            total_distance = 0
-            Wh_km = 0
-            SOC_consumed = 0
-            mode_values = 0
-            
-            total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
-            capture_analysis_output(log_file, subfolder_path)
-            
-        else:
-            print("Log file or KM file not found in subfolder:", subfolder)
+                    total_duration = 0
+                    total_distance = 0
+                    Wh_km = 0
+                    SOC_consumed = 0
+                    mode_values = 0
+                    
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
+                    capture_analysis_output(log_file, subfolder_path)
+                    
+                else:
+                    print("Log file or KM file not found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)
