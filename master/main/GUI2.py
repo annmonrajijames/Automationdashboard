@@ -1,24 +1,45 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import subprocess
 import os
+import shutil
 
 def open_folder():
     global folder_path
     folder_path = filedialog.askdirectory()
 
+def copy_folder(original_path):
+    destination_path = filedialog.askdirectory(title="Select Destination for Copy")
+    if destination_path:
+        destination_folder = os.path.join(destination_path, os.path.basename(original_path))
+        shutil.copytree(original_path, destination_folder)
+        return destination_folder
+    else:
+        return original_path
+
 def run_script():
+    if copy_var.get():
+        # If the user wants to copy the folder
+        new_path = copy_folder(folder_path)
+    else:
+        new_path = folder_path
+    
     script = file_var.get()
     dir_path = os.path.dirname(os.path.realpath(__file__))
     script_path = os.path.join(dir_path, script)
-    if script and folder_path:
-        subprocess.run(['python', script_path, folder_path], check=True)
+    if script and new_path:
+        subprocess.run(['python', script_path, new_path], check=True)
 
 app = tk.Tk()
 app.title("Run Python Scripts")
 
 # Global variable to store the folder path
 folder_path = ""
+
+# Checkbox for copying the folder
+copy_var = tk.BooleanVar()
+copy_check = tk.Checkbutton(app, text="Copy folder to new location", variable=copy_var)
+copy_check.pack(pady=5)
 
 # Dropdown for selecting the Python script
 file_var = tk.StringVar(app)
