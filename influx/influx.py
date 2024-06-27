@@ -920,8 +920,8 @@ def capture_analysis_output(log_file,folder_path):
         # Save the Excel workbook
         excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"
         wb.save(excel_output_file)
-        print("excel_output_file",excel_output_file)
-        print("Excel generated!")
+        print("excel_output_file1",excel_output_file," generated")
+        
 
         df = pd.read_excel(excel_output_file, sheet_name="Analysis Results")
 
@@ -977,15 +977,19 @@ def capture_analysis_output(log_file,folder_path):
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
 
-            plot_file = f"{folder_path}/idling_speed_bar_plot.png"
+            plot_file = f"{folder_path}/Time spent in Speed intervals.png"
             plt.savefig(plot_file)
             plt.show()
             print(f"Idling and speed bar plot saved: {plot_file}")
 
+            # Insert plots into the Excel worksheet
+            img_idling_speed = Image(plot_file)
+            ws.add_image(img_idling_speed, 'F2')  # Adjust the cell location as needed
+
         # Function to plot and save Wh/km and distance metrics
         def plot_wh_distance_metrics():
             plt.figure(figsize=(15, 6))  # Increase figure size
-            bars = plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            bars = plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
             # plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
             plt.xlabel('Metrics')
             plt.ylabel('Values')
@@ -1003,9 +1007,21 @@ def capture_analysis_output(log_file,folder_path):
             plt.show()
             print(f"Wh/km and distance bar plot saved: {plot_file}")
 
+            # Insert plots into the Excel worksheet
+            img_wh_distance = Image(f"{folder_path}/wh_distance_bar_plot.png")
+            ws.add_image(img_wh_distance, 'F35')  # Adjust the cell location as needed
+
+
         # Generate and save the plots
         plot_idling_speed_metrics()
         plot_wh_distance_metrics()
+
+         # Save the Excel workbook
+        excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"
+        wb.save(excel_output_file)
+        print("excel_output_file1",excel_output_file," generated")
+
+        
 
     except Exception as e:
         print("Error:", e)
