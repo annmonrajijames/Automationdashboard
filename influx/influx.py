@@ -192,31 +192,6 @@ def analysis_Energy(data,subfolder_path):
         print("Temperature difference: ",CellTempDiff)
 
     
-    # # Maximum cell temperature calculation
-    # temp_columns_max = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
-    # max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
-    # max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
-    # # print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
-
-    # # Find which column (cell) has the maximum temperature
-    # max_cell_column = data[temp_columns_max].idxmax(axis=1)
-
-    # print(data[temp_columns_max].dtypes)
-
-
-    # # print(max_cell_column)
-
-    # # Print the result
-    # print(f"\nOverall maximum value of cell temperature: {max_cell_temp}")
-    # print(f"Cell with maximum temperature:------------------------------> {max_cell_column[max_cell_column.idxmax()]}")
-    # print(max_cell_column[max_cell_column.idxmax()])
-
-    # Assuming `data` is your DataFrame containing temperature columns
-
-
-    ##################
-    # Assuming `data` is your DataFrame containing temperature columns
-
     # Define the temperature columns
     temp_columns = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
 
@@ -235,13 +210,13 @@ def analysis_Energy(data,subfolder_path):
         max_column = max_columns_multiple[0]
 
     # Determine the maximum temperature occurrence in the selected column
-    max_occurrence = data[max_column].value_counts().idxmax()
+    # max_occurrence = data[max_column].value_counts().idxmax()
 
     # Print the results
     print(f"Overall maximum value of cell temperature: {max_values.max()}")
-    print(f"Column(s) with maximum temperature: {max_columns_multiple}")
-    print(f"Column with the highest occurrence: {max_column}")
-    print(f"Maximum occurrence temperature: {max_occurrence}")
+    # print(f"Column(s) with maximum temperature: {max_columns_multiple}")
+    print(f"Column with the highest cell temperature: {max_column}")
+    # print(f"Maximum occurrence temperature: {max_occurrence}")
 
 
 
@@ -293,8 +268,8 @@ def analysis_Energy(data,subfolder_path):
     start_localtime = data['DATETIME'].min()
     end_localtime = data['DATETIME'].max()
 
-    print(start_localtime)
-    print(end_localtime)
+    print("Start time of the ride: ",start_localtime)
+    print("End time of the ride:",end_localtime)
 
     # # Format the start and end times
     # start_localtime_formatted = start_localtime.strftime('%d/%m/%Y %H:%M:%S')
@@ -306,7 +281,6 @@ def analysis_Energy(data,subfolder_path):
     
 
     # Calculate the total localtime taken for the ride``
-    print("---------------")
     total_duration = end_localtime - start_localtime
     total_hours = total_duration.seconds // 3600
     total_minutes = (total_duration.seconds % 3600) // 60
@@ -644,10 +618,12 @@ def analysis_Energy(data,subfolder_path):
         "Total Time taken for the ride": total_duration,
         "Starting SoC (Ah)": starting_soc_Ah,
         "Ending SoC (Ah)": ending_soc_Ah,
+        "Actual Ampere-hours (Ah)": actual_ah,
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Energy consumption Rate(WH/KM)": watt_h / total_distance,
+        "Total distance covered (km)": total_distance,
         "Mode": "", 
         "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
         "Distance_Custom mode":distance_per_mode[3],
@@ -655,9 +631,7 @@ def analysis_Energy(data,subfolder_path):
         "Distance_POWER mode":distance_per_mode[2],
         "Wh/km in ECO mode": wh_per_km_ECO_mode,
         "Distance_ECO mode":distance_per_mode[1],       
-        "Actual Ampere-hours (Ah)": actual_ah,
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
-        "Total distance covered (km)": total_distance,
         "Peak Power(W)": peak_power,
         "Average Power(W)": average_power,
         "Average_current":abs(average_current),
@@ -1054,7 +1028,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\influx_a"
+main_folder_path = r"C:\Users\kamalesh.kb\influx"
 
  
 def mergeExcel(main_folder_path):

@@ -133,7 +133,7 @@ def process_files(main_folder_path):
                                 nearest_index = df['DATETIME'].sub(t2).abs().idxmin()
                                 t2_index = nearest_index
                             
-                            print("t1----------->",i,"t2_index-------------->",t2_index)
+                            # print("t1----------->",i,"t2_index-------------->",t2_index)
 
                             if t2_index >= len(df) or t2_index < 0:
                                 print(f"Invalid t2_index: {t2_index}")
@@ -143,7 +143,7 @@ def process_files(main_folder_path):
                                 print("Log file saved(contains single ride)")
                                 break
 
-                            print("SOC difference----------------->",df.iloc[i]['SOC [SA: 08]'] - df.iloc[t2_index]['SOC [SA: 08]'])
+                            # print("SOC difference----------------->",df.iloc[i]['SOC [SA: 08]'] - df.iloc[t2_index]['SOC [SA: 08]'])
 
                             if abs(df.iloc[i]['SOC [SA: 08]'] - df.iloc[t2_index]['SOC [SA: 08]']) > threshold or t2_index >= len(df) - 10:
                                 # end_time = df.iloc[t2_index]['DATETIME'] - pd.Timedelta(seconds=anomaly_window)
@@ -199,5 +199,5 @@ def process_files(main_folder_path):
                             if i == len(df) - 1:
                                 break
 
-main_folder_path = r"C:\Users\kamalesh.kb\influx_a1"
+main_folder_path = r"C:\Users\kamalesh.kb\influx"
 process_files(main_folder_path)
