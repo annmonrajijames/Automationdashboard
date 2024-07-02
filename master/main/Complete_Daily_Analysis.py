@@ -20,7 +20,7 @@ from collections import defaultdict
 
 
 
-main_folder_path = r'C:\Users\kamalesh.kb\Bytebeam_Analysis\Automationdashboard\master\main\daily_analysis'
+main_folder_path = r'D:\Lectrix_company\work\The_data\Test'
 
 def Merge_log_km(main_folder_path):
     print("Merging Log and Km")
