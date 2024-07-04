@@ -38,14 +38,9 @@ app.title("Run Python Scripts")
 # Global variable to store the folder path
 folder_path = ""
 
-# Checkbox for copying the folder
-copy_var = tk.BooleanVar()
-copy_check = tk.Checkbutton(app, text="Copy folder to new location", variable=copy_var)
-copy_check.grid(row=0, columnspan=2, padx=10, pady=5)
-
 # Label for the dropdown menu
 label = tk.Label(app, text="Choose the Analysis")
-label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
+label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 
 # Dropdown for selecting the Python script
 file_var = tk.StringVar(app)
@@ -56,15 +51,20 @@ scripts = {
     "Error Causes": "Error_causes.py"
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
-dropdown.grid(row=1, column=1, padx=10, pady=10)
+dropdown.grid(row=0, column=1, padx=10, pady=10)
 
 # Label for displaying the folder path
 path_label = tk.Label(app, text="Choose to see input folder path")
-path_label.grid(row=2, column=0, padx=10, pady=10, sticky='e')
+path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
 
 # Button to choose the folder
 folder_button = tk.Button(app, text="Choose Folder", command=open_folder)
-folder_button.grid(row=2, column=1, padx=10, pady=10)
+folder_button.grid(row=1, column=1, padx=10, pady=10)
+
+# Checkbox for copying the folder
+copy_var = tk.BooleanVar()
+copy_check = tk.Checkbutton(app, text="Copy folder to new location", variable=copy_var)
+copy_check.grid(row=2, columnspan=2, padx=10, pady=5)
 
 # Button to run the script
 run_button = tk.Button(app, text="Run", command=run_script)
