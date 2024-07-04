@@ -7,6 +7,8 @@ import shutil
 def open_folder():
     global folder_path
     folder_path = filedialog.askdirectory()
+    if folder_path:
+        path_label.config(text=folder_path)
 
 def copy_folder(original_path):
     destination_path = filedialog.askdirectory(title="Select Destination for Copy")
@@ -56,9 +58,13 @@ scripts = {
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.grid(row=1, column=1, padx=10, pady=10)
 
+# Label for displaying the folder path
+path_label = tk.Label(app, text="Choose to see input folder path")
+path_label.grid(row=2, column=0, padx=10, pady=10, sticky='e')
+
 # Button to choose the folder
 folder_button = tk.Button(app, text="Choose Folder", command=open_folder)
-folder_button.grid(row=2, columnspan=2, padx=10, pady=10)
+folder_button.grid(row=2, column=1, padx=10, pady=10)
 
 # Button to run the script
 run_button = tk.Button(app, text="Run", command=run_script)
