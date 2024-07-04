@@ -9,6 +9,7 @@ def open_folder():
     folder_path = filedialog.askdirectory()
     if folder_path:
         path_label.config(text=folder_path)
+        run_button.config(state='normal')  # Enable the run button
 
 def copy_folder(original_path):
     destination_path = filedialog.askdirectory(title="Select Destination for Copy")
@@ -76,8 +77,8 @@ copy_var = tk.BooleanVar()
 copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var, bg="lightblue", fg="black")
 copy_check.grid(row=2, column=1, padx=10, pady=5, sticky='w')  # Align to the left (west)
 
-# Button to run the script
-run_button = tk.Button(app, text="Run", command=run_script, bg="lightblue", fg="black")
+# Button to run the script (initially disabled)
+run_button = tk.Button(app, text="Run", command=run_script, bg="lightblue", fg="black", state='disabled')
 run_button.grid(row=3, columnspan=2, padx=10, pady=20)
 
 app.mainloop()
