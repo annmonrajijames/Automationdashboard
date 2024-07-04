@@ -61,10 +61,14 @@ path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
 folder_button = tk.Button(app, text="Choose Folder", command=open_folder)
 folder_button.grid(row=1, column=1, padx=10, pady=10)
 
+# Label for the "Save output in preferred location" checkbox
+save_output_label = tk.Label(app, text="Run to see the output folder path")
+save_output_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
+
 # Checkbox for copying the folder
 copy_var = tk.BooleanVar()
-copy_check = tk.Checkbutton(app, text="Copy folder to new location", variable=copy_var)
-copy_check.grid(row=2, columnspan=2, padx=10, pady=5)
+copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var)
+copy_check.grid(row=2, column=1, padx=10, pady=5)
 
 # Button to run the script
 run_button = tk.Button(app, text="Run", command=run_script)
