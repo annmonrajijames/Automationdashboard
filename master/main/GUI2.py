@@ -57,7 +57,7 @@ dropdown.config(bg="lightblue", fg="black")
 dropdown.grid(row=0, column=1, padx=10, pady=10, sticky='w')  # Align to the left (west)
 
 # Label for displaying the folder path
-path_label = tk.Label(app, text="Choose to see input folder path", bg="lightblue", fg="black")
+path_label = tk.Label(app, text="Choose to see input folder path", bg="lightblue", fg="black", wraplength=200)
 path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
 
 # Button to choose the folder
@@ -65,7 +65,7 @@ folder_button = tk.Button(app, text="Choose Folder", command=open_folder, bg="li
 folder_button.grid(row=1, column=1, padx=10, pady=10, sticky='w')  # Align to the left (west)
 
 # Label for the "Save output in preferred location" checkbox
-save_output_label = tk.Label(app, text="Run to see the output folder path", bg="lightblue", fg="black")
+save_output_label = tk.Label(app, text="Run to see the output folder path", bg="lightblue", fg="black", wraplength=200)
 save_output_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
 
 # Checkbox for copying the folder
