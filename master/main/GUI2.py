@@ -15,6 +15,7 @@ def copy_folder(original_path):
     if destination_path:
         destination_folder = os.path.join(destination_path, os.path.basename(original_path))
         shutil.copytree(original_path, destination_folder)
+        save_output_label.config(text=destination_folder)
         return destination_folder
     else:
         return original_path
