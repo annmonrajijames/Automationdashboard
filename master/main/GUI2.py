@@ -56,6 +56,9 @@ dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.config(bg="lightblue", fg="black")
 dropdown.grid(row=0, column=1, padx=10, pady=10, sticky='w')  # Align to the left (west)
 
+# Set the default value to the first script
+file_var.set(next(iter(scripts.values())))
+
 # Label for displaying the folder path
 path_label = tk.Label(app, text="Choose to see input folder path", bg="lightblue", fg="black", wraplength=200)
 path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
