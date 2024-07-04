@@ -35,12 +35,13 @@ def run_script():
 
 app = tk.Tk()
 app.title("Run Python Scripts")
+app.configure(bg="lightblue")  # Set the background color
 
 # Global variable to store the folder path
 folder_path = ""
 
 # Label for the dropdown menu
-label = tk.Label(app, text="Choose the Analysis")
+label = tk.Label(app, text="Choose the Analysis", bg="lightblue", fg="black")
 label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 
 # Dropdown for selecting the Python script
@@ -52,27 +53,28 @@ scripts = {
     "Error Causes": "Error_causes.py"
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
+dropdown.config(bg="lightblue", fg="black")
 dropdown.grid(row=0, column=1, padx=10, pady=10)
 
 # Label for displaying the folder path
-path_label = tk.Label(app, text="Choose to see input folder path")
+path_label = tk.Label(app, text="Choose to see input folder path", bg="lightblue", fg="black")
 path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
 
 # Button to choose the folder
-folder_button = tk.Button(app, text="Choose Folder", command=open_folder)
+folder_button = tk.Button(app, text="Choose Folder", command=open_folder, bg="lightblue", fg="black")
 folder_button.grid(row=1, column=1, padx=10, pady=10)
 
 # Label for the "Save output in preferred location" checkbox
-save_output_label = tk.Label(app, text="Run to see the output folder path")
+save_output_label = tk.Label(app, text="Run to see the output folder path", bg="lightblue", fg="black")
 save_output_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
 
 # Checkbox for copying the folder
 copy_var = tk.BooleanVar()
-copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var)
+copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var, bg="lightblue", fg="black")
 copy_check.grid(row=2, column=1, padx=10, pady=5)
 
 # Button to run the script
-run_button = tk.Button(app, text="Run", command=run_script)
+run_button = tk.Button(app, text="Run", command=run_script, bg="lightblue", fg="black")
 run_button.grid(row=3, columnspan=2, padx=10, pady=20)
 
 app.mainloop()
