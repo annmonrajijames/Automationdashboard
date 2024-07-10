@@ -29,7 +29,9 @@ from pptx.util import Inches
 from docx.shared import Inches
 from openpyxl import load_workbook, Workbook
 from collections import defaultdict
-
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import simpledialog 
 
 
 
@@ -206,11 +208,15 @@ def crop_data(main_folder_path):
                         continue_removing = True
                         while continue_removing:
                             # Check if cropping is needed
-                            crop = input("Do you want to remove anomalies? (yes/no): ")
-                            if crop.lower() == "yes":
+                            #crop = input("Do you want to remove anomalies? (yes/no): ")
+                            root = tk.Tk()
+                            root.withdraw()
+                            # Display messagebox and get user input
+                            result = messagebox.askquestion("Remove Anomalies", "Do you want to remove anomalies?")
+                            if result == "yes":
                                 # Allow user to input start time and end time for the anomalies after seeing the graph
-                                start_time_input = input("Enter start time of anomaly (format: 2024-04-02 12:59:00.000): ")
-                                end_time_input = input("Enter end time of anomaly (format: 2024-04-02 12:59:00.000): ")
+                                start_time_input = simpledialog.askstring("Enter Start Time","Enter start time of anomaly (format: 2024-04-02 12:59:00.000): ")
+                                end_time_input = simpledialog.askstring("Enter End Time","Enter end time of anomaly (format: 2024-04-02 12:59:00.000): ")
 
                                 # Convert input strings to datetime
                                 start_time = pd.to_datetime(start_time_input, format='%Y-%m-%d %H:%M:%S.%f')
@@ -1245,10 +1251,20 @@ def analysis(main_folder_path):
                     print(f"Failed to process {log_file_to_use}: {str(e)}")
             else:
                 print(f"No suitable log file found in subfolder: {subfolder_path}")
+            
+    def show_success_message(message):
+        # Create a root window
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        
+        # Display a message box with an information icon and a multiline message
+        messagebox.showinfo("Success", message)
+
+        show_success_message("PPT generated!\nExcel generated!\nAnalysis file is ready")
+        show_success_message("Log without anomaly already exists for folder: R1\nNo log file found in folder: R1")
 
     mergeExcel(main_folder_path)
-
-
+    
 
 Merge_log_km(main_folder_path)
 crop_data(main_folder_path)
