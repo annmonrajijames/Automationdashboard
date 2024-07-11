@@ -155,7 +155,7 @@ label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 file_var = tk.StringVar(app)
 file_var.set("Select a script")
 scripts = {
-    "Test Script": "test.py",
+    "Daily Analysis": "Daily_analysis.py",
     "Battery Analyzer": "Battery_Analyzer.py",
     "Master Dashboard": "Master_dashboard.py"
 }
