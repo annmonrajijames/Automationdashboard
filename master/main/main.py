@@ -49,9 +49,10 @@ label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 file_var = tk.StringVar(app)
 file_var.set("Select a script")
 scripts = {
-    "Daily Analysis": "Daily_Analysis.py",
-    "Battery Analysis": "Battery_Analysis.py",
-    "Error Causes": "Error_causes.py"
+    "Daily analysis LX70": "Daily_analysis_LX70.py",
+    "Battery analysis": "Battery_analysis.py",
+    "Error causes": "Error_causes.py",
+    "Daily analysis Enduro": "Daily_analysis_enduro.py"
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.config(bg="lightblue", fg="black")
