@@ -24,15 +24,15 @@ def copy_folder(original_path):
 def run_script():
     if copy_var.get():
         # If the user wants to copy the folder
-        ns_path = copy_folder(folder_path)
+        new_path = copy_folder(folder_path)
     else:
-        ns_path = folder_path
+        new_path = folder_path
     
     script = file_var.get()
     dir_path = os.path.dirname(os.path.realpath(__file__))
     script_path = os.path.join(dir_path, script)
-    if script and ns_path:
-        subprocess.run(['python', script_path, ns_path], check=True)
+    if script and new_path:
+        subprocess.run(['python', script_path, new_path], check=True)
 
 app = tk.Tk()
 app.title("Run Python Scripts")
@@ -40,6 +40,10 @@ app.configure(bg="lightblue")  # Set the background color
 
 # Global variable to store the folder path
 folder_path = ""
+
+# Label for the dropdown menu
+label = tk.Label(app, text="Choose the Analysis", bg="lightblue", fg="black")
+label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 
 # Dropdown for selecting the Python script
 file_var = tk.StringVar(app)
@@ -51,32 +55,28 @@ scripts = {
     "Daily analysis Enduro": "Daily_analysis_enduro.py"
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
-dropdown.config(bg="lightblue", fg="black")
-dropdown.grid(row=0, column=1, padx=10, pady=10, sticky='s')
+dropdown.config(bg="lightblue", fg="black", width=20)
+dropdown.grid(row=0, column=1, padx=10, pady=10, sticky='w')  # Align to the left (west)
 
 # Set the default value to the first script
 file_var.set(next(iter(scripts.values())))
 
-# Label for the dropdown menu
-label = tk.Label(app, text="Choose the Analysis", bg="lightblue", fg="black")
-label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-
 # Label for displaying the folder path
 path_label = tk.Label(app, text="Choose to see input folder path", bg="lightblue", fg="black", wraplength=100)
-path_label.grid(row=1, column=0, padx=10, pady=10, sticky='n')
+path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
 
 # Button to choose the folder
 folder_button = tk.Button(app, text="Choose Folder", command=open_folder, bg="lightblue", fg="black")
-folder_button.grid(row=1, column=1, padx=10, pady=10, sticky='n')
+folder_button.grid(row=1, column=1, padx=10, pady=10, sticky='nw')  # Align to the left (west)
 
 # Label for the "Save output in preferred location" checkbox
 save_output_label = tk.Label(app, text="Run to see the output folder path", bg="lightblue", fg="black", wraplength=100)
-save_output_label.grid(row=2, column=0, padx=10, pady=5, sticky='s')
+save_output_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
 
 # Checkbox for copying the folder
 copy_var = tk.BooleanVar()
 copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var, bg="lightblue", fg="black")
-copy_check.grid(row=2, column=1, padx=10, pady=5, sticky='s')
+copy_check.grid(row=2, column=1, padx=10, pady=5, sticky='w')  # Align to the left (west)
 
 # Button to run the script (initially disabled)
 run_button = tk.Button(app, text="Run", command=run_script, bg="lightblue", fg="black", state='disabled')
