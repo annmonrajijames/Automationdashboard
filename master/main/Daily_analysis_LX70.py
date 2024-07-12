@@ -9,34 +9,21 @@ def main():
     print(f"Processing file: {input_file_path}")
     # Add your code here to handle the input file
 
-if __name__ == "__main__":
-    main()
-import pandas as pd
-from scipy.spatial import KDTree
-import numpy as np
-import os    
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import mplcursors  # Import mplcursors
-import warnings
-from math import radians, sin, cos, sqrt, atan2
-import io
-import openpyxl
-from contextlib import redirect_stdout
-from pptx.util import Inches, Pt  # Correcting the import statement
-from pptx import Presentation
-from pptx.util import Inches
-from docx.shared import Inches
-from openpyxl import load_workbook, Workbook
-from collections import defaultdict
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import simpledialog 
 
+if __name__ == "__main__":
+    main()
 
+import pandas as pd
+from scipy.spatial import KDTree
+import numpy as np
+import os
 
 main_folder_path = rf'{input_file_path}'
 print("Main folder path=", main_folder_path)
+
 def Merge_log_km(main_folder_path):
     print("Merging Log and Km")
 
@@ -99,6 +86,13 @@ def Merge_log_km(main_folder_path):
 
 def crop_data(main_folder_path):
     print("Crop out the anomaly")
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    import mplcursors  # Import mplcursors
+    import warnings
+
     # Disable the SettingWithCopyWarning
     warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
@@ -242,6 +236,26 @@ def crop_data(main_folder_path):
 
     
 def analysis(main_folder_path):
+    from matplotlib.mlab import window_none
+    import pandas as pd
+    from math import radians, sin, cos, sqrt, atan2
+    import sys
+    import io
+    import openpyxl
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.basemap import Basemap
+    from PIL import Image
+    import os
+    import matplotlib.dates as mdates
+    import mplcursors  # Import mplcursors
+    from contextlib import redirect_stdout
+    from pptx.util import Inches, Pt  # Correcting the import statement
+    from pptx import Presentation
+    from pptx.util import Inches
+    from docx import Document
+    from docx.shared import Inches
+    from openpyxl import load_workbook, Workbook
+    from collections import defaultdict
     window_size =5
     
     # List to store DataFrames from each CSV file
@@ -374,6 +388,7 @@ def analysis(main_folder_path):
         total_duration = 0
         total_distance = 0
         Wh_km = 0
+        SOC_consumed = 0
     
         if (data['SOC_8'] > 90).any():
             # Maximum cell temperature calculation
@@ -449,7 +464,7 @@ def analysis(main_folder_path):
         print("before")
         # Set the 'localtime' column as the index
         data.set_index('localtime', inplace=True)
-        
+        print("after1")
 
 
         # Remove duplicate timestamps
@@ -457,11 +472,11 @@ def analysis(main_folder_path):
 
         # Resample the data to have one-second intervals and fill missing values with previous ones
         data_resampled = data.resample('s').ffill()
-        
+        print("after2")
     
         # Calculate the time difference between consecutive rows
         data_resampled['Time_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
-        
+        print("after3")
 
 
         # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
@@ -490,6 +505,9 @@ def analysis(main_folder_path):
         avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
         avg_speed =avg_motor_rpm * 0.01606
 
+        # Initialize total distance covered
+        total_distance = 0
+        distance_per_mode = defaultdict(float)
     
         # Iterate over rows to compute distance covered between consecutive points
         for i in range(len(data) - 1):
@@ -507,47 +525,15 @@ def analysis(main_folder_path):
             # Add distance to total distance covered
             total_distance += distance
 
-              
-
-###############
-        data_resampled['Speed_kmh'] = data_resampled['MotorSpeed_340920578'] * 0.016
-        
-        # Convert Speed to m/s
-        data_resampled['Speed_ms'] = data_resampled['Speed_kmh'] / 3.6
-        
-        # Initialize total distance covered
-        distance_per_mode = defaultdict(float)
-
-        total_distance_with_RPM = 0
-
-        for index, row in data_resampled.iterrows():
-            if row['MotorSpeed_340920578'] >= 100:
-
-                distance_interval = row['Speed_ms'] * row['Time_Diff']
-                # Calculate the distance traveled in this interval
-                total_distance_with_RPM += distance_interval
-
-                # Add distance to distance per mode
-                mode = row['Mode_Ack_408094978']
-
-                distance_per_mode[mode] += distance_interval
-                # print("mode------------------------------->",mode)
-                # print("distance_per_mode------------------>",distance_per_mode)
-
-        
-        # print(f"Total Distance Covered: {total_distance} meters")
-        Distance_with_RPM= total_distance_with_RPM / 1000
-        print(f"Distance covered:---------------->: {Distance_with_RPM} Kms")
-
-
-       
-###############
-
-
+              # Add distance to distance per mode
+            mode = data['Mode_Ack_408094978'].iloc[i]
+            distance_per_mode[mode] += distance
+    
+        print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
     
         ##############   Wh/Km
-        Wh_km = abs(watt_h / Distance_with_RPM)
-        print("WH/KM:{:.2f}". format (watt_h / Distance_with_RPM))
+        Wh_km = abs(watt_h / total_distance)
+        print("WH/KM:{:.2f}". format (watt_h / total_distance))
     
         # Assuming 'data' is your DataFrame with 'SOC_8' column
         initial_soc = data['SOC_8'].iloc[-1]  # Initial SOC percentage
@@ -559,49 +545,28 @@ def analysis(main_folder_path):
         print ("Total SOC consumed:{:.2f}".format (total_soc_consumed),"%")
     
     
-        ######################################
         # Check if the mode remains constant or changes
-
-        # Assuming 'data' is your DataFrame
-# Remove rows where 'Mode_Ack_408094978' is empty or NaN
-        total_rows=len(data)
-        print("total_rows1---------->",total_rows)
-        data = data[data['Mode_Ack_408094978'].notna() & (data['Mode_Ack_408094978'] != '')]
-        
-
-        # mode_values = data['Mode_Ack_408094978'].unique()
-
-        # if len(mode_values) == 1:
-        #     # Mode remains constant throughout the log file
-        #     mode = mode_values[0]
-        #     if mode == 3:
-        #         print("Custom mode -100%")
-        #     elif mode == 2:
-        #         print("Power mode -100%")
-        #     elif mode == 1:
-        #         print("Eco mode - 100% ")
-        # else:
-        #     # Mode changes throughout the log file
-        #     total_rows = len(data)
-        #     print("total_rows2---------->",total_rows)
-        #     mode_counts = data['Mode_Ack_408094978'].value_counts()
-
-        #     # Exclude mode 0 or empty from total_rows calculation
-        #     total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
-        #     print("total_rows3---------->",total_rows)
-        #     # total_rows -= mode_counts.get(' ', 0)  # Subtract rows where mode is empty string (if any)
-        #     # print("total_rows3---------->",total_rows)
-
-        #     for mode, count in mode_counts.items():
-        #         if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
-        #             percentage = (count / total_rows) * 100
-        #             if mode == 3:
-        #                 print(f"Custom mode: {percentage:.2f}%")
-        #             elif mode == 2:
-        #                 print(f"Power mode: {percentage:.2f}%")
-        #             elif mode == 1:
-        #                 print(f"Eco mode: {percentage:.2f}%")
-
+        mode_values = data['Mode_Ack_408094978'].unique()
+    
+        if len(mode_values) == 1:
+            # Mode remains constant throughout the log file
+            mode = mode_values[0]
+            if mode == 3:
+                print("Mode is Custom mode.")
+            elif mode == 2:
+                print("Mode is Power mode.")
+            elif mode == 1:
+                print("Mode is Eco mode.")
+        else:
+            # Mode changes throughout the log file
+            mode_counts = data['Mode_Ack_408094978'].value_counts(normalize=True) * 100
+            for mode, percentage in mode_counts.items():
+                if mode == 3:
+                    print(f"Custom mode: {percentage:.2f}%")
+                elif mode == 2:
+                    print(f"Power mode: {percentage:.2f}%")
+                elif mode == 1:
+                    print(f"Eco mode: {percentage:.2f}%")
     
     
         ######################################
@@ -616,16 +581,16 @@ def analysis(main_folder_path):
             return abs(watt_h_mode / distance)
 
         # Calculate Wh/km for each mode
-        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3]/1000)
-        print("Custom mode distance-------------->",distance_per_mode[3]/1000)
-        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2]/1000)
-        print("POWER mode distance-------------->",distance_per_mode[2]/1000)
-        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1]/1000)
-        print("ECO mode distance-------------->",distance_per_mode[1]/1000)
+        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
+        print("Custom mode distance-------------->",distance_per_mode[3])
+        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+        print("POWER mode distance-------------->",distance_per_mode[2])
+        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
+        print("ECO mode distance-------------->",distance_per_mode[1])
 
         # Calculate Wh/km for the entire ride
         watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600
-        wh_per_km_total = abs(watt_h / Distance_with_RPM)
+        wh_per_km_total = abs(watt_h / total_distance)
 
         # Print the results
         print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
@@ -825,24 +790,24 @@ def analysis(main_folder_path):
             "Byte Beam ID": ByteBeamId,
             "Total time taken for the ride": total_duration,
             "Actual Ampere-hours (Ah)": actual_ah,
-            "Actual Watt-hours Consumed(Wh)- Calculated_UsingFormala-'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
+            "Actual Watt-hours (Wh)- Calculated_UsingFormala-'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
             "Starting SoC (Ah)": starting_soc_Ah,
             "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "SOH": SOH,
-            "Total distance covered (km)": Distance_with_RPM,
-            "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / Distance_with_RPM,
+            "Total distance covered (km)": total_distance,
+            "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
             "Mode": "",
             "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
-            "Distance travelled in Custom mode":distance_per_mode[3]/1000,
+            "Distance travelled in Custom mode":distance_per_mode[3],
             "Wh/km in POWER mode": wh_per_km_POWER_mode,
-            "Distance travelled in POWER mode":distance_per_mode[2]/1000,
+            "Distance travelled in POWER mode":distance_per_mode[2],
             "Wh/km in ECO mode": wh_per_km_ECO_mode,
-            "Distance travelled in ECO mode":distance_per_mode[1]/1000,
-            "Peak_current":peak_current,
-            "Average_current":abs(average_current),
+            "Distance travelled in ECO mode":distance_per_mode[1],
+            "peak_current":peak_current,
+            "average_current":abs(average_current),
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             "Total Energy Regenerated(Wh)": energy_regenerated,
@@ -870,48 +835,30 @@ def analysis(main_folder_path):
             "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed,
-            "Average_speed":avg_speed
+            "average_speed":avg_speed
             }
     
-          # Check if the mode remains constant or changes
-        mode_values = data['Mode_Ack_408094978'].unique()
-
+        mode_values = data_resampled['Mode_Ack_408094978'].unique()
         if len(mode_values) == 1:
-            # Mode remains constant throughout the log file
             mode = mode_values[0]
             if mode == 3:
-                print("Mode is Custom mode.")
-                ppt_data["Mode"] = "Custom mode: 100%"
+                ppt_data["Mode"] = "Custom mode"
             elif mode == 2:
-                print("Mode is Power mode.")
-                ppt_data["Mode"] = "Power mode: 100%"
+                ppt_data["Mode"] = "Power mode"
             elif mode == 1:
-                print("Mode is Eco mode.")
-                ppt_data["Mode"] = "Eco mode: 100%"
-                
+                ppt_data["Mode"] = "Eco mode"
         else:
             # Mode changes throughout the log file
-            total_rows = len(data)
-            mode_counts = data['Mode_Ack_408094978'].value_counts()
+            mode_counts = data_resampled['Mode_Ack_408094978'].value_counts(normalize=True) * 100
             mode_strings = []  # Initialize list to store mode strings
-
-            # Exclude mode 0 or empty from total_rows calculation
-            total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
-            total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
-
-            for mode, count in mode_counts.items():
-                if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
-                    percentage = (count / total_rows) * 100
-                    if mode == 3:
-                        print(f"Custom mode: {percentage:.2f}%")
-                        mode_strings.append(f"Custom mode\n{percentage:.2f}%")
-                    elif mode == 2:
-                        print(f"Power mode: {percentage:.2f}%")
-                        mode_strings.append(f"Power mode\n{percentage:.2f}%")
-                    elif mode == 1:
-                        print(f"Eco mode: {percentage:.2f}%")
-                        mode_strings.append(f"Eco mode\n{percentage:.2f}%")
-                ppt_data["Mode"] = "\n".join(mode_strings)
+            for mode, percentage in mode_counts.items():
+                if mode == 3:
+                    mode_strings.append(f"Custom mode\n{percentage:.2f}%")
+                elif mode == 2:
+                    mode_strings.append(f"Power mode\n{percentage:.2f}%")
+                elif mode == 1:
+                    mode_strings.append(f"Eco mode\n{percentage:.2f}%")
+            ppt_data["Mode"] = "\n".join(mode_strings)
     
         # Add calculated parameters to ppt_data
         ppt_data["Idling time percentage"] = idling_percentage
@@ -970,7 +917,7 @@ def analysis(main_folder_path):
         # Calculate the difference in temperature
         temp_difference = max_temp - min_temp
         print("temp_difference: ",temp_difference)
-        print("Total distance: ",Distance_with_RPM)
+        print("Total distance: ",total_distance)
     
         print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
         print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
@@ -1004,21 +951,19 @@ def analysis(main_folder_path):
     
         # Convert to a binary mask indicating consecutive occurrences
         abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
-
-        print("analysis function ended")
     
-        return total_duration, Wh_km, total_soc_consumed,ppt_data
+        return total_duration, total_distance, Wh_km, total_soc_consumed,ppt_data
     
-    print("analysis function ended out")
-
+    
+    
     # def capture_analysis_output(log_file, km_file, folder_path):
     def capture_analysis_output(log_file,folder_path):
         try:
-            print("capture_analysis function 1")
             analysis_output = io.StringIO()
             output_file = "analysis_results.docx"
     
             with redirect_stdout(analysis_output):
+                #total_duration, total_distance, Wh_km, total_soc_consumed, ppt_data = analysis_Energy(log_file, km_file)
                 analysis_output = analysis_output.getvalue()
     
             # Extract folder name from folder_path
@@ -1240,7 +1185,7 @@ def analysis(main_folder_path):
                 print(f"Processing file: {log_file_to_use}")  # Debug print to verify files being processed
                 try:
                     data = pd.read_csv(log_file_to_use)  # Read the data
-                    total_duration, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(log_file_to_use)
                     capture_analysis_output(log_file_to_use, os.path.dirname(log_file_to_use))
 
                     if 'data' in locals():
@@ -1251,20 +1196,10 @@ def analysis(main_folder_path):
                     print(f"Failed to process {log_file_to_use}: {str(e)}")
             else:
                 print(f"No suitable log file found in subfolder: {subfolder_path}")
-            
-    def show_success_message(message):
-        # Create a root window
-        root = tk.Tk()
-        root.withdraw()  # Hide the root window
-        
-        # Display a message box with an information icon and a multiline message
-        messagebox.showinfo("Success", message)
-
-        show_success_message("PPT generated!\nExcel generated!\nAnalysis file is ready")
-        show_success_message("Log without anomaly already exists for folder: R1\nNo log file found in folder: R1")
 
     mergeExcel(main_folder_path)
-    
+
+
 
 Merge_log_km(main_folder_path)
 crop_data(main_folder_path)
