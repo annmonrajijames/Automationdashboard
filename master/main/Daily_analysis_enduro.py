@@ -115,26 +115,27 @@ def crop_data(main_folder_path):
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
         # Plot 'PackCurr_6' on primary y-axis
-        line1, = ax1.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
+        
         ax1.set_ylabel('Pack Current (A)', color='blue')
         ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
 
         # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
         ax2 = ax1.twinx()
-        line2, = ax2.plot(data.index, data['MotorSpeed_340920578'], color='green', label='Motor Speed')
-        ax2.set_ylabel('Motor Speed (RPM)', color='green')
+        line1, = ax2.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
+        line2, = ax2.plot(data.index, data['SOC_8'], color='red', label='SOC')
+        ax2.set_ylabel('SOC', color='RED')
 
         # Add 'AC_Current_340920579' to primary y-axis
-        line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='lightgray', label='AC Current')
+        line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='orange', label='AC Current')
 
         # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-        line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='lightgray', label='AC Voltage (x10)')
+        line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='yellow', label='AC Voltage (x10)')
 
         # Add 'Throttle_408094978' to the left side y-axis
-        line5, = ax1.plot(data.index, data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
+        line5, = ax2.plot(data.index, data['Throttle_408094978'], color='green', label='Throttle (%)')
 
             # Add 'Throttle_408094978' to the left side y-axis
-        line6, = ax1.plot(data.index, data['SOC_8'], color='red', label='SOC (%)')
+        # line6, = ax2.plot(data.index, data['SOC_8'], color='red', label='SOC (%)')
 
         # Hide the y-axis label for 'AC_Current_340920579'
         ax1.get_yaxis().get_label().set_visible(False)
@@ -317,26 +318,27 @@ def analysis(main_folder_path):
         fig, ax1 = plt.subplots(figsize=(10, 6))
     
         # Plot 'PackCurr_6' on primary y-axis
-        line1, = ax1.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
         ax1.set_ylabel('Pack Current (A)', color='blue')
+        
         ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
     
-        # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
+        # Create secondary y-axis for 'SOC'
         ax2 = ax1.twinx()
-        line2, = ax2.plot(data.index, data['MotorSpeed_340920578'], color='green', label='Motor Speed')
-        ax2.set_ylabel('Motor Speed (RPM)', color='green')
-    
+        
+        
+        line1, = ax2.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
+        line2, = ax2.plot(data.index, data['SOC_8'], color='red', label='SOC')
+        ax2.set_ylabel('SOC', color='green')
+
         # Add 'AC_Current_340920579' to primary y-axis
-        line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='red', label='AC Current')
+        line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='orange', label='AC Current')
     
         # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
         line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='yellow', label='AC Voltage (x10)')
     
         # Add 'Throttle_408094978' to the left side y-axis
-        line5, = ax1.plot(data.index, data['Throttle_408094978'], color='orange', label='Throttle (%)')
+        line5, = ax2.plot(data.index, data['Throttle_408094978'], color='green', label='Throttle (%)')
     
-        # Add 'Throttle_408094978' to the left side y-axis
-        line6, = ax1.plot(data.index, data['SOC_8'], color='black', label='SOC (%)')
     
     
         # Hide the y-axis label for 'AC_Current_340920579'
@@ -358,7 +360,7 @@ def analysis(main_folder_path):
         ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
     
         # Enable cursor to display values on graphs
-        mplcursors.cursor([line1, line2, line3, line4, line5,line6])
+        mplcursors.cursor([line1, line2, line3, line4, line5])
     
         # Save the plot as an image or display it
         plt.tight_layout()  # Adjust layout to prevent clipping of labels
@@ -461,10 +463,10 @@ def analysis(main_folder_path):
         # Calculate the time difference between consecutive rows
         data['Time_Diff'] = data['localtime'].diff().dt.total_seconds().fillna(0)
 
-        print("before")
+        
         # Set the 'localtime' column as the index
         data.set_index('localtime', inplace=True)
-        print("after1")
+        
 
 
         # Remove duplicate timestamps
@@ -472,11 +474,10 @@ def analysis(main_folder_path):
 
         # Resample the data to have one-second intervals and fill missing values with previous ones
         data_resampled = data.resample('s').ffill()
-        print("after2")
+        
     
         # Calculate the time difference between consecutive rows
         data_resampled['Time_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
-        print("after3")
 
 
         # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
@@ -503,7 +504,7 @@ def analysis(main_folder_path):
 
         average_current =data_resampled['PackCurr_6'].mean()
         avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
-        avg_speed =avg_motor_rpm * 0.01606
+        avg_speed =avg_motor_rpm * 0.0875
 
         # Initialize total distance covered
         total_distance = 0
@@ -528,7 +529,9 @@ def analysis(main_folder_path):
               # Add distance to distance per mode
             mode = data['Mode_Ack_408094978'].iloc[i]
             distance_per_mode[mode] += distance
-    
+
+            
+        
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
     
         ##############   Wh/Km
@@ -551,22 +554,26 @@ def analysis(main_folder_path):
         if len(mode_values) == 1:
             # Mode remains constant throughout the log file
             mode = mode_values[0]
-            if mode == 3:
-                print("Mode is Custom mode.")
-            elif mode == 2:
-                print("Mode is Power mode.")
-            elif mode == 1:
+            if mode == 2:
+                print("Mode is Normal mode.")
+            elif mode == 6:
+                print("Mode is Fast Mode.")
+            elif mode == 4:
                 print("Mode is Eco mode.")
+            elif mode == 5:
+                print("Mode is Limp mode.")
         else:
             # Mode changes throughout the log file
             mode_counts = data['Mode_Ack_408094978'].value_counts(normalize=True) * 100
             for mode, percentage in mode_counts.items():
-                if mode == 3:
-                    print(f"Custom mode: {percentage:.2f}%")
-                elif mode == 2:
-                    print(f"Power mode: {percentage:.2f}%")
-                elif mode == 1:
+                if mode == 2:
+                    print(f"Normal mode: {percentage:.2f}%")
+                elif mode == 6:
+                    print(f"Fast Mode: {percentage:.2f}%")
+                elif mode == 4:
                     print(f"Eco mode: {percentage:.2f}%")
+                elif mode == 5:
+                    print(f"Limp mode: {percentage:.2f}%")
     
     
         ######################################
@@ -581,21 +588,25 @@ def analysis(main_folder_path):
             return abs(watt_h_mode / distance)
 
         # Calculate Wh/km for each mode
-        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
-        print("Custom mode distance-------------->",distance_per_mode[3])
-        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
-        print("POWER mode distance-------------->",distance_per_mode[2])
-        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
-        print("ECO mode distance-------------->",distance_per_mode[1])
+        wh_per_km_Normal_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+        print("Normal mode distance-------------->",distance_per_mode[2])
+        wh_per_km_Fast_mode = calculate_wh_per_km(data_resampled, 6, distance_per_mode[6])
+        print("Fast Mode distance-------------->",distance_per_mode[6])
+        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 4, distance_per_mode[4])
+        print("ECO mode distance-------------->",distance_per_mode[4])
+        wh_per_km_LIMP_mode = calculate_wh_per_km(data_resampled, 5, distance_per_mode[5])
+        print("LIMP mode distance-------------->",distance_per_mode[5])
+
 
         # Calculate Wh/km for the entire ride
         watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600
         wh_per_km_total = abs(watt_h / total_distance)
 
         # Print the results
-        print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
-        print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
+        print(f"Wh/km for Normal mode: {wh_per_km_Normal_mode:.2f}")
+        print(f"Wh/km for Fast Mode: {wh_per_km_Fast_mode:.2f}")
         print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
+        print(f"Wh/km for LIMP mode: {wh_per_km_LIMP_mode:.2f}")
         print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
 
         ######################################
@@ -650,7 +661,7 @@ def analysis(main_folder_path):
         speed_range_percentages = {}
     
         for range_ in speed_ranges:
-            speed_range_time = ((data['MotorSpeed_340920578'] * 0.016 > range_[0]) & (data['MotorSpeed_340920578'] * 0.016 < range_[1])).sum()
+            speed_range_time = ((data['MotorSpeed_340920578'] * 0.0875 > range_[0]) & (data['MotorSpeed_340920578'] * 0.0875 < range_[1])).sum()
             speed_range_percentage = (speed_range_time / len(data)) * 100
             speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
             print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
@@ -755,7 +766,7 @@ def analysis(main_folder_path):
                 print("max_continuous_duration------->",max_continuous_duration)
                 max_continuous_duration = current_max_duration
                 cruising_rpm = speed
-                cruising_speed=speed*0.01606
+                cruising_speed=speed*0.0875
 
                 if cruising_speed >1:
                     cruise_speed=cruising_speed
@@ -770,7 +781,7 @@ def analysis(main_folder_path):
         print("The maximum motor speed in RPM is:", Max_motor_rpm)
     
         # Convert the maximum motor speed to speed using the given factor
-        peak_speed = Max_motor_rpm * 0.01606
+        peak_speed = Max_motor_rpm * 0.0875
     
         # Print the maximum speed
         print("The maximum speed is:", peak_speed)
@@ -800,14 +811,16 @@ def analysis(main_folder_path):
             "Total distance covered (km)": total_distance,
             "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
             "Mode": "",
-            "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
-            "Distance travelled in Custom mode":distance_per_mode[3],
-            "Wh/km in POWER mode": wh_per_km_POWER_mode,
-            "Distance travelled in POWER mode":distance_per_mode[2],
+            "Wh/km in Normal mode": wh_per_km_Normal_mode,
+            "Distance travelled in Normal mode":distance_per_mode[2],
+            "Wh/km in Fast Mode": wh_per_km_Fast_mode,
+            "Distance travelled in Fast Mode":distance_per_mode[6],
             "Wh/km in ECO mode": wh_per_km_ECO_mode,
-            "Distance travelled in ECO mode":distance_per_mode[1],
-            "peak_current":peak_current,
-            "average_current":abs(average_current),
+            "Distance travelled in ECO mode":distance_per_mode[4],
+            "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
+            "Distance travelled in LIMP Mode":distance_per_mode[5],
+            "Peak_current":peak_current,
+            "Average_current":abs(average_current),
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             "Total Energy Regenerated(Wh)": energy_regenerated,
@@ -841,23 +854,27 @@ def analysis(main_folder_path):
         mode_values = data_resampled['Mode_Ack_408094978'].unique()
         if len(mode_values) == 1:
             mode = mode_values[0]
-            if mode == 3:
-                ppt_data["Mode"] = "Custom mode"
-            elif mode == 2:
-                ppt_data["Mode"] = "Power mode"
-            elif mode == 1:
+            if mode == 2:
+                ppt_data["Mode"] = "Normal mode"
+            elif mode == 6:
+                ppt_data["Mode"] = "Fast Mode"
+            elif mode == 4:
                 ppt_data["Mode"] = "Eco mode"
+            elif mode == 5:
+                ppt_data["Mode"] = "Limp mode"
         else:
             # Mode changes throughout the log file
             mode_counts = data_resampled['Mode_Ack_408094978'].value_counts(normalize=True) * 100
             mode_strings = []  # Initialize list to store mode strings
             for mode, percentage in mode_counts.items():
-                if mode == 3:
-                    mode_strings.append(f"Custom mode\n{percentage:.2f}%")
-                elif mode == 2:
-                    mode_strings.append(f"Power mode\n{percentage:.2f}%")
-                elif mode == 1:
+                if mode == 2:
+                    mode_strings.append(f"Normal mode\n{percentage:.2f}%")
+                elif mode == 6:
+                    mode_strings.append(f"Fast Mode\n{percentage:.2f}%")
+                elif mode == 4:
                     mode_strings.append(f"Eco mode\n{percentage:.2f}%")
+                elif mode == 5:
+                    mode_strings.append(f"Limp mode\n{percentage:.2f}%")  
             ppt_data["Mode"] = "\n".join(mode_strings)
     
         # Add calculated parameters to ppt_data
