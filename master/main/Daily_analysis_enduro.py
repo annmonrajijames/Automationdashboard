@@ -1,5 +1,29 @@
 import sys
-
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import simpledialog 
+import pandas as pd
+from scipy.spatial import KDTree
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import mplcursors  # Import mplcursors
+import warnings
+from matplotlib.mlab import window_none
+from math import radians, sin, cos, sqrt, atan2
+import io
+import openpyxl
+from mpl_toolkits.basemap import Basemap
+from PIL import Image
+from contextlib import redirect_stdout
+from pptx.util import Inches, Pt  # Correcting the import statement
+from pptx import Presentation
+from pptx.util import Inches
+from docx import Document
+from docx.shared import Inches
+from openpyxl import load_workbook, Workbook
+from collections import defaultdict
 def main():
     if len(sys.argv) != 2:
         print("Usage: python test.py <input_file_path>")
@@ -9,17 +33,8 @@ def main():
     print(f"Processing file: {input_file_path}")
     # Add your code here to handle the input file
 
-import tkinter as tk
-from tkinter import messagebox
-from tkinter import simpledialog 
-
 if __name__ == "__main__":
     main()
-
-import pandas as pd
-from scipy.spatial import KDTree
-import numpy as np
-import os
 
 main_folder_path = rf'{input_file_path}'
 print("Main folder path=", main_folder_path)
@@ -86,12 +101,7 @@ def Merge_log_km(main_folder_path):
 
 def crop_data(main_folder_path):
     print("Crop out the anomaly")
-    import os
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import mplcursors  # Import mplcursors
-    import warnings
+    
 
     # Disable the SettingWithCopyWarning
     warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
@@ -237,26 +247,7 @@ def crop_data(main_folder_path):
 
     
 def analysis(main_folder_path):
-    from matplotlib.mlab import window_none
-    import pandas as pd
-    from math import radians, sin, cos, sqrt, atan2
-    import sys
-    import io
-    import openpyxl
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.basemap import Basemap
-    from PIL import Image
-    import os
-    import matplotlib.dates as mdates
-    import mplcursors  # Import mplcursors
-    from contextlib import redirect_stdout
-    from pptx.util import Inches, Pt  # Correcting the import statement
-    from pptx import Presentation
-    from pptx.util import Inches
-    from docx import Document
-    from docx.shared import Inches
-    from openpyxl import load_workbook, Workbook
-    from collections import defaultdict
+    
     window_size =5
     
     # List to store DataFrames from each CSV file
