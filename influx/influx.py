@@ -433,6 +433,7 @@ def analysis_Energy(data,subfolder_path):
  
     # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
     data_resampled['Power'] = data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]']
+
  
     # Find the peak power
     peak_power = data_resampled['Power'].min()

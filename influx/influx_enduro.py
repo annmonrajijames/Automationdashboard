@@ -265,6 +265,19 @@ def analysis_Energy(data,subfolder_path):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d  %H:%M:%S')
       
     # Convert the DATETIME column to datetime objects
+    # Ensure the DATETIME column is read as integers
+    data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
+
+    # Check for any NaN values which indicate parsing issues
+    # print(data['DATETIME'].isnull().sum())
+
+    # Drop or handle NaN values
+    data = data.dropna(subset=['DATETIME'])
+
+    # Convert the Unix timestamps to datetime
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
+
+    # Print the converted DATETIME column
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     # Find the minimum and maximum datetime
     start_localtime = data['DATETIME'].min()
@@ -291,7 +304,6 @@ def analysis_Energy(data,subfolder_path):
  
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
-    # print(data['localtime_Diff'])
  
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
@@ -312,8 +324,9 @@ def analysis_Energy(data,subfolder_path):
     data_resampled['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
  
     # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
-    print("Current ----------------------------------------------------------->")
-    print(data_resampled['PackCurr [SA: 06]'])
+
+
+    # print(data_resampled['PackCurr [SA: 06]'])
     actual_ah = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
     print("Actual Ampere-hours (Ah):------------------------------------> {:.2f}".format(actual_ah))
  
@@ -1135,6 +1148,7 @@ for subfolder in os.listdir(main_folder_path):
             print(f"Processing log file: {log_file}")
             try:
                 data = pd.read_csv(log_file)
+                print("file_path--------->",log_file)
                 # Process your data here
             except Exception as e:
                 print(f"Error processing {log_file}: {e}")
