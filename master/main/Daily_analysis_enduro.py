@@ -800,7 +800,7 @@ def analysis(main_folder_path):
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             "SOH": SOH,
             "Total distance covered (km)": total_distance,
-            "Total energy consumption(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
+            "Energy Consumption Rate(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
             "Mode": "",
             "Wh/km in Normal mode": wh_per_km_Normal_mode,
             "Distance travelled in Normal mode":distance_per_mode[2],

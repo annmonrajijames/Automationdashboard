@@ -104,43 +104,40 @@ def crop_data(main_folder_path):
 
     def plot_ghps(data,folder_name):
         if 'localtime' not in data.columns:
-            # Convert the 'timestamp' column from Unix milliseconds to datetime
-            data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
+            data['localtime'] = pd.to_datetime(data['DATETIME'], unit='s') + pd.Timedelta(hours=5, minutes=30)
 
-            # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
-            data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
 
 
         # Convert 'localtime' column to datetime
         data['localtime'] = pd.to_datetime(data['localtime'], format='%Y-%m-%d %H:%M:%S.%f')
         data['localtime'] = pd.to_datetime(data['localtime'])
         data.set_index('localtime', inplace=True)
-        # data['PackCurr_6'] = data.apply(adjust_current, axis=1)
+        # data['Current_value'] = data.apply(adjust_current, axis=1)
 
         # Create a figure and axes for plotting
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
-        # Plot 'PackCurr_6' on primary y-axis
-        line1, = ax1.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
-        ax1.set_ylabel('Pack Current (A)', color='blue')
+        # Plot 'Current_value' on primary y-axis
+        line1, = ax1.plot(data.index, -data['Current_value'], color='blue', label='Current_value')
+        ax1.set_ylabel('Current (A)', color='blue')
         ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
 
-        # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
+        # Create secondary y-axis for 'RPM' (RPM)
         ax2 = ax1.twinx()
-        line2, = ax2.plot(data.index, data['MotorSpeed_340920578'], color='green', label='Motor Speed')
+        line2, = ax2.plot(data.index, data['RPM'], color='green', label='Motor Speed')
         ax2.set_ylabel('Motor Speed (RPM)', color='green')
 
-        # Add 'AC_Current_340920579' to primary y-axis
-        line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='lightgray', label='AC Current')
+        # # Add 'AC_Current_340920579' to primary y-axis
+        # line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='lightgray', label='AC Current')
 
-        # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-        line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='lightgray', label='AC Voltage (x10)')
+        # # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
+        # line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='lightgray', label='AC Voltage (x10)')
 
-        # Add 'Throttle_408094978' to the left side y-axis
-        line5, = ax1.plot(data.index, data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
+        # # Add 'Throttle_408094978' to the left side y-axis
+        # line5, = ax1.plot(data.index, data['Throttle_408094978'], color='lightgray', label='Throttle (%)')
 
             # Add 'Throttle_408094978' to the left side y-axis
-        line6, = ax1.plot(data.index, data['SOC_8'], color='red', label='SOC (%)')
+        line6, = ax1.plot(data.index, data['SOC_value'], color='red', label='SOC (%)')
 
         # Hide the y-axis label for 'AC_Current_340920579'
         ax1.get_yaxis().get_label().set_visible(False)
@@ -161,7 +158,7 @@ def crop_data(main_folder_path):
         ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
 
         # Enable cursor to display values on graphs
-        mplcursors.cursor([line1, line2, line3, line4, line5])
+        mplcursors.cursor([line1, line2])
 
         # Save the plot as an image or display it
         plt.tight_layout()  # Adjust layout to prevent clipping of labels
@@ -172,11 +169,7 @@ def crop_data(main_folder_path):
         plt.show()
         
         if 'localtime' not in data.columns:
-            # Convert the 'timestamp' column from Unix milliseconds to datetime
-            data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
-
-            # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
-            data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
+            data['localtime'] = pd.to_datetime(data['DATETIME'], unit='s') + pd.Timedelta(hours=5, minutes=30)
 
 
         # Convert 'localtime' column to datetime
@@ -201,7 +194,7 @@ def crop_data(main_folder_path):
                         data = pd.read_csv(log_file_path)
                     
                         # Convert 'timestamp' to datetime
-                        data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms') + pd.Timedelta(hours=5, minutes=30)
+                        data['localtime'] = pd.to_datetime(data['DATETIME'], unit='s') + pd.Timedelta(hours=5, minutes=30)
             
                         plot_ghps(data, subfolder)
             
@@ -251,7 +244,7 @@ def analysis(main_folder_path):
         Calculate the great-circle distance between two points
         on the Earth's surface using the Haversine formula.
         """
-        # Convert latitude and longitude from degrees to radians
+        # Convert LATITUDE and LONGITUDE from degrees to radians
         lat1 = radians(lat1)
         lon1 = radians(lon1)
         lat2 = radians(lat2)
@@ -260,7 +253,7 @@ def analysis(main_folder_path):
         # Radius of the Earth in kilometers
         R = 6371.0
     
-        # Calculate differences in latitude and longitude
+        # Calculate differences in LATITUDE and LONGITUDE
         dlat = lat2 - lat1
         dlon = lon2 - lon1
     
@@ -274,7 +267,7 @@ def analysis(main_folder_path):
     # Define a function to set current to zero if RPM is zero for 10 or more consecutive points
     def adjust_current(row):
         adjust_current.zero_count = getattr(adjust_current, 'zero_count', 0)
-        if row['MotorSpeed_340920578'] == 0:
+        if row['RPM'] == 0:
             adjust_current.zero_count += 1
         else:
             adjust_current.zero_count = 0
@@ -282,47 +275,43 @@ def analysis(main_folder_path):
         if adjust_current.zero_count >= 10:
             return 0
         else:
-            return row['PackCurr_6']
+            return row['Current_value']
     
     
     
     def plot_ghps(data,Path):
         if 'localtime' not in data.columns:
-            # Convert the 'timestamp' column from Unix milliseconds to datetime
-            data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
-    
-            # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
-            data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
+            data['localtime'] = pd.to_datetime(data['DATETIME'], unit='s') + pd.Timedelta(hours=5, minutes=30)
     
         # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f', dayfirst=True)
         data['localtime'] = pd.to_datetime(data['localtime'])
         data.set_index('localtime', inplace=True)
-        data['PackCurr_6'] = data.apply(adjust_current, axis=1)
+        data['Current_value'] = data.apply(adjust_current, axis=1)
     
         # Create a figure and axes for plotting
         fig, ax1 = plt.subplots(figsize=(10, 6))
     
-        # Plot 'PackCurr_6' on primary y-axis
-        line1, = ax1.plot(data.index, -data['PackCurr_6'], color='blue', label='PackCurr_6')
-        ax1.set_ylabel('Pack Current (A)', color='blue')
+        # Plot 'Current_value' on primary y-axis
+        line1, = ax1.plot(data.index, -data['Current_value'], color='blue', label='Current_value')
+        ax1.set_ylabel('Current (A)', color='blue')
         ax1.yaxis.set_label_coords(-0.1, 0.7)  # Adjust label position
     
-        # Create secondary y-axis for 'MotorSpeed_340920578' (RPM)
+        # Create secondary y-axis for 'RPM' (RPM)
         ax2 = ax1.twinx()
-        line2, = ax2.plot(data.index, data['MotorSpeed_340920578'], color='green', label='Motor Speed')
+        line2, = ax2.plot(data.index, data['RPM'], color='green', label='Motor Speed')
         ax2.set_ylabel('Motor Speed (RPM)', color='green')
     
-        # Add 'AC_Current_340920579' to primary y-axis
-        line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='red', label='AC Current')
+        # # Add 'AC_Current_340920579' to primary y-axis
+        # line3, = ax1.plot(data.index, data['AC_Current_340920579'], color='red', label='AC Current')
     
-        # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
-        line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='yellow', label='AC Voltage (x10)')
-    
-        # Add 'Throttle_408094978' to the left side y-axis
-        line5, = ax1.plot(data.index, data['Throttle_408094978'], color='orange', label='Throttle (%)')
+        # # Add 'AC_Voltage_340920580' scaled to 10x to the left side y-axis
+        # line4, = ax1.plot(data.index, data['AC_Voltage_340920580'] * 10, color='yellow', label='AC Voltage (x10)')
     
         # Add 'Throttle_408094978' to the left side y-axis
-        line6, = ax1.plot(data.index, data['SOC_8'], color='black', label='SOC (%)')
+        # line5, = ax1.plot(data.index, data['Throttle_408094978'], color='orange', label='Throttle (%)')
+    
+        # Add 'Throttle_408094978' to the left side y-axis
+        line6, = ax1.plot(data.index, data['SOC_value'], color='black', label='SOC (%)')
     
     
         # Hide the y-axis label for 'AC_Current_340920579'
@@ -344,7 +333,7 @@ def analysis(main_folder_path):
         ax2.grid(True, linestyle=':', linewidth=0.5, color='gray')
     
         # Enable cursor to display values on graphs
-        mplcursors.cursor([line1, line2, line3, line4, line5,line6])
+        mplcursors.cursor([line1, line2,line6])
     
         # Save the plot as an image or display it
         plt.tight_layout()  # Adjust layout to prevent clipping of labels
@@ -364,63 +353,56 @@ def analysis(main_folder_path):
         data = pd.read_csv(log_file)
     
         if 'localtime' not in data.columns:
-        # Convert the 'timestamp' column from Unix milliseconds to datetime
-            data['localtime'] = pd.to_datetime(data['timestamp'], unit='ms')
-    
-        # Adjusting the timestamp to IST (Indian Standard Time) by adding 5 hours and 30 minutes
-            data['localtime'] = data['localtime'] + pd.Timedelta(hours=5, minutes=30)
+            data['localtime'] = pd.to_datetime(data['DATETIME'], unit='s') + pd.Timedelta(hours=5, minutes=30)
     
     
         total_duration = 0
         total_distance = 0
         Wh_km = 0
     
-        if (data['SOC_8'] > 90).any():
-            # Maximum cell temperature calculation
-            temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
-            max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
-            max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
-            print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+        # if (data['SOC_value'] > 90).any():
+        #     # Maximum cell temperature calculation
+        #     temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
+        #     max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        #     max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
+        #     print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
     
-            # Minimum cell temperature calculation
-            temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
-            min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
-            min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
-            print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
+        #     # Minimum cell temperature calculation
+        #     temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
+        #     min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        #     min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
+        #     print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
     
-            #Difference between Maximum and Minimum cell Temperature
-            CellTempDiff= max_cell_temp-min_cell_temp
-            print("Temperature difference: ",CellTempDiff)
+        #     #Difference between Maximum and Minimum cell Temperature
+        #     CellTempDiff= max_cell_temp-min_cell_temp
+        #     print("Temperature difference: ",CellTempDiff)
     
-        else:
-            print("SOC is not maximum!")
-            # Maximum cell temperature calculation
-            temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
-            max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
-            max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
-            print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+        # else:
+        #     print("SOC is not maximum!")
+        #     # Maximum cell temperature calculation
+        #     temp_columns_max = [f'Temp{i}_10' for i in range(1, 9)]
+        #     max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        #     max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
+        #     print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
     
-            # Minimum cell temperature calculation
-            temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
-            min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
-            min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
-            print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
+        #     # Minimum cell temperature calculation
+        #     temp_columns_min = [f'Temp{i}_10' for i in range(1, 9)]
+        #     min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
+        #     min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
+        #     print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
     
-            #Difference between Maximum and Minimum cell Temperature
-            CellTempDiff= max_cell_temp-min_cell_temp
-            print("Temperature difference: ",CellTempDiff)
+        #     #Difference between Maximum and Minimum cell Temperature
+        #     CellTempDiff= max_cell_temp-min_cell_temp
+        #     print("Temperature difference: ",CellTempDiff)
     
-    
-    
-    
-    
-        # Check if 'localtime' column exists in data DataFrame
-        if 'localtime' not in data.columns:
-            print("Error: 'localtime' column not found in the DataFrame.")
-            return None, None, None, None
+
+        # # Check if 'localtime' column exists in data DataFrame
+        # if 'localtime' not in data.columns:
+        #     print("Error: 'localtime' column not found in the DataFrame.")
+        #     return None, None, None, None
     
         # Drop rows with missing values in 'SOCAh_8' column
-        data.dropna(subset=['SOCAh_8'], inplace=True)
+        data.dropna(subset=['SOC'], inplace=True)
     
         # Convert the 'localtime' column to datetime s
         # data['localtime'] = pd.to_datetime(data['localtime'], format='%d/%m/%Y %H:%M:%S.%f',dayfirst=True)
@@ -465,40 +447,40 @@ def analysis(main_folder_path):
 
 
         # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
-        actual_ah = abs((data_resampled['PackCurr_6'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
+        actual_ah = abs((data_resampled['Current_value'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
         print("Actual Ampere-hours (Ah): {:.2f}".format(actual_ah))
     
         # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
-        watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
+        watt_h = abs((data_resampled['Current_value'] * data_resampled['voltage_value'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
         print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
     
-        ###########   starting and ending ah
-        starting_soc_Ah = data['SOCAh_8'].iloc[-1]
-        ending_soc_Ah = data['SOCAh_8'].iloc[0]
+        # ###########   starting and ending ah
+        # starting_soc_Ah = data['SOCAh_8'].iloc[-1]
+        # ending_soc_Ah = data['SOCAh_8'].iloc[0]
     
-        print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
-        print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
+        # print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
+        # print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
     
     
     #Code for SOC_percentage(Starting and Ending SOC)
-        starting_soc_percentage = data['SOC_8'].max()
-        ending_soc_percentage = data['SOC_8'].min()
+        starting_soc_percentage = data['SOC_value'].max()
+        ending_soc_percentage = data['SOC_value'].min()
         print("Starting SOC:", starting_soc_percentage)
         print("Ending SOC:", ending_soc_percentage)
 
-        average_current =data_resampled['PackCurr_6'].mean()
-        avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
-        avg_speed =avg_motor_rpm * 0.01606
+        average_current =data_resampled['Current_value'].mean()
+        avg_motor_rpm =data_resampled['RPM'].mean()
+        avg_speed =avg_motor_rpm * 0.074
 
     
         # Iterate over rows to compute distance covered between consecutive points
         for i in range(len(data) - 1):
         
-            # Get latitude and longitude of consecutive points
-            lat1 = data['latitude'].iloc[i]
-            lon1 = data['longitude'].iloc[i]
-            lat2 = data['latitude'].iloc[i + 1]
-            lon2 = data['longitude'].iloc[i + 1]
+            # Get LATITUDE and LONGITUDE of consecutive points
+            lat1 = data['LATITUDE'].iloc[i]
+            lon1 = data['LONGITUDE'].iloc[i]
+            lat2 = data['LATITUDE'].iloc[i + 1]
+            lon2 = data['LONGITUDE'].iloc[i + 1]
         
     
             # Calculate distance between consecutive points
@@ -507,37 +489,42 @@ def analysis(main_folder_path):
             # Add distance to total distance covered
             total_distance += distance
 
+            
+        print("Thalapathy---------------------->",total_distance)
               
 
 ###############
-        data_resampled['Speed_kmh'] = data_resampled['MotorSpeed_340920578'] * 0.016
+        data_resampled['Speed_kmh'] = data_resampled['RPM'] * 0.074
+
         
         # Convert Speed to m/s
         data_resampled['Speed_ms'] = data_resampled['Speed_kmh'] / 3.6
+
+        print(['Speed_kmh'])
         
         # Initialize total distance covered
-        distance_per_mode = defaultdict(float)
+        # distance_per_mode = defaultdict(float)
 
         total_distance_with_RPM = 0
 
         for index, row in data_resampled.iterrows():
-            if row['MotorSpeed_340920578'] >= 100:
+            if row['RPM'] >= 100:
 
                 distance_interval = row['Speed_ms'] * row['Time_Diff']
                 # Calculate the distance traveled in this interval
                 total_distance_with_RPM += distance_interval
 
                 # Add distance to distance per mode
-                mode = row['Mode_Ack_408094978']
+                # mode = row['Mode_Ack_408094978']
 
-                distance_per_mode[mode] += distance_interval
+                # distance_per_mode[mode] += distance_interval
                 # print("mode------------------------------->",mode)
                 # print("distance_per_mode------------------>",distance_per_mode)
 
         
         # print(f"Total Distance Covered: {total_distance} meters")
         Distance_with_RPM= total_distance_with_RPM / 1000
-        print(f"Distance covered:---------------->: {Distance_with_RPM} Kms")
+        print(f"Distance covered(with RPM):---------------->: {Distance_with_RPM} Kms")
 
 
        
@@ -549,9 +536,9 @@ def analysis(main_folder_path):
         Wh_km = abs(watt_h / Distance_with_RPM)
         print("WH/KM:{:.2f}". format (watt_h / Distance_with_RPM))
     
-        # Assuming 'data' is your DataFrame with 'SOC_8' column
-        initial_soc = data['SOC_8'].iloc[-1]  # Initial SOC percentage
-        final_soc = data['SOC_8'].iloc[0]   # Final SOC percentage
+        # Assuming 'data' is your DataFrame with 'SOC_value' column
+        initial_soc = data['SOC_value'].iloc[-1]  # Initial SOC percentage
+        final_soc = data['SOC_value'].iloc[0]   # Final SOC percentage
     
         # Calculate total SOC consumed
         total_soc_consumed =  abs(final_soc - initial_soc)
@@ -565,8 +552,9 @@ def analysis(main_folder_path):
         # Assuming 'data' is your DataFrame
 # Remove rows where 'Mode_Ack_408094978' is empty or NaN
         total_rows=len(data)
-        print("total_rows1---------->",total_rows)
-        data = data[data['Mode_Ack_408094978'].notna() & (data['Mode_Ack_408094978'] != '')]
+        # print("total_rows1---------->",total_rows)
+        # data = data[data['Mode_Ack_408094978'].notna() & (data['Mode_Ack_408094978'] != '')]
+
         
 
         # mode_values = data['Mode_Ack_408094978'].unique()
@@ -606,56 +594,58 @@ def analysis(main_folder_path):
     
         ######################################
        # Function to calculate Wh/km for a given mode
-        def calculate_wh_per_km(data, mode, distance):
-            if distance < 1:
-                return 0  # Return 0 if distance is less than 1 km
-            mode_data = data[data['Mode_Ack_408094978'] == mode]
-            if mode_data.empty:
-                return 0  # Return 0 if there's no data for the given mode
-            watt_h_mode = abs((mode_data['PackCurr_6'] * mode_data['PackVol_6'] * mode_data['Time_Diff']).sum()) / 3600
-            return abs(watt_h_mode / distance)
+        # def calculate_wh_per_km(data, mode, distance):
+        #     if distance < 1:
+        #         return 0  # Return 0 if distance is less than 1 km
+        #     mode_data = data[data['Mode_Ack_408094978'] == mode]
+        #     if mode_data.empty:
+        #         return 0  # Return 0 if there's no data for the given mode
+        #     watt_h_mode = abs((mode_data['Current_value'] * mode_data['voltage_value'] * mode_data['Time_Diff']).sum()) / 3600
+        #     return abs(watt_h_mode / distance)
 
         # Calculate Wh/km for each mode
-        wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3]/1000)
-        print("Custom mode distance-------------->",distance_per_mode[3]/1000)
-        wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2]/1000)
-        print("POWER mode distance-------------->",distance_per_mode[2]/1000)
-        wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1]/1000)
-        print("ECO mode distance-------------->",distance_per_mode[1]/1000)
+        # wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3]/1000)
+        # print("Custom mode distance-------------->",distance_per_mode[3]/1000)
+        # wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2]/1000)
+        # print("POWER mode distance-------------->",distance_per_mode[2]/1000)
+        # wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1]/1000)
+        # print("ECO mode distance-------------->",distance_per_mode[1]/1000)
 
         # Calculate Wh/km for the entire ride
-        watt_h = abs((data_resampled['PackCurr_6'] * data_resampled['PackVol_6'] * data_resampled['Time_Diff']).sum()) / 3600
+        watt_h = abs((data_resampled['Current_value'] * data_resampled['voltage_value'] * data_resampled['Time_Diff']).sum()) / 3600
         wh_per_km_total = abs(watt_h / Distance_with_RPM)
 
-        # Print the results
-        print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
-        print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
-        print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
-        print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
+        # # Print the results
+        # print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
+        # print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
+        # print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
+        # print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
 
         ######################################
     
-        # Calculate power using PackCurr_6 and PackVol_6
-        data_resampled['Power'] = data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
+        # Calculate power using Current_value and voltage_value
+        data_resampled['Power'] = data_resampled['Current_value'] * data_resampled['voltage_value']
+
+        print(data_resampled['Power'])
     
         # Find the peak power
-        peak_power = data_resampled['Power'].min()
+        peak_power = data_resampled['Power'].max()
         print("Peak Power:", peak_power)
 
-        peak_current= abs(data_resampled['PackCurr_6'].min())
+        peak_current= abs(data_resampled['Current_value'].max())
         print("peak_current", peak_current)
 
     
         # Calculate the average power
         average_power = abs(data_resampled['Power'].mean())
         print("Average Power:", average_power)
-        altitude = None
-        # Calculate altitude if 'Altitude' column exists in data_resampled
-        if 'Altitude' in data_resampled.columns:
-            altitude = data_resampled['Altitude'].max()  # Assuming you want to find the maximum altitude
-            print("Maximum Altitude:", altitude)
-        else:
-            print("Altitude data not available.")
+        # altitude = None
+        # # Calculate altitude if 'Altitude' column exists in data_resampled
+        # if 'Altitude' in data_resampled.columns:
+        #     altitude = data_resampled['Altitude'].max()  # Assuming you want to find the maximum altitude
+        #     print("Maximum Altitude:", altitude)
+        # else:
+        #     print("Altitude data not available.")
     
     
         # Calculate energy regenerated (in watt-hours)
@@ -668,14 +658,14 @@ def analysis(main_folder_path):
         print("total energy regenerated",energy_regenerated)
     
         # Calculate regenerative effectiveness as a percentage
-        if total_energy_consumed != 0:
-            regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
-            print("Regenerative Effectiveness (%):", regenerative_effectiveness)
-        else:
-            print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
+        # if total_energy_consumed != 0:
+        #     regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
+        #     print("Regenerative Effectiveness (%):", regenerative_effectiveness)
+        # else:
+        #     print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
     
         # Calculate idling time percentage (RPM was zero for more than 5 seconds)
-        idling_time = ((data['MotorSpeed_340920578'] <= 0) | data['MotorSpeed_340920578'].isna()).sum()
+        idling_time = ((data['RPM'] <= 0) | data['RPM'].isna()).sum()
         print("data length time",len(data))
         idling_percentage = (idling_time / len(data)) * 100
         print("Idling time percentage:", idling_percentage)
@@ -685,103 +675,103 @@ def analysis(main_folder_path):
         speed_range_percentages = {}
     
         for range_ in speed_ranges:
-            speed_range_time = ((data['MotorSpeed_340920578'] * 0.016 > range_[0]) & (data['MotorSpeed_340920578'] * 0.016 < range_[1])).sum()
+            speed_range_time = ((data['RPM'] * 0.074 > range_[0]) & (data['RPM'] * 0.074 < range_[1])).sum()
             speed_range_percentage = (speed_range_time / len(data)) * 100
             speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
             print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
     
             
-        # Calculate power using PackCurr_6 and PackVol_6
-        data_resampled['Power'] = -data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
+        # Calculate power using Current_value and voltage_value
+        data_resampled['Power'] = -data_resampled['Current_value'] * data_resampled['voltage_value']
     
         # Find the peak power
-        peak_power = data_resampled['Power'].max()
+        # peak_power = data_resampled['Power'].max()
     
-        # Get the maximum cell voltage
-        max_cell_voltage = data_resampled['MaxCellVol_5'].max()
+        # # Get the maximum cell voltage
+        # max_cell_voltage = data_resampled['MaxCellVol_5'].max()
     
-        # Find the index where the maximum voltage occurs
-        max_index = data_resampled['MaxCellVol_5'].idxmax()
+        # # Find the index where the maximum voltage occurs
+        # max_index = data_resampled['MaxCellVol_5'].idxmax()
     
-        # Retrieve the corresponding cell ID using the index
-        max_cell_id = data_resampled['MaxVoltId_5'].loc[max_index]
+        # # Retrieve the corresponding cell ID using the index
+        # max_cell_id = data_resampled['MaxVoltId_5'].loc[max_index]
     
-        # Get the minimum cell voltage
-        min_cell_voltage = data_resampled['MinCellVol_5'].min()
+        # # Get the minimum cell voltage
+        # min_cell_voltage = data_resampled['MinCellVol_5'].min()
     
-        # Find the index where the minimum voltage occurs
-        min_index = data_resampled['MinCellVol_5'].idxmin()
+        # # Find the index where the minimum voltage occurs
+        # min_index = data_resampled['MinCellVol_5'].idxmin()
     
-        # Retrieve the corresponding cell ID using the index
-        min_cell_id = data_resampled['MinVoltId_5'].loc[min_index]
+        # # Retrieve the corresponding cell ID using the index
+        # min_cell_id = data_resampled['MinVoltId_5'].loc[min_index]
     
-        voltage_difference = max_cell_voltage - min_cell_voltage
+        # voltage_difference = max_cell_voltage - min_cell_voltage
     
-        # Get the maximum temperature
-        max_temp = data_resampled['MaxTemp_7'].max()
+        # # Get the maximum temperature
+        # max_temp = data_resampled['MaxTemp_7'].max()
     
-        # Find the index where the maximum temperature occurs
-        max_temp_index = data_resampled['MaxTemp_7'].idxmax()
+        # # Find the index where the maximum temperature occurs
+        # max_temp_index = data_resampled['MaxTemp_7'].idxmax()
     
-        # Retrieve the corresponding temperature ID using the index
-        max_temp_id = data_resampled['MaxTempId_7'].loc[max_temp_index]
+        # # Retrieve the corresponding temperature ID using the index
+        # max_temp_id = data_resampled['MaxTempId_7'].loc[max_temp_index]
     
-        # Get the minimum temperature
-        min_temp = data_resampled['MinTemp_7'].min()
+        # # Get the minimum temperature
+        # min_temp = data_resampled['MinTemp_7'].min()
     
-        # Find the index where the minimum temperature occurs
-        min_temp_index = data_resampled['MinTemp_7'].idxmin()
+        # # Find the index where the minimum temperature occurs
+        # min_temp_index = data_resampled['MinTemp_7'].idxmin()
     
-        # Retrieve the corresponding temperature ID using the index
-        min_temp_id = data_resampled['MinTempId_7'].loc[min_temp_index]
+        # # Retrieve the corresponding temperature ID using the index
+        # min_temp_id = data_resampled['MinTempId_7'].loc[min_temp_index]
     
-        # Calculate the difference in temperature
-        temp_difference = max_temp - min_temp
+        # # Calculate the difference in temperature
+        # temp_difference = max_temp - min_temp
     
-        # Get the maximum temperature of FetTemp_8
-        max_fet_temp = data_resampled['FetTemp_8'].max()
+        # # Get the maximum temperature of FetTemp_8
+        # max_fet_temp = data_resampled['FetTemp_8'].max()
     
-        # Get the maximum temperature of AfeTemp_12
-        max_afe_temp = data_resampled['AfeTemp_12'].max()
+        # # Get the maximum temperature of AfeTemp_12
+        # max_afe_temp = data_resampled['AfeTemp_12'].max()
     
-        # Get the maximum temperature of PcbTemp_12
-        max_pcb_temp = data_resampled['PcbTemp_12'].max()
+        # # Get the maximum temperature of PcbTemp_12
+        # max_pcb_temp = data_resampled['PcbTemp_12'].max()
     
-        # Get the maximum temperature of MCU_Temperature_408094979
-        max_mcu_temp = data_resampled['MCU_Temperature_408094979'].max()
+        # # Get the maximum temperature of MCU_Temperature_408094979
+        # max_mcu_temp = data_resampled['MCU_Temperature_408094979'].max()
     
-        # Check for abnormal motor temperature at high RPMs
-        max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
+        # # Check for abnormal motor temperature at high RPMs
+        # max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
     
-        # Find the battery voltage
-        batteryVoltage = (data_resampled['BatteryVoltage_340920578'].max()) * 10
-        print( "Battery Voltage", batteryVoltage )
+        # # Find the battery voltage
+        # batteryVoltage = (data_resampled['BatteryVoltage_340920578'].max()) * 10
+        # print( "Battery Voltage", batteryVoltage )
     
         # Check for abnormal motor temperature at high RPMs for at least 15 seconds
-        abnormal_motor_temp = (data_resampled['Motor_Temperature_408094979'] < 10) & (data_resampled['MotorSpeed_340920578'] > 3500)
-        abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
+        # abnormal_motor_temp = (data_resampled['Motor_Temperature_408094979'] < 10) & (data_resampled['RPM'] > 3500)
+        # abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
     
-        # Check if abnormal condition persists for at least 15 seconds
-        abnormal_motor_temp_detected = (abnormal_motor_temp_mask >= 120).any()
+        # # Check if abnormal condition persists for at least 15 seconds
+        # abnormal_motor_temp_detected = (abnormal_motor_temp_mask >= 120).any()
     
-        #For battery Analysis
-        cycleCount= data_resampled['CycleCount_7'].max()
+        # #For battery Analysis
+        # cycleCount= data_resampled['CycleCount_7'].max()
 
-        SOH = data_resampled['SOH_8'].max()
+        # SOH = data_resampled['SOH'].max()
     
     
     
-        ByteBeamId= data['id'].iloc[0]
+        # ByteBeamId= data['id'].iloc[0]
     
         max_continuous_duration = 0
     
-        for speed in range(int(data_resampled['MotorSpeed_340920578'].min()), int(data_resampled['MotorSpeed_340920578'].max()) + 1):
+        for speed in range(int(data_resampled['RPM'].min()), int(data_resampled['RPM'].max()) + 1):
             lower_bound = speed - window_size
             upper_bound = speed + window_size
         
     
-            within_window = data_resampled[(data_resampled['MotorSpeed_340920578'] >= lower_bound) & (data_resampled['MotorSpeed_340920578'] <= upper_bound)].copy()
-            within_window.loc[:, 'Group'] = (within_window['MotorSpeed_340920578'].diff() > window_size).cumsum()
+            within_window = data_resampled[(data_resampled['RPM'] >= lower_bound) & (data_resampled['RPM'] <= upper_bound)].copy()
+            within_window.loc[:, 'Group'] = (within_window['RPM'].diff() > window_size).cumsum()
             continuous_durations = within_window.groupby('Group')['Time_Diff'].sum()
         
             current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
@@ -790,7 +780,7 @@ def analysis(main_folder_path):
                 print("max_continuous_duration------->",max_continuous_duration)
                 max_continuous_duration = current_max_duration
                 cruising_rpm = speed
-                cruising_speed=speed*0.01606
+                cruising_speed=speed*0.074
 
                 if cruising_speed >1:
                     cruise_speed=cruising_speed
@@ -798,212 +788,233 @@ def analysis(main_folder_path):
                     cruise_speed =0
     
     
-            # Find the maximum value in the 'MotorSpeed_340920578' column
-        Max_motor_rpm = data_resampled['MotorSpeed_340920578'].max()
+            # Find the maximum value in the 'RPM' column
+        Max_motor_rpm = data_resampled['RPM'].max()
     
         # Print the maximum motor speed in RPM
         print("The maximum motor speed in RPM is:", Max_motor_rpm)
     
         # Convert the maximum motor speed to speed using the given factor
-        peak_speed = Max_motor_rpm * 0.01606
+        peak_speed = Max_motor_rpm * 0.074
     
         # Print the maximum speed
         print("The maximum speed is:", peak_speed)
     
-        total_energy_kwh = actual_ah * batteryVoltage / 1000
-        print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
+        # total_energy_kwh = actual_ah * batteryVoltage / 1000
+        # print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
     
-        total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
-        print("Electricity consumption units in kW", (total_energy_kw))
+        # total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
+        # print("Electricity consumption units in kW", (total_energy_kw))
 
         print("wh/km----------->",wh_per_km_total)
     
         # Add these variables and logic to ppt_data
+
+        # Count number of 'ones' in 'eco' column
+        eco_count = data_resampled['Eco_mode'].sum()
+        
+        # Count number of 'ones' in 'power' column
+        power_count = data_resampled['power_mode'].sum()
+        
+        # Calculate total number of rows
+        total_rows = len(data_resampled)
+        
+        # Calculate percentages
+        eco_percentage = (eco_count / total_rows) * 100
+        power_percentage = (power_count / total_rows) * 100
+        
+        # Display or use the results as needed
+        print(f"Number of 'ones' in 'eco': {eco_count}")
+        print(f"Number of 'ones' in 'power': {power_count}")
+        print(f"Percentage of 'ones' in 'eco': {eco_percentage:.2f}%")
+        print(f"Percentage of 'ones' in 'power': {power_percentage:.2f}%")
     
         ppt_data = {
             "Date and Time": str(start_time_seconds) + " to " + str(end_time_seconds),
-            "Byte Beam ID": ByteBeamId,
+            # "Byte Beam ID": ByteBeamId,
             "Total time taken for the ride": total_duration,
             "Actual Ampere-hours (Ah)": actual_ah,
             "Actual Watt-hours Consumed(Wh)- Calculated_UsingFormala-'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
-            "Starting SoC (Ah)": starting_soc_Ah,
-            "Ending SoC (Ah)": ending_soc_Ah,
+            # "Starting SoC (Ah)": starting_soc_Ah,
+            # "Ending SoC (Ah)": ending_soc_Ah,
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
-            "SOH": SOH,
-            "Total distance covered (km)": Distance_with_RPM,
-            "Energy Consumption Rate(WH/KM)- ENTIRE RIDE": watt_h / Distance_with_RPM,
-            "Mode": "",
-            "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
-            "Distance travelled in Custom mode":distance_per_mode[3]/1000,
-            "Wh/km in POWER mode": wh_per_km_POWER_mode,
-            "Distance travelled in POWER mode":distance_per_mode[2]/1000,
-            "Wh/km in ECO mode": wh_per_km_ECO_mode,
-            "Distance travelled in ECO mode":distance_per_mode[1]/1000,
+            # "SOH": SOH,
+            "Total distance covered (km)": total_distance,
+            "Energy Consumption Rate(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
+            "Eco_Mode_Percentage":eco_percentage,
+            "Power_Mode_Percentage":power_percentage,
+            # "Mode": "",
+            # "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
+            # "Distance travelled in Custom mode":distance_per_mode[3]/1000,
+            # "Wh/km in POWER mode": wh_per_km_POWER_mode,
+            # "Distance travelled in POWER mode":distance_per_mode[2]/1000,
+            # "Wh/km in ECO mode": wh_per_km_ECO_mode,
+            # "Distance travelled in ECO mode":distance_per_mode[1]/1000,
             "Peak_current":peak_current,
             "Average_current":abs(average_current),
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             "Total Energy Regenerated(Wh)": energy_regenerated,
-            "Regenerative Effectiveness(%)": regenerative_effectiveness,
-            "Highest Cell Voltage(V)": max_cell_voltage,
-            "Lowest Cell Voltage(V)": min_cell_voltage,
-            "Difference in Cell Voltage(V)": voltage_difference,
-            "Minimum Temperature(C)": min_temp,
-            "Maximum Temperature(C)": max_temp,
-            "Difference in Temperature(C)": max_temp- min_temp,
-            "Maximum Fet Temperature-BMS(C)": max_fet_temp,
-            "Maximum Afe Temperature-BMS(C)": max_afe_temp,
-            "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
-            "Maximum MCU Temperature(C)": max_mcu_temp,
-            "Maximum Motor Temperature(C)": max_motor_temp,
-            "Abnormal Motor Temperature Detected(C)": abnormal_motor_temp_detected,
-            "highest cell temp(C)": max_cell_temp,
-            "lowest cell temp(C)": min_cell_temp,
-            "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
-            "Battery Voltage(V)": batteryVoltage,
-            "Total energy charged(kWh)- Calculated_Using_BatteryData": total_energy_kwh,
-            "Electricity consumption units(kW)": total_energy_kw,
-            "Cycle Count of battery": cycleCount,
-            "Cruising Speed (Rpm)": cruising_rpm,
-            "cruising_speed (km/hr)":cruise_speed,
+            # "Regenerative Effectiveness(%)": regenerative_effectiveness,
+            # "Highest Cell Voltage(V)": max_cell_voltage,
+            # "Lowest Cell Voltage(V)": min_cell_voltage,
+            # "Difference in Cell Voltage(V)": voltage_difference,
+            # "Minimum Temperature(C)": min_temp,
+            # "Maximum Temperature(C)": max_temp,
+            # "Difference in Temperature(C)": max_temp- min_temp,
+            # "Maximum Fet Temperature-BMS(C)": max_fet_temp,
+            # "Maximum Afe Temperature-BMS(C)": max_afe_temp,
+            # "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
+            # "Maximum MCU Temperature(C)": max_mcu_temp,
+            # "Maximum Motor Temperature(C)": max_motor_temp,
+            # "Abnormal Motor Temperature Detected(C)": abnormal_motor_temp_detected,
+            # "highest cell temp(C)": max_cell_temp,
+            # "lowest cell temp(C)": min_cell_temp,
+            # "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
+            # "Battery Voltage(V)": batteryVoltage,
+            # "Total energy charged(kWh)- Calculated_Using_BatteryData": total_energy_kwh,
+            # "Electricity consumption units(kW)": total_energy_kw,
+            # "Cycle Count of battery": cycleCount,
+            # "Cruising Speed (Rpm)": cruising_rpm,
+            # "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed,
             "Average_speed":avg_speed
             }
     
           # Check if the mode remains constant or changes
-        mode_values = data['Mode_Ack_408094978'].unique()
+        # mode_values = data['Mode_Ack_408094978'].unique()
 
-        if len(mode_values) == 1:
-            # Mode remains constant throughout the log file
-            mode = mode_values[0]
-            if mode == 3:
-                print("Mode is Custom mode.")
-                ppt_data["Mode"] = "Custom mode: 100%"
-            elif mode == 2:
-                print("Mode is Power mode.")
-                ppt_data["Mode"] = "Power mode: 100%"
-            elif mode == 1:
-                print("Mode is Eco mode.")
-                ppt_data["Mode"] = "Eco mode: 100%"
+        # if len(mode_values) == 1:
+        #     # Mode remains constant throughout the log file
+        #     mode = mode_values[0]
+        #     if mode == 3:
+        #         print("Mode is Custom mode.")
+        #         ppt_data["Mode"] = "Custom mode: 100%"
+        #     elif mode == 2:
+        #         print("Mode is Power mode.")
+        #         ppt_data["Mode"] = "Power mode: 100%"
+        #     elif mode == 1:
+        #         print("Mode is Eco mode.")
+        #         ppt_data["Mode"] = "Eco mode: 100%"
                 
-        else:
-            # Mode changes throughout the log file
-            total_rows = len(data)
-            mode_counts = data['Mode_Ack_408094978'].value_counts()
-            mode_strings = []  # Initialize list to store mode strings
+        # else:
+        #     # Mode changes throughout the log file
+        #     total_rows = len(data)
+        #     mode_counts = data['Mode_Ack_408094978'].value_counts()
+        #     mode_strings = []  # Initialize list to store mode strings
 
-            # Exclude mode 0 or empty from total_rows calculation
-            total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
-            total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
+        #     # Exclude mode 0 or empty from total_rows calculation
+        #     total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
+        #     total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
 
-            for mode, count in mode_counts.items():
-                if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
-                    percentage = (count / total_rows) * 100
-                    if mode == 3:
-                        print(f"Custom mode: {percentage:.2f}%")
-                        mode_strings.append(f"Custom mode\n{percentage:.2f}%")
-                    elif mode == 2:
-                        print(f"Power mode: {percentage:.2f}%")
-                        mode_strings.append(f"Power mode\n{percentage:.2f}%")
-                    elif mode == 1:
-                        print(f"Eco mode: {percentage:.2f}%")
-                        mode_strings.append(f"Eco mode\n{percentage:.2f}%")
-                ppt_data["Mode"] = "\n".join(mode_strings)
+        #     for mode, count in mode_counts.items():
+        #         if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
+        #             percentage = (count / total_rows) * 100
+        #             if mode == 3:
+        #                 print(f"Custom mode: {percentage:.2f}%")
+        #                 mode_strings.append(f"Custom mode\n{percentage:.2f}%")
+        #             elif mode == 2:
+        #                 print(f"Power mode: {percentage:.2f}%")
+        #                 mode_strings.append(f"Power mode\n{percentage:.2f}%")
+        #             elif mode == 1:
+        #                 print(f"Eco mode: {percentage:.2f}%")
+        #                 mode_strings.append(f"Eco mode\n{percentage:.2f}%")
+        #         ppt_data["Mode"] = "\n".join(mode_strings)
     
         # Add calculated parameters to ppt_data
         ppt_data["Idling time percentage"] = idling_percentage
         ppt_data.update(speed_range_percentages)
     
-        # Calculate power using PackCurr_6 and PackVol_6
-        data_resampled['Power'] = -data_resampled['PackCurr_6'] * data_resampled['PackVol_6']
+        # Calculate power using Current_value and voltage_value
+        data_resampled['Power'] = -data_resampled['Current_value'] * data_resampled['voltage_value']
     
         # Find the peak power
         peak_power = data_resampled['Power'].max()
         print("Peak Power:", peak_power)
     
-        # Get the maximum cell voltage
-        max_cell_voltage = data_resampled['MaxCellVol_5'].max()
+        # # Get the maximum cell voltage
+        # max_cell_voltage = data_resampled['MaxCellVol_5'].max()
     
-        # Find the index where the maximum voltage occurs
-        max_index = data_resampled['MaxCellVol_5'].idxmax()
+        # # Find the index where the maximum voltage occurs
+        # max_index = data_resampled['MaxCellVol_5'].idxmax()
     
-        # Retrieve the corresponding cell ID using the index
-        max_cell_id = data_resampled['MaxVoltId_5'].loc[max_index]
+        # # Retrieve the corresponding cell ID using the index
+        # max_cell_id = data_resampled['MaxVoltId_5'].loc[max_index]
     
-            # Get the minimum cell voltage
-        min_cell_voltage = data_resampled['MinCellVol_5'].min()
+        #     # Get the minimum cell voltage
+        # min_cell_voltage = data_resampled['MinCellVol_5'].min()
     
-        # Find the index where the minimum voltage occurs
-        min_index = data_resampled['MinCellVol_5'].idxmin()
+        # # Find the index where the minimum voltage occurs
+        # min_index = data_resampled['MinCellVol_5'].idxmin()
     
-        # Retrieve the corresponding cell ID using the index
-        min_cell_id = data_resampled['MinVoltId_5'].loc[min_index]
+        # # Retrieve the corresponding cell ID using the index
+        # min_cell_id = data_resampled['MinVoltId_5'].loc[min_index]
     
-        voltage_difference = max_cell_voltage - min_cell_voltage
-    
-    
-        print("Lowest Cell Voltage:", min_cell_voltage, "V, Cell ID:", min_cell_id)
-        print("Highest Cell Voltage:", max_cell_voltage, "V, Cell ID:", max_cell_id)
-        print("Difference in Cell Voltage:", voltage_difference, "V")
-    
-        # Get the maximum temperature
-        max_temp = data_resampled['MaxTemp_7'].max()
-    
-        # Find the index where the maximum temperature occurs
-        max_temp_index = data_resampled['MaxTemp_7'].idxmax()
-    
-        # Retrieve the corresponding temperature ID using the index
-        max_temp_id = data_resampled['MaxTempId_7'].loc[max_temp_index]
+        # voltage_difference = max_cell_voltage - min_cell_voltage
     
     
-        # Get the minimum temperature
-        min_temp = data_resampled['MinTemp_7'].min()
+        # print("Lowest Cell Voltage:", min_cell_voltage, "V, Cell ID:", min_cell_id)
+        # print("Highest Cell Voltage:", max_cell_voltage, "V, Cell ID:", max_cell_id)
+        # print("Difference in Cell Voltage:", voltage_difference, "V")
     
-        # Find the index where the minimum temperature occurs
-        min_temp_index = data_resampled['MinTemp_7'].idxmin()
+        # # Get the maximum temperature
+        # max_temp = data_resampled['MaxTemp_7'].max()
     
-        # Retrieve the corresponding temperature ID using the index
-        min_temp_id = data_resampled['MinTempId_7'].loc[min_temp_index]
-        # Calculate the difference in temperature
-        temp_difference = max_temp - min_temp
-        print("temp_difference: ",temp_difference)
-        print("Total distance: ",Distance_with_RPM)
+        # # Find the index where the maximum temperature occurs
+        # max_temp_index = data_resampled['MaxTemp_7'].idxmax()
     
-        print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
-        print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
-        print("Difference in Temperature:", temp_difference, "C")
-    
-        # Get the maximum temperature of FetTemp_8
-        max_fet_temp = data_resampled['FetTemp_8'].max()
-        print("Maximum Fet Temperature:", max_fet_temp, "C")
-    
-        # Get the maximum temperature of AfeTemp_12
-        max_afe_temp = data_resampled['AfeTemp_12'].max()
-        print("Maximum Afe Temperature:", max_afe_temp, "C")
-    
-        # Get the maximum temperature of PcbTemp_12
-        max_pcb_temp = data_resampled['PcbTemp_12'].max()
-        print("Maximum PCB Temperature:", max_pcb_temp, "C")
-    
-        # Get the maximum temperature of MCU_Temperature_408094979
-        max_mcu_temp = data_resampled['MCU_Temperature_408094979'].max()
-        print("Maximum MCU Temperature:", max_mcu_temp, "C")
-    
-        # Check for abnormal motor temperature at high RPMs
-        max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
+        # # Retrieve the corresponding temperature ID using the index
+        # max_temp_id = data_resampled['MaxTempId_7'].loc[max_temp_index]
     
     
-        print("Maximum Motor Temperature:", max_motor_temp, "C")
+        # # Get the minimum temperature
+        # min_temp = data_resampled['MinTemp_7'].min()
+    
+        # # Find the index where the minimum temperature occurs
+        # min_temp_index = data_resampled['MinTemp_7'].idxmin()
+    
+        # # Retrieve the corresponding temperature ID using the index
+        # min_temp_id = data_resampled['MinTempId_7'].loc[min_temp_index]
+        # # Calculate the difference in temperature
+        # temp_difference = max_temp - min_temp
+        # print("temp_difference: ",temp_difference)
+        # print("Total distance: ",Distance_with_RPM)
+    
+        # print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
+        # print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
+        # print("Difference in Temperature:", temp_difference, "C")
+    
+        # # Get the maximum temperature of FetTemp_8
+        # max_fet_temp = data_resampled['FetTemp_8'].max()
+        # print("Maximum Fet Temperature:", max_fet_temp, "C")
+    
+        # # Get the maximum temperature of AfeTemp_12
+        # max_afe_temp = data_resampled['AfeTemp_12'].max()
+        # print("Maximum Afe Temperature:", max_afe_temp, "C")
+    
+        # # Get the maximum temperature of PcbTemp_12
+        # max_pcb_temp = data_resampled['PcbTemp_12'].max()
+        # print("Maximum PCB Temperature:", max_pcb_temp, "C")
+    
+        # # Get the maximum temperature of MCU_Temperature_408094979
+        # max_mcu_temp = data_resampled['MCU_Temperature_408094979'].max()
+        # print("Maximum MCU Temperature:", max_mcu_temp, "C")
+    
+        # # Check for abnormal motor temperature at high RPMs
+        # max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
     
     
-        # Check for abnormal motor temperature at high RPMs for at least 15 seconds
-        abnormal_motor_temp = (data_resampled['Motor_Temperature_408094979'] < 10) & (data_resampled['MotorSpeed_340920578'] > 3500)
+        # print("Maximum Motor Temperature:", max_motor_temp, "C")
     
-        # Convert to a binary mask indicating consecutive occurrences
-        abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
+    
+        # # Check for abnormal motor temperature at high RPMs for at least 15 seconds
+        # abnormal_motor_temp = (data_resampled['Motor_Temperature_408094979'] < 10) & (data_resampled['RPM'] > 3500)
+    
+        # # Convert to a binary mask indicating consecutive occurrences
+        # abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
 
         print("analysis function ended")
     
@@ -1230,7 +1241,7 @@ def analysis(main_folder_path):
             for file in os.listdir(subfolder_path):
                 if file == 'log_withoutanomaly.csv':
                     log_file_without_anomaly = os.path.join(subfolder_path, file)
-                elif file == 'log_km.csv':
+                elif file == 'log.csv':
                     log_file_with_anomaly = os.path.join(subfolder_path, file)
 
             # Choose the appropriate file to process
@@ -1266,6 +1277,6 @@ def analysis(main_folder_path):
     mergeExcel(main_folder_path)
     
 
-Merge_log_km(main_folder_path)
-crop_data(main_folder_path)
+# Merge_log_km(main_folder_path)
+# crop_data(main_folder_path)
 analysis(main_folder_path)
