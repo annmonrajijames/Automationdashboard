@@ -407,8 +407,7 @@ def analysis_Energy(data,subfolder_path):
     ##############   Wh/Km
     Wh_km = abs(watt_h / total_distance)
     print("WH/KM:{:.2f}". format (watt_h / total_distance))
- 
-    # Assuming 'data' is your DataFrame with 'SOC [SA: 08]' column
+     # Assuming 'data' is your DataFrame with 'SOC [SA: 08]' column
     initial_soc = data['SOC [SA: 08]'].iloc[-1]  # Initial SOC percentage
     final_soc = data['SOC [SA: 08]'].iloc[0]   # Final SOC percentage
  
