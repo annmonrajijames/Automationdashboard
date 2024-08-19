@@ -1047,7 +1047,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\Influx_enduro\july_21"
+main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\Nduro"
 
  
 def mergeExcel(main_folder_path):
