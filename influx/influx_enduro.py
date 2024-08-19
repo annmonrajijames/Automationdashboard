@@ -74,7 +74,7 @@ def plot_ghps(data,Path,maxCellTemp):
 
     
 
-    speed = data['MotorSpeed [SA: 02]'] * 0.0875
+    speed = data['MotorSpeed [SA: 02]'] * 0.0836
 
     data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
 
@@ -152,6 +152,8 @@ def analysis_Energy(data,subfolder_path):
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     
     # data.set_index('DATETIME', inplace=True)
+
+   
 
     total_duration = 0
     total_distance = 0
@@ -304,6 +306,42 @@ def analysis_Energy(data,subfolder_path):
  
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
+
+
+###############Calculating the Distance based on RPM
+    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0836
+    
+    # Convert Speed to m/s
+    data['Speed_ms'] = data['Speed_kmh'] / 3.6
+    
+    # Initialize total distance covered
+    distance_per_mode = defaultdict(float)
+
+    total_distance_with_RPM = 0
+
+    for index, row in data.iterrows():
+        if row['MotorSpeed [SA: 02]'] >= 100:
+
+            distance_interval = row['Speed_ms'] * row['localtime_Diff']
+            # Calculate the distance traveled in this interval
+            total_distance_with_RPM += distance_interval
+            
+    print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
+
+#################
+
+###########Calculating the Distance based on Ground Distance from GPS Module data
+    total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+    # for index, row in data.iterrows():
+    #     if row['GROUND_DISTANCE'] >= 100:
+
+    #         distance_interval_groundSpeed = row['GROUND_DISTANCE'] * row['localtime_Diff']
+    #         # Calculate the distance traveled in this interval
+    #         total_distance_Ground_Distance += distance_interval_groundSpeed
+            
+    print("Distance With total_distance_Ground_Distance---------------------->",total_distance_Ground_Distance/1000)
+###############
+
  
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
@@ -481,7 +519,7 @@ def analysis_Energy(data,subfolder_path):
     speed_range_percentages = {}
  
     for range_ in speed_ranges:
-        speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0875 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0875 < range_[1])).sum()
+        speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0836 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0836 < range_[1])).sum()
         speed_range_percentage = (speed_range_localtime / len(data)) * 100
         speed_range_percentages[f"Time_{range_[0]}-{range_[1]} km/h(%)"] = speed_range_percentage
         print(f"Time_{range_[0]}-{range_[1]} km/h(%): {speed_range_percentage:.2f}%")
@@ -586,7 +624,7 @@ def analysis_Energy(data,subfolder_path):
     #         print("max_continuous_duration------->",max_continuous_duration)
     #         max_continuous_duration = current_max_duration
     #         cruising_rpm = speed
-    #         cruising_speed=speed*0.0875
+    #         cruising_speed=speed*0.0836
 
     #         if cruising_speed >1:
     #             cruise_speed=cruising_speed
@@ -603,9 +641,9 @@ def analysis_Energy(data,subfolder_path):
     print("The maximum motor speed in RPM is:", Max_motor_rpm)
 
     # Convert the maximum motor speed to speed using the given factor
-    peak_speed = Max_motor_rpm * 0.0875
+    peak_speed = Max_motor_rpm * 0.0836
 
-    avg_speed =avg_motor_rpm * 0.0875
+    avg_speed =avg_motor_rpm * 0.0836
 
     # Print the maximum speed
     print("The maximum speed is:", peak_speed)
@@ -629,16 +667,18 @@ def analysis_Energy(data,subfolder_path):
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Energy consumption Rate(WH/KM)": watt_h / total_distance,
-        "Total distance covered (km)": total_distance,
+        "Total distance - RPM": total_distance_with_RPM/1000,
+        "Total distance covered (km) - Lat & Long(GPS)": total_distance,
+        "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
         "Mode": "", 
-        "Wh/km in Normal mode": wh_per_km_Normal_mode,
-        "Distance travelled in Normal mode":distance_per_mode[2],
-        "Wh/km in Fast Mode": wh_per_km_Fast_mode,
-        "Distance travelled in Fast Mode":distance_per_mode[6],
-        "Wh/km in ECO Mode": wh_per_km_ECO_mode,
-        "Distance travelled in ECO mode":distance_per_mode[4],
-        "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
-        "Distance travelled in LIMP Mode":distance_per_mode[5],
+        # "Wh/km in Normal mode": wh_per_km_Normal_mode,
+        # "Distance travelled in Normal mode":distance_per_mode[2],
+        # "Wh/km in Fast Mode": wh_per_km_Fast_mode,
+        # "Distance travelled in Fast Mode":distance_per_mode[6],
+        # "Wh/km in ECO Mode": wh_per_km_ECO_mode,
+        # "Distance travelled in ECO mode":distance_per_mode[4],
+        # "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
+        # "Distance travelled in LIMP Mode":distance_per_mode[5],
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Peak Power(W)": peak_power,
         "Average Power(W)": average_power,
@@ -961,21 +1001,11 @@ def capture_analysis_output(log_file,folder_path):
             # 'Time_80-90 km/h'
         ]
 
-        # Define columns to plot for Wh/km and distance metrics
-        wh_distance_columns = [
-            'Wh/km in Normal mode',
-            'Distance travelled in Normal mode',
-            'Wh/km in Fast Mode',
-            'Distance travelled in Fast Mode',
-            'Wh/km in ECO Mode',
-            'Distance travelled in ECO mode'
-        ]
-
+     
         # Define colors for idling and speed metrics
         idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red']
 
-        # Define colors for Wh/km and distance metrics
-        wh_distance_colors = ['blue', 'blue', 'red', 'red', 'green', 'green']
+        
 
         # Function to plot and save idling and speed metrics
         def plot_idling_speed_metrics():
@@ -1002,35 +1032,11 @@ def capture_analysis_output(log_file,folder_path):
             img_idling_speed = Image(plot_file)
             ws.add_image(img_idling_speed, 'F35')  # Adjust the cell location as needed
 
-        # Function to plot and save Wh/km and distance metrics
-        def plot_wh_distance_metrics():
-            plt.figure(figsize=(15, 6))  # Increase figure size
-            bars = plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
-            # plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
-            plt.xlabel('Metrics')
-            plt.ylabel('Values')
-            plt.title('Bar Graph of Wh/km and Distance Travelled')
-            plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
-
-
-            # Annotate bars with values
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
-
-            plot_file = f"{folder_path}/wh_distance_bar_plot.png"
-            plt.savefig(plot_file)
-            plt.show()
-            print(f"Wh/km and distance bar plot saved: {plot_file}")
-
-            # Insert plots into the Excel worksheet
-            img_wh_distance = Image(f"{folder_path}/wh_distance_bar_plot.png")
-            ws.add_image(img_wh_distance, 'F2')  # Adjust the cell location as needed
+        
 
 
         # Generate and save the plots
         plot_idling_speed_metrics()
-        plot_wh_distance_metrics()
 
          # Save the Excel workbook
         excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"

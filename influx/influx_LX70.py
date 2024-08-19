@@ -292,7 +292,40 @@ def analysis_Energy(data,subfolder_path):
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
     # print(data['localtime_Diff'])
- 
+    
+###############Calculating the Distance based on RPM
+    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0836
+    
+    # Convert Speed to m/s
+    data['Speed_ms'] = data['Speed_kmh'] / 3.6
+    
+    # Initialize total distance covered
+    distance_per_mode = defaultdict(float)
+
+    total_distance_with_RPM = 0
+
+    for index, row in data.iterrows():
+        if row['MotorSpeed [SA: 02]'] >= 100:
+
+            distance_interval = row['Speed_ms'] * row['localtime_Diff']
+            # Calculate the distance traveled in this interval
+            total_distance_with_RPM += distance_interval
+            
+    print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
+#################
+
+###########Calculating the Distance based on Ground Distance from GPS Module data
+    total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+    # for index, row in data.iterrows():
+    #     if row['GROUND_DISTANCE'] >= 100:
+
+    #         distance_interval_groundSpeed = row['GROUND_DISTANCE'] * row['localtime_Diff']
+    #         # Calculate the distance traveled in this interval
+    #         total_distance_Ground_Distance += distance_interval_groundSpeed
+            
+    print("Distance With total_distance_Ground_Distance---------------------->",total_distance_Ground_Distance/1000)
+###############
+
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
 
@@ -626,7 +659,10 @@ def analysis_Energy(data,subfolder_path):
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Energy consumption Rate(WH/KM)": watt_h / total_distance,
-        "Total distance covered (km)": total_distance,
+        # "Total distance covered (km)": total_distance,
+        "Total distance - RPM": total_distance_with_RPM/1000,
+        "Total distance covered (km) - Lat & Long(GPS)": total_distance,
+        "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
         "Mode": "", 
         "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
         "Distance_Custom mode":distance_per_mode[3],
