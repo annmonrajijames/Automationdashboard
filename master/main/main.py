@@ -54,6 +54,9 @@ scripts = {
     "Error causes": "Error_causes.py",
     "Daily analysis Enduro": "Daily_analysis_enduro.py",
     "Daily analysis LXS": "Daily_analysis_Lxs.py",
+    "Daily analysis Influx LX70" : "Daily_analysis_Influx_LX70.py"
+    "Daily analysis Influx Enduro" : "Daily_analysis_Influx_enduro.py"
+    "Daily analysis Influx LXS" : "Daily_analysis_Influx_LXS.py"
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.config(bg="lightblue", fg="black", width=20)
