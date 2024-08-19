@@ -331,7 +331,10 @@ def analysis_Energy(data,subfolder_path):
 #################
 
 ###########Calculating the Distance based on Ground Distance from GPS Module data
-    total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+    # total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+    # Drop any empty values in the 'GROUND_DISTANCE' column and get the last non-empty value
+    total_distance_Ground_Distance = data['GROUND_DISTANCE'].dropna().iloc[-1]
+
     # for index, row in data.iterrows():
     #     if row['GROUND_DISTANCE'] >= 100:
 

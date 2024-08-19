@@ -74,7 +74,7 @@ def plot_ghps(data,Path,maxCellTemp):
 
     
 
-    speed = data['MotorSpeed [SA: 02]'] * 0.0106
+    speed = data['MotorSpeed [SA: 02]'] * 0.0160
 
     data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
 
@@ -263,7 +263,7 @@ def analysis_Energy(data,subfolder_path):
     # end_localtime_seconds = data['DATETIME'].max().strflocaltime('%d/%m/%Y %H:%M:%S')
     # data['DATETIME'] = data['DATETIME'].astype(str)
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d  %H:%M:%S')
-      
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
     # Convert the DATETIME column to datetime objects
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     # Find the minimum and maximum datetime
@@ -294,7 +294,7 @@ def analysis_Energy(data,subfolder_path):
     # print(data['localtime_Diff'])
     
 ###############Calculating the Distance based on RPM
-    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0836
+    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0160
     
     # Convert Speed to m/s
     data['Speed_ms'] = data['Speed_kmh'] / 3.6
@@ -315,7 +315,10 @@ def analysis_Energy(data,subfolder_path):
 #################
 
 ###########Calculating the Distance based on Ground Distance from GPS Module data
-    total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+    # total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+    # Drop any empty values in the 'GROUND_DISTANCE' column and get the last non-empty value
+    total_distance_Ground_Distance = data['GROUND_DISTANCE'].dropna().iloc[-1]
+
     # for index, row in data.iterrows():
     #     if row['GROUND_DISTANCE'] >= 100:
 
@@ -496,11 +499,11 @@ def analysis_Energy(data,subfolder_path):
     print("total energy regenerated",energy_regenerated)
  
     # Calculate regenerative effectiveness as a percentage
-    if total_energy_consumed != 0:
-     regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
-     print("Regenerative Effectiveness (%):", regenerative_effectiveness)
-    else:
-     print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
+    # if total_energy_consumed != 0:
+    #  regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
+    #  print("Regenerative Effectiveness (%):", regenerative_effectiveness)
+    # else:
+    #  print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
  
     # Calculate idling localtime percentage (RPM was zero for more than 5 seconds)
     idling_localtime = ((data['MotorSpeed [SA: 02]'] <= 0) | data['MotorSpeed [SA: 02]'].isna()).sum()
@@ -532,7 +535,7 @@ def analysis_Energy(data,subfolder_path):
     max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
  
     # Retrieve the corresponding cell ID using the index
-    max_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[max_index]
+    # max_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[max_index]
  
     # Get the minimum cell voltage
     min_cell_voltage = data_resampled['MinCellVol [SA: 05]'].min()
@@ -541,7 +544,7 @@ def analysis_Energy(data,subfolder_path):
     min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
  
     # Retrieve the corresponding cell ID using the index
-    min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
+    # min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
  
     voltage_difference = max_cell_voltage - min_cell_voltage
  
@@ -552,7 +555,7 @@ def analysis_Energy(data,subfolder_path):
     max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
  
     # Retrieve the corresponding temperature ID using the index
-    max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
+    # max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
  
     # Get the minimum temperature
     min_temp = data_resampled['MinTemp [SA: 07]'].min()
@@ -561,7 +564,7 @@ def analysis_Energy(data,subfolder_path):
     min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
  
     # Retrieve the corresponding temperature ID using the index
-    min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
+    # min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
  
     # Calculate the difference in temperature
     temp_difference = max_temp - min_temp
@@ -599,29 +602,29 @@ def analysis_Energy(data,subfolder_path):
  
     # InfluxId= data['id'].iloc[0]
     
-    max_continuous_duration = 0
+    # max_continuous_duration = 0
 
-    for speed in range(int(data_resampled['MotorSpeed [SA: 02]'].min()), int(data_resampled['MotorSpeed [SA: 02]'].max()) + 1):
-        lower_bound = speed - window_size
-        upper_bound = speed + window_size
+    # for speed in range(int(data_resampled['MotorSpeed [SA: 02]'].min()), int(data_resampled['MotorSpeed [SA: 02]'].max()) + 1):
+    #     lower_bound = speed - window_size
+    #     upper_bound = speed + window_size
         
 
-        within_window = data_resampled[(data_resampled['MotorSpeed [SA: 02]'] >= lower_bound) & (data_resampled['MotorSpeed [SA: 02]'] <= upper_bound)].copy()
-        within_window.loc[:, 'Group'] = (within_window['MotorSpeed [SA: 02]'].diff() > window_size).cumsum()
-        continuous_durations = within_window.groupby('Group')['localtime_Diff'].sum()
+    #     within_window = data_resampled[(data_resampled['MotorSpeed [SA: 02]'] >= lower_bound) & (data_resampled['MotorSpeed [SA: 02]'] <= upper_bound)].copy()
+    #     within_window.loc[:, 'Group'] = (within_window['MotorSpeed [SA: 02]'].diff() > window_size).cumsum()
+    #     continuous_durations = within_window.groupby('Group')['localtime_Diff'].sum()
         
-        current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
+    #     current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
     
-        if current_max_duration > max_continuous_duration:
-            print("max_continuous_duration------->",max_continuous_duration)
-            max_continuous_duration = current_max_duration
-            cruising_rpm = speed
-            cruising_speed=speed*0.01606
+    #     if current_max_duration > max_continuous_duration:
+    #         print("max_continuous_duration------->",max_continuous_duration)
+    #         max_continuous_duration = current_max_duration
+    #         cruising_rpm = speed
+    #         cruising_speed=speed*0.01606
 
-            if cruising_speed >1:
-                cruise_speed=cruising_speed
-            else :
-                cruise_speed =0
+    #         if cruising_speed >1:
+    #             cruise_speed=cruising_speed
+    #         else :
+    #             cruise_speed =0
 
 
         # Find the maximum value in the 'MotorSpeed [SA: 02]' column
@@ -675,7 +678,7 @@ def analysis_Energy(data,subfolder_path):
         "Average Power(W)": average_power,
         "Average_current":abs(average_current),
         "Total Energy Regenerated(Wh)": energy_regenerated,
-        "Regenerative Effectiveness(%)": regenerative_effectiveness,
+        # "Regenerative Effectiveness(%)": regenerative_effectiveness,
         "Avg_speed (km/hr)":avg_speed,
         "Highest Cell Voltage(V)": max_cell_voltage,
         "Lowest Cell Voltage(V)": min_cell_voltage,
@@ -696,8 +699,8 @@ def analysis_Energy(data,subfolder_path):
         "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
         "Electricity consumption units(kW)": total_energy_kw,
         "Cycle Count of battery": cycleCount,
-        "Cruising Speed (Rpm)": cruising_rpm,
-        "cruising_speed (km/hr)":cruise_speed,
+        # "Cruising Speed (Rpm)": cruising_rpm,
+        # "cruising_speed (km/hr)":cruise_speed,
         "Maximum Motor speed (RPM)":Max_motor_rpm,
         "Peak speed (Km/hr)":peak_speed,
         }
@@ -759,58 +762,58 @@ def analysis_Energy(data,subfolder_path):
 
 
  
-    # Get the maximum cell voltage
-    max_cell_voltage = data_resampled['MaxCellVol [SA: 05]'].max()
+    # # Get the maximum cell voltage
+    # max_cell_voltage = data_resampled['MaxCellVol [SA: 05]'].max()
  
-    # Find the index where the maximum voltage occurs
-    max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
+    # # Find the index where the maximum voltage occurs
+    # max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
+ 
+    # # Retrieve the corresponding cell ID using the index
+    # max_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[max_index]
+ 
+    #     # Get the minimum cell voltage
+    # min_cell_voltage = data_resampled['MinCellVol [SA: 05]'].min()
+ 
+    # # Find the index where the minimum voltage occurs
+    # min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
  
     # Retrieve the corresponding cell ID using the index
-    max_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[max_index]
+    # min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
  
-        # Get the minimum cell voltage
-    min_cell_voltage = data_resampled['MinCellVol [SA: 05]'].min()
- 
-    # Find the index where the minimum voltage occurs
-    min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
- 
-    # Retrieve the corresponding cell ID using the index
-    min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
- 
-    voltage_difference = max_cell_voltage - min_cell_voltage
+    # voltage_difference = max_cell_voltage - min_cell_voltage
  
  
-    print("Lowest Cell Voltage:", min_cell_voltage, "V, Cell ID:", min_cell_id)
-    print("Highest Cell Voltage:", max_cell_voltage, "V, Cell ID:", max_cell_id)
-    print("Difference in Cell Voltage:", voltage_difference, "V")
+    # print("Lowest Cell Voltage:", min_cell_voltage, "V, Cell ID:", min_cell_id)
+    # print("Highest Cell Voltage:", max_cell_voltage, "V, Cell ID:", max_cell_id)
+    # print("Difference in Cell Voltage:", voltage_difference, "V")
  
-    # Get the maximum temperature
-    max_temp = data_resampled['MaxTemp [SA: 07]'].max()
+    # # Get the maximum temperature
+    # max_temp = data_resampled['MaxTemp [SA: 07]'].max()
  
-    # Find the index where the maximum temperature occurs
-    max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
+    # # Find the index where the maximum temperature occurs
+    # max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
  
-    # Retrieve the corresponding temperature ID using the index
-    max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
+    # # Retrieve the corresponding temperature ID using the index
+    # max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
  
  
-    # Get the minimum temperature
-    min_temp = data_resampled['MinTemp [SA: 07]'].min()
+    # # Get the minimum temperature
+    # min_temp = data_resampled['MinTemp [SA: 07]'].min()
  
-    # Find the index where the minimum temperature occurs
-    min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
+    # # Find the index where the minimum temperature occurs
+    # min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
  
-    # Retrieve the corresponding temperature ID using the index
-    min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
-    # Calculate the difference in temperature
-    temp_difference = max_temp - min_temp
-    print("temp_difference------------------------>",temp_difference)
-    print("Total distance------------------------->",total_distance)
+    # # Retrieve the corresponding temperature ID using the index
+    # min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
+    # # Calculate the difference in temperature
+    # temp_difference = max_temp - min_temp
+    # print("temp_difference------------------------>",temp_difference)
+    # print("Total distance------------------------->",total_distance)
  
-    # Print the information
-    print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
-    print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
-    print("Difference in Temperature:", temp_difference, "C")
+    # # Print the information
+    # print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
+    # print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
+    # print("Difference in Temperature:", temp_difference, "C")
  
     # Get the maximum temperature of FetTemp [SA: 08]
     max_fet_temp = data_resampled['FetTemp [SA: 08]'].max()
@@ -1074,7 +1077,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\influx_analysis"
+main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\influx_analysis\Jun_18"
 
  
 def mergeExcel(main_folder_path):
@@ -1147,48 +1150,48 @@ def mergeExcel(main_folder_path):
 
 
 # Iterate over immediate subfolders of main_folder_path
-for subfolder_1 in os.listdir(main_folder_path):
-    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+# for subfolder_1 in os.listdir(main_folder_path):
+#     subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
     
-    # Check if subfolder_1 is a directory
-    if os.path.isdir(subfolder_1_path):
+#     # Check if subfolder_1 is a directory
+#     if os.path.isdir(subfolder_1_path):
         
         # Iterate over subfolders within subfolder_1
-        for subfolder in os.listdir(subfolder_1_path):
-            subfolder_path = os.path.join(subfolder_1_path, subfolder)
+for subfolder in os.listdir(main_folder_path):
+    subfolder_path = os.path.join(main_folder_path, subfolder)
+    
+    # Check if subfolder starts with "Battery" and is a directory
+    if os.path.isdir(subfolder_path):                
+        log_file = None
+        log_found = False
+        
+        # Iterate through files in the subfolder
+        for file in os.listdir(subfolder_path):
+            if file.startswith('log.') and file.endswith('.csv'):
+                log_file = os.path.join(subfolder_path, file)
+                log_found = True
+                break  # Stop searching once the log file is found
+        
+        # Process the log file if found
+        if log_found:
+            print(f"Processing log file: {log_file}")
+            try:
+                data = pd.read_csv(log_file)
+                # Process your data here
+            except Exception as e:
+                print(f"Error processing {log_file}: {e}")
+
+
+            total_duration = 0
+            total_distance = 0
+            Wh_km = 0
+            SOC_consumed = 0
+            mode_values = 0
             
-            # Check if subfolder starts with "Battery" and is a directory
-            if os.path.isdir(subfolder_path):                
-                log_file = None
-                log_found = False
-                
-                # Iterate through files in the subfolder
-                for file in os.listdir(subfolder_path):
-                    if file.startswith('log.') and file.endswith('.csv'):
-                        log_file = os.path.join(subfolder_path, file)
-                        log_found = True
-                        break  # Stop searching once the log file is found
-                
-                # Process the log file if found
-                if log_found:
-                    print(f"Processing log file: {log_file}")
-                    try:
-                        data = pd.read_csv(log_file)
-                        # Process your data here
-                    except Exception as e:
-                        print(f"Error processing {log_file}: {e}")
-
-
-                    total_duration = 0
-                    total_distance = 0
-                    Wh_km = 0
-                    SOC_consumed = 0
-                    mode_values = 0
-                    
-                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
-                    capture_analysis_output(log_file, subfolder_path)
-                    
-                else:
-                    print("Log file or KM file not found in subfolder:", subfolder)
+            total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
+            capture_analysis_output(log_file, subfolder_path)
+            
+        else:
+            print("Log file or KM file not found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)
