@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 import subprocess
 import os
 import shutil
+import sys
 
 def open_folder():
     global folder_path
@@ -22,15 +23,20 @@ def copy_folder():
         return folder_path
 
 def run_script():
+    # Determine the base path: Use _MEIPASS for bundled app, and __file__ for development
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    
     if copy_var.get():
         new_path = destination_folder if 'destination_folder' in globals() else folder_path
     else:
         new_path = folder_path
 
     script = file_var.get()
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    script_path = os.path.join(dir_path, script)
+    # Adjust the script path to consider the base path
+    script_path = os.path.join(base_path, script)
+
     if script and new_path:
+        # Run the script from the correct path
         subprocess.run(['python', script_path, new_path], check=True)
 
 def handle_copy_check():
