@@ -1,5 +1,5 @@
 import sys
- 
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python test.py <input_file_path>")
@@ -11,7 +11,7 @@ def main():
  
 if __name__ == "__main__":
     main()
- 
+
 from matplotlib.mlab import window_none
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
@@ -36,8 +36,8 @@ from collections import defaultdict
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 window_size =5
- 
- 
+
+
    
  
 # List to store DataFrames from each CSV file
@@ -79,22 +79,25 @@ def adjust_current(row):
         return 0
     else:
         return row['PackCurr [SA: 06]']
- 
- 
-   
+
+
+    
 def plot_ghps(data,Path,maxCellTemp):
- 
-   
- 
-    speed = data['MotorSpeed [SA: 02]'] * 0.0875
- 
+
+    
+
+    speed = data['MotorSpeed [SA: 02]'] * 0.0160
+
     data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
- 
+
+
+
+
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
-    # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
-    # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='Black')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='Red')), secondary_y=False)
     fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
@@ -106,51 +109,51 @@ def plot_ghps(data,Path,maxCellTemp):
     fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
     # fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
     fig.add_trace(go.Scatter(x=data.index, y=data['DeltaCellVoltage'], name='DeltaCellVoltage', line=dict(color='Purple')), secondary_y=True)
- 
+
     fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
                       xaxis_title='Local localtime',
                       yaxis_title='Pack Current (A)',
                       yaxis2_title='Motor Speed (RPM)')
- 
+
     fig.update_xaxes(tickformat='%H:%M:%S')
- 
+
     # Save the plot as an HTML file
     os.makedirs(Path, exist_ok=True)
     graph_path = os.path.join(Path, 'Log.html')
     fig.write_html(graph_path)
- 
- 
+
+
 # Resetting index to default integer index
     data.reset_index(inplace=True)
- 
+
     # data.set_index('DATETIME', inplace=False)
- 
- 
+
+
     return graph_path  # Return the path of the saved graph image
- 
+
 # Example usage:
 # data = pd.read_csv('your_data.csv')
 # Path = 'path/to/save'
 # plot_ghps(data, Path)
- 
+
  
  
 # def analysis_Energy(log_file, km_file):
 def analysis_Energy(data,subfolder_path):
     dayfirst=True
- 
+
     # data = pd.read_csv(log_file)
     # Remove duplicates based on the "DATETIME" column and keep the first occurrence
     # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
- 
- 
+
+
 #Uncomment the following two lines if DateTime is already in IST.
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-   
- 
+    
+
 #uncomment and run if ride contains only one ride(completely) and in that case dont need to run the split battery!
- 
+
     # # Convert Unix epoch time to datetime, assuming the original timezone is UTC
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
     # # Convert to your desired timezone (e.g., 'Asia/Kolkata')
@@ -159,9 +162,9 @@ def analysis_Energy(data,subfolder_path):
     # data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
     # # If you need the datetime back as pandas datetime type without timezone info
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-   
+    
     # data.set_index('DATETIME', inplace=True)
- 
+
     total_duration = 0
     total_distance = 0
     Wh_km = 0
@@ -201,17 +204,17 @@ def analysis_Energy(data,subfolder_path):
         #Difference between Maximum and Minimum cell Temperature
         CellTempDiff= max_cell_temp-min_cell_temp
         print("Temperature difference: ",CellTempDiff)
- 
-   
+
+    
     # Define the temperature columns
     temp_columns = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
- 
+
     # Find the maximum temperature value among columns
     max_values = data[temp_columns].max()
- 
+
     # Determine which column(s) have the maximum temperature
     max_columns_multiple = max_values[max_values == max_values.max()].index
- 
+
     # If there are multiple columns with the same maximum temperature,
     # choose the column with the highest occurrence
     if len(max_columns_multiple) > 1:
@@ -219,21 +222,21 @@ def analysis_Energy(data,subfolder_path):
         max_column = max_occurrence_counts.idxmax()
     else:
         max_column = max_columns_multiple[0]
- 
+
     # Determine the maximum temperature occurrence in the selected column
     # max_occurrence = data[max_column].value_counts().idxmax()
- 
+
     # Print the results
     print(f"Overall maximum value of cell temperature: {max_values.max()}")
     # print(f"Column(s) with maximum temperature: {max_columns_multiple}")
     print(f"Column with the highest cell temperature: {max_column}")
     # print(f"Maximum occurrence temperature: {max_occurrence}")
- 
- 
- 
+
+
+
     ##################
     data['Power'] = data['PackCurr [SA: 06]'] * data['PackVol [SA: 06]']
- 
+
     # Specify the columns of interest
     columns_of_interest = [
         'CellVol01 [SA: 01]', 'CellVol02 [SA: 01]', 'CellVol03 [SA: 01]', 'CellVol04 [SA: 01]',
@@ -241,23 +244,23 @@ def analysis_Energy(data,subfolder_path):
         'CellVol09 [SA: 03]', 'CellVol10 [SA: 03]', 'CellVol11 [SA: 03]', 'CellVol12 [SA: 03]',
         'CellVol13 [SA: 04]', 'CellVol14 [SA: 04]', 'CellVol15 [SA: 04]', 'CellVol16 [SA: 04]'
     ]
- 
+
     # Create an empty list to store computed differences
     differences = []
- 
+
     # Iterate through each row and compute max, min, and their difference for each row
     for index, row in data[columns_of_interest].iterrows():
         max_value = row.max()
         min_value = row.min()
         difference = max_value - min_value
-       
+        
         differences.append(difference)  # Append the computed difference to the list
- 
+
     # Add the differences list as a new column 'CellDifference' in the DataFrame
     data['DeltaCellVoltage'] = differences
- 
- 
-    # plot_ghps(data,subfolder_path,max_column)
+
+
+    plot_ghps(data,subfolder_path,max_column)
  
     # Drop rows with missing values in 'SOCAh [SA: 08]' column
     data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
@@ -266,44 +269,31 @@ def analysis_Energy(data,subfolder_path):
     # # Calculate the start localtime and end localtime
     # start_localtime = data['DATETIME'].min()
     # end_localtime = data['DATETIME'].max()
- 
+
     # # Calculate the start localtime and end localtime with formatting
     # start_localtime_seconds = data['DATETIME'].min().strflocaltime('%d/%m/%Y %H:%M:%S')
     # end_localtime_seconds = data['DATETIME'].max().strflocaltime('%d/%m/%Y %H:%M:%S')
     # data['DATETIME'] = data['DATETIME'].astype(str)
     # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d  %H:%M:%S')
-     
+    # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
     # Convert the DATETIME column to datetime objects
-    # Ensure the DATETIME column is read as integers
-    data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
- 
-    # Check for any NaN values which indicate parsing issues
-    # print(data['DATETIME'].isnull().sum())
- 
-    # Drop or handle NaN values
-    data = data.dropna(subset=['DATETIME'])
- 
-    # Convert the Unix timestamps to datetime
-    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
- 
-    # Print the converted DATETIME column
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
     # Find the minimum and maximum datetime
     start_localtime = data['DATETIME'].min()
     end_localtime = data['DATETIME'].max()
- 
+
     print("Start time of the ride: ",start_localtime)
     print("End time of the ride:",end_localtime)
- 
+
     # # Format the start and end times
     # start_localtime_formatted = start_localtime.strftime('%d/%m/%Y %H:%M:%S')
     # end_localtime_formatted = end_localtime.strftime('%d/%m/%Y %H:%M:%S')
- 
+
     # print(f"Start Local Time: {start_localtime_formatted}")
     # print(f"End Local Time: {end_localtime_formatted}")
     # ############
-   
- 
+    
+
     # Calculate the total localtime taken for the ride``
     total_duration = end_localtime - start_localtime
     total_hours = total_duration.seconds // 3600
@@ -313,9 +303,10 @@ def analysis_Energy(data,subfolder_path):
  
     # Calculate the localtime difference between consecutive rows
     data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
-
+    # print(data['localtime_Diff'])
+    
 ###############Calculating the Distance based on RPM
-    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0836
+    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0160
     
     # Convert Speed to m/s
     data['Speed_ms'] = data['Speed_kmh'] / 3.6
@@ -350,35 +341,31 @@ def analysis_Energy(data,subfolder_path):
     print("Distance With total_distance_Ground_Distance---------------------->",total_distance_Ground_Distance/1000)
 ###############
 
- 
     #Set the 'localtime' column as the index
     data.set_index('DATETIME', inplace=True)
- 
+
     # duplicates = data.index[data.index.duplicated()]
     # print("Duplicate Index Values:", duplicates)
-   
+    
     # data = data.groupby(data.index).mean()  # Example: Taking the mean of duplicate values at the same timestamp
-   
+    
     # Keep the first value in each group of duplicates
     data = data.groupby(data.index).first()
  
     #Resample the data to have one-second intervals and fill missing values with previous ones
     data_resampled = data.resample('s').ffill()
-   
+    
  
     # Calculate the localtime difference between consecutive rows
     data_resampled['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
  
     # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
- 
- 
-    # print(data_resampled['PackCurr [SA: 06]'])
     actual_ah = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
-    print("Actual Ampere-hours (Ah):------------------------------------> {:.2f}".format(actual_ah))
+    print("Actual Ampere-hours (Ah): {:.2f}".format(actual_ah))
  
     # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
     watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
-    print("Actual Watt-hours (Wh):------------------------------------> {:.2f}" .format(watt_h))
+    print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
  
     #starting and ending ah
     starting_soc_Ah = data['SOCAh [SA: 08]'].iloc[0]
@@ -386,7 +373,7 @@ def analysis_Energy(data,subfolder_path):
  
     print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
     print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
- 
+
  
     #Code for SOC_percentage(Starting and Ending SOC)
     starting_soc_percentage = data['SOC [SA: 08]'].max()
@@ -398,10 +385,10 @@ def analysis_Energy(data,subfolder_path):
     # Initialize total distance covered
     total_distance = 0
     distance_per_mode = defaultdict(float)
- 
+
     # Iterate over rows to compute distance covered between consecutive points
     for i in range(len(data) - 1):
-     
+      
         # Get latitude and longitude of consecutive points
         lat1 = data['LATITUDE'].iloc[i]
         lon1 = data['LONGITUDE'].iloc[i]
@@ -414,7 +401,7 @@ def analysis_Energy(data,subfolder_path):
  
         # Add distance to total distance covered
         total_distance += distance
- 
+
         mode = data['Mode_Ack [SA: 02]'].iloc[i]
         distance_per_mode[mode] += distance
  
@@ -438,10 +425,29 @@ def analysis_Energy(data,subfolder_path):
     # mode_values = data['Mode_Ack [SA: 02]'].unique()
  
     total_rows=len(data)
-    # print("total_rows1---------->",total_rows)
+    print("total_rows1---------->",total_rows)
     data = data[data['Mode_Ack [SA: 02]'].notna() & (data['Mode_Ack [SA: 02]'] != '')]
- 
- 
+
+    # if len(mode_values) == 1:
+    #     # Mode remains constant throughout the 
+    #     mode = mode_values[0]
+    #     if mode == 3:
+    #         print("Mode is Custom mode.")
+    #     elif mode == 2:
+    #         print("Mode is Power mode.")
+    #     elif mode == 1:
+    #         print("Mode is Eco mode.")
+    # else:
+    #     # Mode changes throughout the log file
+    #     mode_counts = data['Mode_Ack [SA: 02]'].value_counts(normalize=True) * 100
+    #     for mode, percentage in mode_counts.items():
+    #         if mode == 3:
+    #             print(f"Custom mode: {percentage:.2f}%")
+    #         elif mode == 2:
+    #             print(f"Power mode: {percentage:.2f}%")
+    #         elif mode == 1:
+    #             print(f"Eco mode: {percentage:.2f}%")
+
     def calculate_wh_per_km(data_resampled, mode, total_distance):
         if total_distance < 1:
             return 0  # Return 0 if distance is less than 1 km
@@ -451,39 +457,36 @@ def analysis_Energy(data,subfolder_path):
         watt_h_mode = abs((mode_data['PackCurr [SA: 06]'] * mode_data['PackVol [SA: 06]'] * mode_data['localtime_Diff']).sum()) / 3600
         print("watt hr per mode-------------------->",watt_h_mode)
         return abs(watt_h_mode / total_distance)
- 
+
     # Calculate Wh/km for each mode
-    wh_per_km_Normal_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
-    print("Normal mode distance-------------->",distance_per_mode[2])
-    wh_per_km_Fast_mode = calculate_wh_per_km(data_resampled, 6, distance_per_mode[6])
-    print("Fast Mode distance-------------->",distance_per_mode[6])
-    wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 4, distance_per_mode[4])
-    print("ECO mode distance-------------->",distance_per_mode[4])
-    wh_per_km_LIMP_mode = calculate_wh_per_km(data_resampled, 5, distance_per_mode[5])
-    print("LIMP mode distance-------------->",distance_per_mode[5])
- 
- 
+    wh_per_km_CUSTOM_mode = calculate_wh_per_km(data_resampled, 3, distance_per_mode[3])
+    print("Custom mode distance-------------->",distance_per_mode[3])
+    wh_per_km_POWER_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
+    print("POWER mode distance-------------->",distance_per_mode[2])
+    wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 1, distance_per_mode[1])
+    print("ECO mode distance-------------->",distance_per_mode[1])
+
     # Calculate Wh/km for the entire ride
     watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600
     wh_per_km_total = abs(watt_h / total_distance)
- 
+
     # Print the results
-    print(f"Wh/km for Normal mode: {wh_per_km_Normal_mode:.2f}")
-    print(f"Wh/km for Fast Mode: {wh_per_km_Fast_mode:.2f}")
+    print(f"Wh/km for Custom mode: {wh_per_km_CUSTOM_mode:.2f}")
+    print(f"Wh/km for Power mode: {wh_per_km_POWER_mode:.2f}")
     print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
-    print(f"Wh/km for LIMP mode: {wh_per_km_LIMP_mode:.2f}")
     print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
-   
+    
  
  
  
     # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
     data_resampled['Power'] = data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]']
+
  
     # Find the peak power
     peak_power = data_resampled['Power'].min()
     print("Peak Power:", peak_power)
- 
+
     average_current =data_resampled['PackCurr [SA: 06]'].mean()
    
     # Calculate the average power
@@ -508,13 +511,11 @@ def analysis_Energy(data,subfolder_path):
     print("total energy regenerated",energy_regenerated)
  
     # Calculate regenerative effectiveness as a percentage
-    if total_energy_consumed != 0:
-     print("-----------------------------------------------------------")
-     regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
-     print("Regenerative Effectiveness (%):", regenerative_effectiveness)
-    else:
-     regenerative_effectiveness = 0
-     print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
+    # if total_energy_consumed != 0:
+    #  regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
+    #  print("Regenerative Effectiveness (%):", regenerative_effectiveness)
+    # else:
+    #  print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
  
     # Calculate idling localtime percentage (RPM was zero for more than 5 seconds)
     idling_localtime = ((data['MotorSpeed [SA: 02]'] <= 0) | data['MotorSpeed [SA: 02]'].isna()).sum()
@@ -527,7 +528,7 @@ def analysis_Energy(data,subfolder_path):
     speed_range_percentages = {}
  
     for range_ in speed_ranges:
-        speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0875 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0875 < range_[1])).sum()
+        speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.016 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.016 < range_[1])).sum()
         speed_range_percentage = (speed_range_localtime / len(data)) * 100
         speed_range_percentages[f"Time_{range_[0]}-{range_[1]} km/h(%)"] = speed_range_percentage
         print(f"Time_{range_[0]}-{range_[1]} km/h(%): {speed_range_percentage:.2f}%")
@@ -543,7 +544,7 @@ def analysis_Energy(data,subfolder_path):
     max_cell_voltage = data_resampled['MaxCellVol [SA: 05]'].max()
  
     # Find the index where the maximum voltage occurs
-    # max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
+    max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
  
     # Retrieve the corresponding cell ID using the index
     # max_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[max_index]
@@ -552,7 +553,7 @@ def analysis_Energy(data,subfolder_path):
     min_cell_voltage = data_resampled['MinCellVol [SA: 05]'].min()
  
     # Find the index where the minimum voltage occurs
-    # min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
+    min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
  
     # Retrieve the corresponding cell ID using the index
     # min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
@@ -562,19 +563,19 @@ def analysis_Energy(data,subfolder_path):
     # Get the maximum temperature
     max_temp = data_resampled['MaxTemp [SA: 07]'].max()
  
-    # # Find the index where the maximum temperature occurs
-    # max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
+    # Find the index where the maximum temperature occurs
+    max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
  
-    # # Retrieve the corresponding temperature ID using the index
+    # Retrieve the corresponding temperature ID using the index
     # max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
  
     # Get the minimum temperature
     min_temp = data_resampled['MinTemp [SA: 07]'].min()
  
     # Find the index where the minimum temperature occurs
-    # min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
+    min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
  
-    # # Retrieve the corresponding temperature ID using the index
+    # Retrieve the corresponding temperature ID using the index
     # min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
  
     # Calculate the difference in temperature
@@ -612,47 +613,45 @@ def analysis_Energy(data,subfolder_path):
    
  
     # InfluxId= data['id'].iloc[0]
-   
-    max_continuous_duration = 0
-    # data_resampled = data_resampled.dropna(subset=['MotorSpeed [SA: 02]'])
-    # data_resampled['MotorSpeed [SA: 02]'] = data_resampled['MotorSpeed [SA: 02]'].astype(int)
- 
+    
+    # max_continuous_duration = 0
+
     # for speed in range(int(data_resampled['MotorSpeed [SA: 02]'].min()), int(data_resampled['MotorSpeed [SA: 02]'].max()) + 1):
     #     lower_bound = speed - window_size
     #     upper_bound = speed + window_size
-       
- 
+        
+
     #     within_window = data_resampled[(data_resampled['MotorSpeed [SA: 02]'] >= lower_bound) & (data_resampled['MotorSpeed [SA: 02]'] <= upper_bound)].copy()
     #     within_window.loc[:, 'Group'] = (within_window['MotorSpeed [SA: 02]'].diff() > window_size).cumsum()
     #     continuous_durations = within_window.groupby('Group')['localtime_Diff'].sum()
-       
+        
     #     current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
-   
+    
     #     if current_max_duration > max_continuous_duration:
     #         print("max_continuous_duration------->",max_continuous_duration)
     #         max_continuous_duration = current_max_duration
     #         cruising_rpm = speed
-    #         cruising_speed=speed*0.0875
- 
+    #         cruising_speed=speed*0.01606
+
     #         if cruising_speed >1:
     #             cruise_speed=cruising_speed
     #         else :
     #             cruise_speed =0
- 
- 
+
+
         # Find the maximum value in the 'MotorSpeed [SA: 02]' column
     Max_motor_rpm = data_resampled['MotorSpeed [SA: 02]'].max()
-   
+    
     avg_motor_rpm =data_resampled['MotorSpeed [SA: 02]'].mean()
- 
+
     # Print the maximum motor speed in RPM
     print("The maximum motor speed in RPM is:", Max_motor_rpm)
- 
+
     # Convert the maximum motor speed to speed using the given factor
-    peak_speed = Max_motor_rpm * 0.0875
- 
-    avg_speed =avg_motor_rpm * 0.0875
- 
+    peak_speed = Max_motor_rpm * 0.01606
+
+    avg_speed =avg_motor_rpm * 0.01606
+
     # Print the maximum speed
     print("The maximum speed is:", peak_speed)
  
@@ -661,7 +660,7 @@ def analysis_Energy(data,subfolder_path):
  
     total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
     print("Electricity consumption units in kW", (total_energy_kw))
-   
+    
     # Add these variables and logic to ppt_data
    
     ppt_data = {
@@ -675,24 +674,23 @@ def analysis_Energy(data,subfolder_path):
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
         "Energy consumption Rate(WH/KM)": watt_h / total_distance,
+        # "Total distance covered (km)": total_distance,
         "Total distance - RPM": total_distance_with_RPM/1000,
         "Total distance covered (km) - Lat & Long(GPS)": total_distance,
         "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
-        "Mode": "",
-        "Wh/km in Normal mode": wh_per_km_Normal_mode,
-        "Distance travelled in Normal mode":distance_per_mode[2],
-        "Wh/km in Fast Mode": wh_per_km_Fast_mode,
-        "Distance travelled in Fast Mode":distance_per_mode[6],
-        "Wh/km in ECO Mode": wh_per_km_ECO_mode,
-        "Distance travelled in ECO mode":distance_per_mode[4],
-        "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
-        "Distance travelled in LIMP Mode":distance_per_mode[5],
+        "Mode": "", 
+        "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
+        "Distance_Custom mode":distance_per_mode[3],
+        "Wh/km in POWER mode": wh_per_km_POWER_mode,
+        "Distance_POWER mode":distance_per_mode[2],
+        "Wh/km in ECO mode": wh_per_km_ECO_mode,
+        "Distance_ECO mode":distance_per_mode[1],       
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Peak Power(W)": peak_power,
         "Average Power(W)": average_power,
         "Average_current":abs(average_current),
         "Total Energy Regenerated(Wh)": energy_regenerated,
-        "Regenerative Effectiveness(%)": regenerative_effectiveness,
+        # "Regenerative Effectiveness(%)": regenerative_effectiveness,
         "Avg_speed (km/hr)":avg_speed,
         "Highest Cell Voltage(V)": max_cell_voltage,
         "Lowest Cell Voltage(V)": min_cell_voltage,
@@ -718,45 +716,41 @@ def analysis_Energy(data,subfolder_path):
         "Maximum Motor speed (RPM)":Max_motor_rpm,
         "Peak speed (Km/hr)":peak_speed,
         }
-   
+    
     mode_values = data_resampled['Mode_Ack [SA: 02]'].unique() #If Mode_Ack [SA: 02] has values [1, 2, 2, 3, 1], unique() will return array([1, 2, 3]).
- 
+
     if len(mode_values) == 1:   # Mode remains constant throughout the log file
         mode = mode_values[0]
-        if mode == 2:
-            ppt_data["Mode"] = "Normal mode: 100%"
-        elif mode == 6:
-            ppt_data["Mode"] = "Fast Mode: 100%"
-        elif mode == 4:
+        if mode == 3:
+            ppt_data["Mode"] = "Custom mode: 100%"
+        elif mode == 2:
+            ppt_data["Mode"] = "Power mode: 100%"
+        elif mode == 1:
             ppt_data["Mode"] = "Eco mode: 100%"
-        elif mode == 5:
-            ppt_data["Mode"] = "Limp mode: 100%"
     else:
         # Mode changes throughout the log file
         # mode_counts = data_resampled['Mode_Ack [SA: 02]'].value_counts(normalize=True) * 100
         total_rows = len(data)
         mode_counts = data['Mode_Ack [SA: 02]'].value_counts()
         mode_strings = []  # Initialize list to store mode strings
-       
+        
          # Exclude mode 0 or empty from total_rows calculation
         total_rows -= mode_counts.get(0, 0)  # Subtract rows where mode is 0 (if any)
         total_rows -= mode_counts.get('', 0)  # Subtract rows where mode is empty string (if any)
- 
+
         for mode,count in mode_counts.items():
             if mode not in [0, '']:  # Exclude mode 0 and empty string from percentage calculation
                 percentage = (count / total_rows) * 100
-                if mode == 2:
-                    mode_strings.append(f"Normal mode\n{percentage:.2f}%")
-                elif mode == 6:
-                    mode_strings.append(f"Fast Mode\n{percentage:.2f}%")
-                elif mode == 4:
+                if mode == 3:
+                    mode_strings.append(f"Custom mode\n{percentage:.2f}%")
+                elif mode == 2:
+                    mode_strings.append(f"Power mode\n{percentage:.2f}%")
+                elif mode == 1:
                     mode_strings.append(f"Eco mode\n{percentage:.2f}%")
-                elif mode == 5:
-                   mode_strings.append(f"Limp mode\n{percentage:.2f}%")
         ppt_data["Mode"] = "\n".join(mode_strings)
  
-   
- 
+    
+
      # Add calculated parameters to ppt_data
     ppt_data["Idling time percentage"] = idling_percentage
     ppt_data.update(speed_range_percentages)
@@ -767,71 +761,71 @@ def analysis_Energy(data,subfolder_path):
     # Find the peak power
     peak_power = data_resampled['Power'].max()
     print("Peak Power:", peak_power)
- 
- 
+
+
     # Filter the DataFrame to include only positive current values
     positive_current = data_resampled[data_resampled['PackCurr [SA: 06]'] < 0]
- 
+
     # Calculate the mean of the positive current values
     average_current = positive_current['PackCurr [SA: 06]'].mean()
- 
+
     # average_current =data_resampled['PackCurr [SA: 06]'].mean()
-   
+    
+
+
  
+    # # Get the maximum cell voltage
+    # max_cell_voltage = data_resampled['MaxCellVol [SA: 05]'].max()
  
+    # # Find the index where the maximum voltage occurs
+    # max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
  
-    # Get the maximum cell voltage
-    max_cell_voltage = data_resampled['MaxCellVol [SA: 05]'].max()
- 
-    # Find the index where the maximum voltage occurs
-    max_index = data_resampled['MaxCellVol [SA: 05]'].idxmax()
- 
-    # Retrieve the corresponding cell ID using the index
+    # # Retrieve the corresponding cell ID using the index
     # max_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[max_index]
  
-        # Get the minimum cell voltage
-    min_cell_voltage = data_resampled['MinCellVol [SA: 05]'].min()
+    #     # Get the minimum cell voltage
+    # min_cell_voltage = data_resampled['MinCellVol [SA: 05]'].min()
  
-    # Find the index where the minimum voltage occurs
-    min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
+    # # Find the index where the minimum voltage occurs
+    # min_index = data_resampled['MinCellVol [SA: 05]'].idxmin()
  
     # Retrieve the corresponding cell ID using the index
     # min_cell_id = data_resampled['MaxVoltId [SA: 05]'].loc[min_index]
  
-    voltage_difference = max_cell_voltage - min_cell_voltage
+    # voltage_difference = max_cell_voltage - min_cell_voltage
  
  
     # print("Lowest Cell Voltage:", min_cell_voltage, "V, Cell ID:", min_cell_id)
     # print("Highest Cell Voltage:", max_cell_voltage, "V, Cell ID:", max_cell_id)
-    print("Difference in Cell Voltage:", voltage_difference, "V")
+    # print("Difference in Cell Voltage:", voltage_difference, "V")
  
-    # Get the maximum temperature
-    max_temp = data_resampled['MaxTemp [SA: 07]'].max()
+    # # Get the maximum temperature
+    # max_temp = data_resampled['MaxTemp [SA: 07]'].max()
  
-    # Find the index where the maximum temperature occurs
-    max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
+    # # Find the index where the maximum temperature occurs
+    # max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
  
-    # Retrieve the corresponding temperature ID using the index
+    # # Retrieve the corresponding temperature ID using the index
     # max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
  
  
-    # Get the minimum temperature
-    min_temp = data_resampled['MinTemp [SA: 07]'].min()
+    # # Get the minimum temperature
+    # min_temp = data_resampled['MinTemp [SA: 07]'].min()
  
-    # Find the index where the minimum temperature occurs
-    min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
+    # # Find the index where the minimum temperature occurs
+    # min_temp_index = data_resampled['MinTemp [SA: 07]'].idxmin()
  
-    # Retrieve the corresponding temperature ID using the index
+    # # Retrieve the corresponding temperature ID using the index
     # min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
-    # Calculate the difference in temperature
-    temp_difference = max_temp - min_temp
-    print("temp_difference------------------------>",temp_difference)
-    print("Total distance------------------------->",total_distance)
+    # # Calculate the difference in temperature
+    # temp_difference = max_temp - min_temp
+    # print("temp_difference------------------------>",temp_difference)
+    # print("Total distance------------------------->",total_distance)
  
     # # Print the information
     # print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
     # print("Minimum Temperature:", min_temp, "C, Temperature ID:", min_temp_id)
-    print("Difference in Temperature:", temp_difference, "C")
+    # print("Difference in Temperature:", temp_difference, "C")
  
     # Get the maximum temperature of FetTemp [SA: 08]
     max_fet_temp = data_resampled['FetTemp [SA: 08]'].max()
@@ -861,10 +855,10 @@ def analysis_Energy(data,subfolder_path):
    
     # Convert to a binary mask indicating consecutive occurrences
     abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
- 
+
     return total_duration, total_distance, Wh_km, total_soc_consumed,ppt_data
  
- 
+
    
 # def capture_analysis_output(log_file, km_file, folder_path):
 def capture_analysis_output(log_file,folder_path):
@@ -944,7 +938,7 @@ def capture_analysis_output(log_file,folder_path):
  
             # Increment row index
             row_index += 1
- 
+
         # plot_ghps(data,folder_path)
  
         # Add image slide with title and properly scaled image
@@ -985,16 +979,16 @@ def capture_analysis_output(log_file,folder_path):
         excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"
         wb.save(excel_output_file)
         print("excel_output_file1",excel_output_file," generated")
-       
- 
+        
+
         df = pd.read_excel(excel_output_file, sheet_name="Analysis Results")
- 
+
         # Transpose the DataFrame
         transposed_df = df.T
         transposed_df.columns = transposed_df.iloc[0]
         transposed_df = transposed_df[1:]
-       
- 
+        
+
              # Define columns to plot for idling and speed metrics
         idling_speed_columns = [
             'Idling time percentage',
@@ -1008,23 +1002,23 @@ def capture_analysis_output(log_file,folder_path):
             'Time_70-80 km/h(%)',
             # 'Time_80-90 km/h'
         ]
- 
+
         # Define columns to plot for Wh/km and distance metrics
         wh_distance_columns = [
-            'Wh/km in Normal mode',
-            'Distance travelled in Normal mode',
-            'Wh/km in Fast Mode',
-            'Distance travelled in Fast Mode',
-            'Wh/km in ECO Mode',
-            'Distance travelled in ECO mode'
+            'Wh/km in CUSTOM mode',
+            'Distance_Custom mode',
+            'Wh/km in POWER mode',
+            'Distance_POWER mode',
+            'Wh/km in ECO mode',
+            'Distance_ECO mode'
         ]
- 
+
         # Define colors for idling and speed metrics
         idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red']
- 
+
         # Define colors for Wh/km and distance metrics
         wh_distance_colors = ['blue', 'blue', 'red', 'red', 'green', 'green']
- 
+
         # Function to plot and save idling and speed metrics
         def plot_idling_speed_metrics():
             plt.figure(figsize=(15, 6))  # Increase figure size
@@ -1034,22 +1028,22 @@ def capture_analysis_output(log_file,folder_path):
             plt.ylabel('Values')
             plt.title('Time_each speed interval')
             plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
- 
- 
+
+
              # Annotate bars with values
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
- 
+
             plot_file = f"{folder_path}/Time spent in Speed intervals.png"
             plt.savefig(plot_file)
             plt.show()
             print(f"Idling and speed bar plot saved: {plot_file}")
- 
+
             # Insert plots into the Excel worksheet
             img_idling_speed = Image(plot_file)
             ws.add_image(img_idling_speed, 'F35')  # Adjust the cell location as needed
- 
+
         # Function to plot and save Wh/km and distance metrics
         def plot_wh_distance_metrics():
             plt.figure(figsize=(15, 6))  # Increase figure size
@@ -1059,44 +1053,44 @@ def capture_analysis_output(log_file,folder_path):
             plt.ylabel('Values')
             plt.title('Bar Graph of Wh/km and Distance Travelled')
             plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
- 
- 
+
+
             # Annotate bars with values
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
- 
+
             plot_file = f"{folder_path}/wh_distance_bar_plot.png"
             plt.savefig(plot_file)
             plt.show()
             print(f"Wh/km and distance bar plot saved: {plot_file}")
- 
+
             # Insert plots into the Excel worksheet
             img_wh_distance = Image(f"{folder_path}/wh_distance_bar_plot.png")
             ws.add_image(img_wh_distance, 'F2')  # Adjust the cell location as needed
- 
- 
+
+
         # Generate and save the plots
         plot_idling_speed_metrics()
         plot_wh_distance_metrics()
- 
+
          # Save the Excel workbook
         excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"
         wb.save(excel_output_file)
         print("excel_output_file1",excel_output_file," generated")
- 
-       
- 
+
+        
+
     except Exception as e:
         print("Error:", e)
  
- 
+
  
 # Initialize variables to store file paths
 log_file = None
  
 main_folder_path = rf'{input_file_path}'
- 
+
  
 def mergeExcel(main_folder_path):
     def prepare_sheet_in_memory(file_path):
@@ -1164,58 +1158,52 @@ def mergeExcel(main_folder_path):
     if __name__ == '__main__':
         main(main_folder_path)
  
- 
- 
- 
-# Iterate over immediate subfolders of main_folder_path
-# for subfolder_1 in os.listdir(main_folder_path):
-#     subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
-   
-#     # Check if subfolder_1 is a directory
-#     if os.path.isdir(subfolder_1_path):
- 
-# Iterate over subfolders within subfolder_1
-for subfolder in os.listdir(main_folder_path):
-    subfolder_path = os.path.join(main_folder_path, subfolder)
-    print(subfolder_path)
-   
-    # Check if subfolder starts with "Battery" and is a directory
-    if os.path.isdir(subfolder_path):                
-        print("Debug1")
-        log_file = None
-        log_found = False
-       
-        # Iterate through files in the subfolder
-        for file in os.listdir(subfolder_path):
-            print("Debug2")
-            if file.startswith('log.') and file.endswith('.csv'):
-                print("if subfolder_path-------->",subfolder_path)
-                log_file = os.path.join(subfolder_path, file)
-                log_found = True
-                break  # Stop searching once the log file is found
-       
-        # Process the log file if found
-        if log_found:
-            print("Debug")
-            print(f"Processing log file: {log_file}")
-            try:
-                data = pd.read_csv(log_file)
-                print("file_path--------->",log_file)
-                # Process your data here
-            except Exception as e:
-                print(f"Error processing {log_file}: {e}")
- 
- 
-            total_duration = 0
-            total_distance = 0
-            Wh_km = 0
-            SOC_consumed = 0
-            mode_values = 0
-           
-            total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
-            capture_analysis_output(log_file, subfolder_path)
-           
-        else:
-            print("Log file or KM file not found in subfolder:", subfolder)
+
+
+
+#Iterate over immediate subfolders of main_folder_path
+for subfolder_1 in os.listdir(main_folder_path):
+    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+    
+    # Check if subfolder_1 is a directory
+    if os.path.isdir(subfolder_1_path):
+        
+        # Iterate over subfolders within subfolder_1
+        for subfolder in os.listdir(subfolder_1_path):
+            subfolder_path = os.path.join(subfolder_1_path, subfolder)
+            
+            # Check if subfolder starts with "Battery" and is a directory
+            if os.path.isdir(subfolder_path):                
+                log_file = None
+                log_found = False
+                
+                # Iterate through files in the subfolder
+                for file in os.listdir(subfolder_path):
+                    if file.startswith('log.') and file.endswith('.csv'):
+                        log_file = os.path.join(subfolder_path, file)
+                        log_found = True
+                        break  # Stop searching once the log file is found
+                
+                # Process the log file if found
+                if log_found:
+                    print(f"Processing log file: {log_file}")
+                    try:
+                        data = pd.read_csv(log_file)
+                        # Process your data here
+                    except Exception as e:
+                        print(f"Error processing {log_file}: {e}")
+
+
+                    total_duration = 0
+                    total_distance = 0
+                    Wh_km = 0
+                    SOC_consumed = 0
+                    mode_values = 0
+                    
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
+                    capture_analysis_output(log_file, subfolder_path)
+                    
+                else:
+                    print("Log file or KM file not found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)

@@ -1121,51 +1121,51 @@ def mergeExcel(main_folder_path):
  
  
 # Iterate over immediate subfolders of main_folder_path
-# for subfolder_1 in os.listdir(main_folder_path):
-#     subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+for subfolder_1 in os.listdir(main_folder_path):
+    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
    
-#     # Check if subfolder_1 is a directory
-#     if os.path.isdir(subfolder_1_path):
+    # Check if subfolder_1 is a directory
+    if os.path.isdir(subfolder_1_path):
  
 # Iterate over subfolders within subfolder_1
-for subfolder in os.listdir(main_folder_path):
-    subfolder_path = os.path.join(main_folder_path, subfolder)
-    print(subfolder_path)
-   
-    # Check if subfolder starts with "Battery" and is a directory
-    if os.path.isdir(subfolder_path):
-        log_file = None
-        log_found = False
-       
-        # Iterate through files in the subfolder
-        for file in os.listdir(subfolder_path):
+        for subfolder in os.listdir(subfolder_1_path):
+            subfolder_path = os.path.join(subfolder_1_path, subfolder)
             print(subfolder_path)
-            if file.startswith('log.') and file.endswith('.csv'):
-               
-                log_file = os.path.join(subfolder_path, file)
-                log_found = True
-                break  # Stop searching once the log file is found
-       
-        # Process the log file if found
-        if log_found:
-            print(f"Processing log file: {log_file}")
-            try:
-                data = pd.read_csv(log_file)
-                # Process your data here
-            except Exception as e:
-                print(f"Error processing {log_file}: {e}")
- 
- 
-            total_duration = 0
-            total_distance = 0
-            Wh_km = 0
-            SOC_consumed = 0
-            mode_values = 0
-           
-            total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
-            capture_analysis_output(log_file, subfolder_path)
-           
-        else:
-            print("Log file file not found in subfolder:", subfolder)
+        
+            # Check if subfolder starts with "Battery" and is a directory
+            if os.path.isdir(subfolder_path):
+                log_file = None
+                log_found = False
+            
+                # Iterate through files in the subfolder
+                for file in os.listdir(subfolder_path):
+                    print(subfolder_path)
+                    if file.startswith('log.') and file.endswith('.csv'):
+                    
+                        log_file = os.path.join(subfolder_path, file)
+                        log_found = True
+                        break  # Stop searching once the log file is found
+            
+                # Process the log file if found
+                if log_found:
+                    print(f"Processing log file: {log_file}")
+                    try:
+                        data = pd.read_csv(log_file)
+                        # Process your data here
+                    except Exception as e:
+                        print(f"Error processing {log_file}: {e}")
+        
+        
+                    total_duration = 0
+                    total_distance = 0
+                    Wh_km = 0
+                    SOC_consumed = 0
+                    mode_values = 0
+                
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
+                    capture_analysis_output(log_file, subfolder_path)
+                
+                else:
+                    print("Log file file not found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)

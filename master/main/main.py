@@ -35,7 +35,7 @@ def run_script():
         subprocess.run(['python', script_path, new_path], check=True)
 
 app = tk.Tk()
-app.title("Run Python Scripts")
+app.title("LECTRIX-Complete Analysis 2.0")
 app.configure(bg="lightblue")  # Set the background color
 
 # Global variable to store the folder path
@@ -49,14 +49,12 @@ label.grid(row=0, column=0, padx=10, pady=10, sticky='e')
 file_var = tk.StringVar(app)
 file_var.set("Select a script")
 scripts = {
-    "Daily analysis LX70": "Daily_analysis_LX70.py",
-    "Battery analysis": "Battery_analysis.py",
-    "Error causes": "Error_causes.py",
-    "Daily analysis Enduro": "Daily_analysis_enduro.py",
-    "Daily analysis LXS": "Daily_analysis_Lxs.py",
-    "Daily analysis Influx LX70" : "Daily_analysis_Influx_LX70.py",
-    "Daily analysis Influx Enduro" : "Daily_analysis_Influx_enduro.py",
-    "Daily analysis Influx LXS" : "Daily_analysis_Influx_LXS.py",
+    "Daily analysis LX70": "Bytebeam_LX70.py",
+    "Daily analysis Enduro": "Bytebeam_NDuro.py",
+    "Daily analysis LXS": "Bytebeam_LXS.py",
+    "Daily analysis Influx LX70" : "Influx_LX70.py",
+    "Daily analysis Influx Enduro" : "Influx_NDuro.py",
+    "Daily analysis Influx LXS" : "Influx_LXS.py",
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.config(bg="lightblue", fg="black", width=20)
