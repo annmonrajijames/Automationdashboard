@@ -11,28 +11,32 @@ def open_folder():
         path_label.config(text=folder_path)
         run_button.config(state='normal')  # Enable the run button
 
-def copy_folder(original_path):
+def copy_folder():
     destination_path = filedialog.askdirectory(title="Select Destination for Copy")
     if destination_path:
-        destination_folder = os.path.join(destination_path, os.path.basename(original_path))
-        shutil.copytree(original_path, destination_folder)
+        destination_folder = os.path.join(destination_path, os.path.basename(folder_path))
+        shutil.copytree(folder_path, destination_folder)
         save_output_label.config(text=destination_folder)
         return destination_folder
     else:
-        return original_path
+        return folder_path
 
 def run_script():
     if copy_var.get():
-        # If the user wants to copy the folder
-        new_path = copy_folder(folder_path)
+        new_path = destination_folder if 'destination_folder' in globals() else folder_path
     else:
         new_path = folder_path
-    
+
     script = file_var.get()
     dir_path = os.path.dirname(os.path.realpath(__file__))
     script_path = os.path.join(dir_path, script)
     if script and new_path:
         subprocess.run(['python', script_path, new_path], check=True)
+
+def handle_copy_check():
+    if copy_var.get():
+        global destination_folder
+        destination_folder = copy_folder()  # Trigger folder selection upon checking
 
 app = tk.Tk()
 app.title("LECTRIX-Complete Analysis 2.0")
@@ -64,7 +68,7 @@ dropdown.grid(row=0, column=1, padx=10, pady=10, sticky='w')  # Align to the lef
 file_var.set(next(iter(scripts.values())))
 
 # Label for displaying the folder path
-path_label = tk.Label(app, text="Choose to see input folder path", bg="lightblue", fg="black", wraplength=100)
+path_label = tk.Label(app, text="Click Choose Folder- Input Folder's path will be shown here", bg="lightblue", fg="black", wraplength=100)
 path_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
 
 # Button to choose the folder
@@ -72,12 +76,12 @@ folder_button = tk.Button(app, text="Choose Folder", command=open_folder, bg="li
 folder_button.grid(row=1, column=1, padx=10, pady=10, sticky='nw')  # Align to the left (west)
 
 # Label for the "Save output in preferred location" checkbox
-save_output_label = tk.Label(app, text="Run to see the output folder path", bg="lightblue", fg="black", wraplength=100)
+save_output_label = tk.Label(app, text="Output folder path will be shown here", bg="lightblue", fg="black", wraplength=100)
 save_output_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
 
 # Checkbox for copying the folder
 copy_var = tk.BooleanVar()
-copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var, bg="lightblue", fg="black")
+copy_check = tk.Checkbutton(app, text="Save output in preferred location", variable=copy_var, bg="lightblue", fg="black", command=handle_copy_check)
 copy_check.grid(row=2, column=1, padx=10, pady=5, sticky='w')  # Align to the left (west)
 
 # Button to run the script (initially disabled)
