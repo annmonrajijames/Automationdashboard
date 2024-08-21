@@ -435,7 +435,28 @@ def Bytebeam_LX70_input(input_folder_path):
             # Calculate the time difference between consecutive rows
             data['Time_Diff'] = data['localtime'].diff().dt.total_seconds().fillna(0)
 
-            print("before")
+###############Calculating the Distance based on RPM
+            data['Speed_kmh'] = data['MotorSpeed_340920578'] * 0.016
+            
+            # Convert Speed to m/s
+            data['Speed_ms'] = data['Speed_kmh'] / 3.6
+            
+            # Initialize total distance covered
+            distance_per_mode = defaultdict(float)
+
+            total_distance_with_RPM = 0
+
+            for index, row in data.iterrows():
+                if row['MotorSpeed_340920578'] > 0: 
+
+                    distance_interval = row['Speed_ms'] * row['Time_Diff']
+                    # Calculate the distance traveled in this interval
+                    total_distance_with_RPM += distance_interval
+                    
+            print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
+#################
+
+
             # Set the 'localtime' column as the index
             data.set_index('localtime', inplace=True)
             
@@ -510,7 +531,7 @@ def Bytebeam_LX70_input(input_folder_path):
             total_distance_with_RPM = 0
 
             for index, row in data_resampled.iterrows():
-                if row['MotorSpeed_340920578'] >= 100:
+                if row['MotorSpeed_340920578'] > 0:
 
                     distance_interval = row['Speed_ms'] * row['Time_Diff']
                     # Calculate the distance traveled in this interval
@@ -821,7 +842,8 @@ def Bytebeam_LX70_input(input_folder_path):
                 "Ending SoC (%)": ending_soc_percentage,
                 "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
                 "SOH": SOH,
-                "Total distance covered (km)": Distance_with_RPM,
+                "Total distance covered (kms) - RPM": total_distance_with_RPM/1000,
+                "Total distance convered (kms)- Lat and Long (GPS)":total_distance,
                 "Energy Consumption Rate(WH/KM)- ENTIRE RIDE": watt_h / Distance_with_RPM,
                 "Mode": "",
                 "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,

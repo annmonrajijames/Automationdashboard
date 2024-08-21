@@ -316,7 +316,7 @@ def Influx_LXS_input(input_folder_path):
         total_distance_with_RPM = 0
 
         for index, row in data.iterrows():
-            if row['RPM'] >= 100:
+            if row['RPM'] > 0:
 
                 distance_interval = row['Speed_ms'] * row['localtime_Diff']
                 # Calculate the distance traveled in this interval

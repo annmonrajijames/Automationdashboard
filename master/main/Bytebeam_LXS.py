@@ -479,11 +479,11 @@ def Bytebeam_LXS_input(input_folder_path):
                 total_distance += distance
 
                 
-            print("Thalapathy---------------------->",total_distance)
+            # print("Thalapathy---------------------->",total_distance)
                 
 
     ###############
-            data_resampled['Speed_kmh'] = data_resampled['RPM'] * 0.074
+            data_resampled['Speed_kmh'] = data_resampled['RPM'] * 0.0836
 
             
             # Convert Speed to m/s
@@ -497,7 +497,7 @@ def Bytebeam_LXS_input(input_folder_path):
             total_distance_with_RPM = 0
 
             for index, row in data_resampled.iterrows():
-                if row['RPM'] >= 100:
+                if row['RPM'] > 0:
 
                     distance_interval = row['Speed_ms'] * row['Time_Diff']
                     # Calculate the distance traveled in this interval

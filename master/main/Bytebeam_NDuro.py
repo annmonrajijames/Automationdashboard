@@ -443,6 +443,26 @@ def Bytebeam_NDuro_input(input_folder_path):
             # Calculate the time difference between consecutive rows
             data['Time_Diff'] = data['localtime'].diff().dt.total_seconds().fillna(0)
 
+###############Calculating the Distance based on RPM
+            data['Speed_kmh'] = data['MotorSpeed_340920578'] * 0.0836
+            
+            # Convert Speed to m/s
+            data['Speed_ms'] = data['Speed_kmh'] / 3.6
+            
+            # Initialize total distance covered
+            distance_per_mode = defaultdict(float)
+
+            total_distance_with_RPM = 0
+
+            for index, row in data.iterrows():
+                if row['MotorSpeed_340920578'] > 0:
+
+                    distance_interval = row['Speed_ms'] * row['Time_Diff']
+                    # Calculate the distance traveled in this interval
+                    total_distance_with_RPM += distance_interval
+                    
+            print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
+#################
             
             # Set the 'localtime' column as the index
             data.set_index('localtime', inplace=True)
@@ -484,7 +504,7 @@ def Bytebeam_NDuro_input(input_folder_path):
 
             average_current =data_resampled['PackCurr_6'].mean()
             avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
-            avg_speed =avg_motor_rpm * 0.0875
+            avg_speed =avg_motor_rpm * 0.0836
 
             # Initialize total distance covered
             total_distance = 0
@@ -641,7 +661,7 @@ def Bytebeam_NDuro_input(input_folder_path):
             speed_range_percentages = {}
         
             for range_ in speed_ranges:
-                speed_range_time = ((data['MotorSpeed_340920578'] * 0.0875 > range_[0]) & (data['MotorSpeed_340920578'] * 0.0875 < range_[1])).sum()
+                speed_range_time = ((data['MotorSpeed_340920578'] * 0.0836 > range_[0]) & (data['MotorSpeed_340920578'] * 0.0836 < range_[1])).sum()
                 speed_range_percentage = (speed_range_time / len(data)) * 100
                 speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h"] = speed_range_percentage
                 print(f"Time spent in {range_[0]}-{range_[1]} km/h: {speed_range_percentage:.2f}%")
@@ -746,7 +766,7 @@ def Bytebeam_NDuro_input(input_folder_path):
                     print("max_continuous_duration------->",max_continuous_duration)
                     max_continuous_duration = current_max_duration
                     cruising_rpm = speed
-                    cruising_speed=speed*0.0875
+                    cruising_speed=speed*0.0836
 
                     if cruising_speed >1:
                         cruise_speed=cruising_speed
@@ -761,7 +781,7 @@ def Bytebeam_NDuro_input(input_folder_path):
             print("The maximum motor speed in RPM is:", Max_motor_rpm)
         
             # Convert the maximum motor speed to speed using the given factor
-            peak_speed = Max_motor_rpm * 0.0875
+            peak_speed = Max_motor_rpm * 0.0836
         
             # Print the maximum speed
             print("The maximum speed is:", peak_speed)
@@ -788,7 +808,8 @@ def Bytebeam_NDuro_input(input_folder_path):
                 "Ending SoC (%)": ending_soc_percentage,
                 "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
                 "SOH": SOH,
-                "Total distance covered (km)": total_distance,
+                "Total distance covered (kms)- RPM ": total_distance_with_RPM/1000,
+                "Total distance covered (kms) - Lat & Long (GPS)": total_distance,
                 "Energy Consumption Rate(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
                 "Mode": "",
                 "Wh/km in Normal mode": wh_per_km_Normal_mode,

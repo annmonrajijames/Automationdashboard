@@ -73,7 +73,7 @@ def Influx_NDuro_input(input_folder_path):
     
     
     
-        speed = data['MotorSpeed [SA: 02]'] * 0.0875
+        speed = data['MotorSpeed [SA: 02]'] * 0.0836
     
         data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
     
@@ -313,7 +313,7 @@ def Influx_NDuro_input(input_folder_path):
         total_distance_with_RPM = 0
 
         for index, row in data.iterrows():
-            if row['MotorSpeed [SA: 02]'] >= 100:
+            if row['MotorSpeed [SA: 02]'] > 0:
 
                 distance_interval = row['Speed_ms'] * row['localtime_Diff']
                 # Calculate the distance traveled in this interval
@@ -514,7 +514,7 @@ def Influx_NDuro_input(input_folder_path):
         speed_range_percentages = {}
     
         for range_ in speed_ranges:
-            speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0875 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0875 < range_[1])).sum()
+            speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0836 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0836 < range_[1])).sum()
             speed_range_percentage = (speed_range_localtime / len(data)) * 100
             speed_range_percentages[f"Time_{range_[0]}-{range_[1]} km/h(%)"] = speed_range_percentage
             print(f"Time_{range_[0]}-{range_[1]} km/h(%): {speed_range_percentage:.2f}%")
@@ -619,7 +619,7 @@ def Influx_NDuro_input(input_folder_path):
         #         print("max_continuous_duration------->",max_continuous_duration)
         #         max_continuous_duration = current_max_duration
         #         cruising_rpm = speed
-        #         cruising_speed=speed*0.0875
+        #         cruising_speed=speed*0.0836
     
         #         if cruising_speed >1:
         #             cruise_speed=cruising_speed
@@ -636,9 +636,9 @@ def Influx_NDuro_input(input_folder_path):
         print("The maximum motor speed in RPM is:", Max_motor_rpm)
     
         # Convert the maximum motor speed to speed using the given factor
-        peak_speed = Max_motor_rpm * 0.0875
+        peak_speed = Max_motor_rpm * 0.0836
     
-        avg_speed =avg_motor_rpm * 0.0875
+        avg_speed =avg_motor_rpm * 0.0836
     
         # Print the maximum speed
         print("The maximum speed is:", peak_speed)
