@@ -28,15 +28,25 @@ def copy_folder():
         return destination_folder
     else:
         return folder_path
- 
+
+def reset_gui():
+    global folder_path, destination_folder
+    folder_path = ""
+    destination_folder = ""
+    file_var.set(next(iter(scripts.values())))  # Reset to the first script
+    path_label.config(text="Click Choose Folder- Input Folder's path will be shown here")
+    save_output_label.config(text="Output folder path will be shown here")
+    copy_var.set(False)
+    run_button.config(state='disabled')
+
 def run_script():
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-   
+
     if copy_var.get():
         new_path = destination_folder if 'destination_folder' in globals() else folder_path
     else:
         new_path = folder_path
- 
+
     script = file_var.get()
     # Mapping script names to function calls
     script_functions = {
@@ -47,10 +57,11 @@ def run_script():
         "Influx_LXS.py": Influx_LXS.Influx_LXS_input,
         "Influx_NDuro.py": Influx_NDuro.Influx_NDuro_input,
     }
- 
+
     # Call the corresponding function
     if script in script_functions:
         script_functions[script](new_path)
+        reset_gui()  # Reset the GUI after the script is run
  
 def handle_copy_check():
     if copy_var.get():
