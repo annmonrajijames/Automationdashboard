@@ -6,7 +6,6 @@ def Influx_LX70_input(input_folder_path):
     import io
     import openpyxl
     import matplotlib.pyplot as plt
-    from mpl_toolkits.basemap import Basemap
     from PIL import Image
     import os
     import matplotlib.dates as mdates

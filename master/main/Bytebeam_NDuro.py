@@ -15,7 +15,6 @@ def Bytebeam_NDuro_input(input_folder_path):
     from math import radians, sin, cos, sqrt, atan2
     import io
     import openpyxl
-    from mpl_toolkits.basemap import Basemap
     from PIL import Image
     from contextlib import redirect_stdout
     from pptx.util import Inches, Pt  # Correcting the import statement
