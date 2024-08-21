@@ -25,7 +25,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 
-main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\Influx_enduro\aug_7"
+main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\Nduro"
 
 
 
@@ -65,7 +65,7 @@ for subfolder in os.listdir(main_folder_path):
                     return new_time.strftime('%H:%M:%S')
 
                 # Apply the function to create a new column
-                data['FormattedTime'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
+                # data['FormattedTime'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
                 print("file_path--------->",log_file)
                 # Process your data here
             except Exception as e:
@@ -75,43 +75,52 @@ for subfolder in os.listdir(main_folder_path):
 
 def plot_ghps(data,Path):
 
-    speed = data['MotorSpeed [SA: 02]'] * 0.0875
+      # Convert the Unix timestamps to datetime
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
+ 
+    # Print the converted DATETIME column
+    data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
-    data.set_index('FormattedTime', inplace=True)  # Setting DATETIME as index
+    data['speed'] = data['MotorSpeed [SA: 02]'] * 0.0836
+    print("speed----------->",data['speed'])
+
+    # data.set_index('', inplace=True)  # Setting DATETIME as index
+    data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
 
 
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-    fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
-    # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
-    # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='Black')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='Red')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
-    fig.add_trace(go.Scatter(x=data.index, y=data['PackVol [SA: 06]'], name='PackVoltage', line=dict(color='Green')), secondary_y=False)
-    # fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
+#     # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
+#     # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Voltage [SA: 04]'] * 10, name='AC Voltage (x10)', line=dict(color='yellow')), secondary_y=False)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['Throttle [SA: 02]'], name='Throttle (%)', line=dict(color='Black')), secondary_y=False)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='Red')), secondary_y=False)
+#     fig.add_trace(go.Scatter(x=data.index, y=speed, name='Speed[Km/hr]', line=dict(color='grey')), secondary_y=False)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['PackVol [SA: 06]'], name='PackVoltage', line=dict(color='Green')), secondary_y=False)
+#     # fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
 
-    fig.add_trace(go.Scatter(x=data.index, y=data['FetTemp [SA: 08]'], name='BMS temperature (FET)', line=dict(color='orange')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['MCU_Temperature [SA: 03]'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['Brake_Pulse [SA: 02]'], name='Break Pulse', line=dict(color='Black')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['FetTemp [SA: 08]'], name='BMS temperature (FET)', line=dict(color='orange')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['MCU_Temperature [SA: 03]'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['Brake_Pulse [SA: 02]'], name='Break Pulse', line=dict(color='Black')), secondary_y=True)
 
-#########################
-    fig.add_trace(go.Scatter(x=data.index, y=data['Ride_Ack [SA: 02]']*100, name='Ride Ack', line=dict(color='Blue')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['DchgFetStatus [SA: 09]']*100, name='DchgFet Ack', line=dict(color='Purple')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['ChgFetStatus [SA: 09]']*100, name='Charge Ack', line=dict(color='Red')), secondary_y=True)
+# #########################
+#     fig.add_trace(go.Scatter(x=data.index, y=data['Ride_Ack [SA: 02]']*100, name='Ride Ack', line=dict(color='Blue')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['DchgFetStatus [SA: 09]']*100, name='DchgFet Ack', line=dict(color='Purple')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['ChgFetStatus [SA: 09]']*100, name='Charge Ack', line=dict(color='Red')), secondary_y=True)
 
-    fig.add_trace(go.Scatter(x=data.index, y=data['IgnitionStatus [SA: 0C]']*100, name='Ignition Status', line=dict(color='Yellow')), secondary_y=True)
+#     fig.add_trace(go.Scatter(x=data.index, y=data['IgnitionStatus [SA: 0C]']*100, name='Ignition Status', line=dict(color='Yellow')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['speed'], name='Speed', line=dict(color='Red')), secondary_y=True)
 
 
     # fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
     # fig.add_trace(go.Scatter(x=data.index, y=data['DeltaCellVoltage'], name='DeltaCellVoltage', line=dict(color='Purple')), secondary_y=True)
 
-    fig.update_layout(title='Battery Pack, Motor Data, and Throttle',
+    fig.update_layout(title='Speed vs Time',
                         xaxis_title='Local localtime',
-                        yaxis_title='Pack Current (A)',
-                        yaxis2_title='Motor Speed (RPM)')
+                        yaxis_title='Speed',
+                        yaxis2_title='Speed')
 
     fig.update_xaxes(tickformat='%H:%M:%S')
 
