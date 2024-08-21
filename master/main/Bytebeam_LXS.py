@@ -197,8 +197,8 @@ def Bytebeam_LXS_input(input_folder_path):
                                 result = messagebox.askquestion("Remove Anomalies", "Do you want to remove anomalies?")
                                 if result == "yes":
                                     # Allow user to input start time and end time for the anomalies after seeing the graph
-                                    start_time_input = simpledialog.askstring("Enter Start Time","Enter start time of anomaly (format: 2024-04-02 12:59:00.000): ")
-                                    end_time_input = simpledialog.askstring("Enter End Time","Enter end time of anomaly (format: 2024-04-02 12:59:00.000): ")
+                                    start_time_input = simpledialog.askstring("Enter Start Time","Enter start time of anomaly (format: 2024-04-25 11:59:00.000): ")
+                                    end_time_input = simpledialog.askstring("Enter End Time","Enter end time of anomaly (format: 2024-04-25 12:08:00.000): ")
 
                                     # Convert input strings to datetime
                                     start_time = pd.to_datetime(start_time_input, format='%Y-%m-%d %H:%M:%S.%f')
