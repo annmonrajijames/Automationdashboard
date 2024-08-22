@@ -1,3 +1,5 @@
+main_folder_path = r"C:\Users\kamalesh.kb\Nduro_test"
+
 def Influx_NDuro_input(input_folder_path):
     import sys 
     from matplotlib.mlab import window_none
@@ -22,6 +24,7 @@ def Influx_NDuro_input(input_folder_path):
     from collections import defaultdict
     import plotly.graph_objs as go
     from plotly.subplots import make_subplots
+    from datetime import datetime, timedelta
     window_size =5
     
     
@@ -34,6 +37,8 @@ def Influx_NDuro_input(input_folder_path):
         Calculate the great-circle distance between two points
         on the Earth's surface using the Haversine formula.
         """
+
+        
         # Convert latitude and longitude from degrees to radians
         lat1 = radians(lat1)
         lon1 = radians(lon1)
@@ -75,7 +80,7 @@ def Influx_NDuro_input(input_folder_path):
     
         speed = data['MotorSpeed [SA: 02]'] * 0.0836
     
-        data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
+        data.set_index('DATETIME', inplace=True)  
     
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
@@ -110,7 +115,6 @@ def Influx_NDuro_input(input_folder_path):
     # Resetting index to default integer index
         data.reset_index(inplace=True)
     
-        # data.set_index('DATETIME', inplace=False)
     
     
         return graph_path  # Return the path of the saved graph image
@@ -126,28 +130,7 @@ def Influx_NDuro_input(input_folder_path):
     def analysis_Energy(data,subfolder_path):
         dayfirst=True
     
-        # data = pd.read_csv(log_file)
-        # Remove duplicates based on the "DATETIME" column and keep the first occurrence
-        # data = data.drop_duplicates(subset=['DATETIME'], keep='first')
-    
-    
-    #Uncomment the following two lines if DateTime is already in IST.
-        # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix').dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
-        # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-    
-    
-    #uncomment and run if ride contains only one ride(completely) and in that case dont need to run the split battery!
-    
-        # # Convert Unix epoch time to datetime, assuming the original timezone is UTC
-        # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s', origin='unix', utc=True)
-        # # Convert to your desired timezone (e.g., 'Asia/Kolkata')
-        # data['DATETIME'] = data['DATETIME'].dt.tz_convert('Asia/Kolkata')  # converting to IST
-        # # Format the datetime as string, including milliseconds
-        # data['DATETIME'] = data['DATETIME'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]  # Converting to string
-        # # If you need the datetime back as pandas datetime type without timezone info
-        # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-    
-        # data.set_index('DATETIME', inplace=True)
+
     
         total_duration = 0
         total_distance = 0
@@ -248,34 +231,72 @@ def Influx_NDuro_input(input_folder_path):
     
         # Drop rows with missing values in 'SOCAh [SA: 08]' column
         data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
-    
-    
-        # # Calculate the start localtime and end localtime
-        # start_localtime = data['DATETIME'].min()
-        # end_localtime = data['DATETIME'].max()
-    
-        # # Calculate the start localtime and end localtime with formatting
-        # start_localtime_seconds = data['DATETIME'].min().strflocaltime('%d/%m/%Y %H:%M:%S')
-        # end_localtime_seconds = data['DATETIME'].max().strflocaltime('%d/%m/%Y %H:%M:%S')
-        # data['DATETIME'] = data['DATETIME'].astype(str)
-        # data['DATETIME'] = pd.to_datetime(data['DATETIME'].str.split('.').str[0], format='%Y-%m-%d  %H:%M:%S')
+
         
-        # Convert the DATETIME column to datetime objects
-        # Ensure the DATETIME column is read as integers
-        data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
+        if 'DATETIME' not in data.columns:
+            # start_time_str = '01-08-24 14:16:00'  # Update this with your actual start time
+            start_time_str = data['Creation Time'].iloc[0]  # Update this with your actual start time
+            # Parse the time, defaulting to ":00" if seconds are missing
+            start_time = datetime.strptime(start_time_str, '%d-%m-%y %H:%M')
+            print("1--->",start_time)
+
+            # # Convert it back to the full format, including seconds
+            # start_time_str = start_time.strftime('%d-%m-%y %H:%M:%S')
+            # print("2--->",start_time_str)
+
+            # # Now use strptime to convert to datetime
+            # start_time = datetime.strptime(start_time_str, '%d-%m-%y %H:%M:%S')
+            # print("3--->",start_time)
+
+            
+
+            # Function to convert fractional seconds to hh:mm:ss format
+            def convert_to_hhmmss(row, start_time):
+                # Calculate the time in seconds
+                seconds = row['Time'] 
+                # Add these seconds to the start time
+                new_time = start_time + timedelta(seconds=seconds)
+                # Return the time in 'dd-mm-yy hh:mm:ss' format
+                return new_time.strftime('%d-%m-%y %H:%M:%S')
+
+            # Apply the function to create a new column
+            data['DATETIME'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
+            # print("Ann------------------------------>",data['DATETIME'])
+
+
     
-        # Check for any NaN values which indicate parsing issues
-        # print(data['DATETIME'].isnull().sum())
-    
-        # Drop or handle NaN values
+        # if 'DATETIME' not in data.columns:
+        #         start_time_str = data['Creation Time'].iloc[0]  # Update this with your actual start time
+        #         print("Annmon----------------------------------->",start_time_str)
+
+        #         start_time = datetime.strptime(start_time_str, '%H:%M:%S')
+
+        #         # Function to convert fractional seconds to hh:mm:ss format
+        #         def convert_to_hhmmss(row, start_time):
+        #             # Calculate the time in seconds
+        #             seconds = row['Time'] 
+        #             # Add these seconds to the start time
+        #             new_time = start_time + timedelta(seconds=seconds)
+        #             # Return the time in hh:mm:ss format
+        #             return new_time.strftime('%H:%M:%S')
+
+        #         # Apply the function to create a new column
+        #         # data['FormattedTime'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
+        data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+        print("1-------------------------------->")
+        print(data['DATETIME'])
+
+
         data = data.dropna(subset=['DATETIME'])
     
-        # Convert the Unix timestamps to datetime
         data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
     
-        # Print the converted DATETIME column
+
         data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-        # Find the minimum and maximum datetime
+        
+
+
+
         start_localtime = data['DATETIME'].min()
         end_localtime = data['DATETIME'].max()
     
@@ -322,20 +343,23 @@ def Influx_NDuro_input(input_folder_path):
         print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
     #################
 
-    ###########Calculating the Distance based on Ground Distance from GPS Module data
-        # total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
-        # Drop any empty values in the 'GROUND_DISTANCE' column and get the last non-empty value
-        total_distance_Ground_Distance = data['GROUND_DISTANCE'].dropna().iloc[-1]
+        if 'GROUND_DISTANCE' in data.columns:
+        ###########Calculating the Distance based on Ground Distance from GPS Module data
+            # total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
+            # Drop any empty values in the 'GROUND_DISTANCE' column and get the last non-empty value
+            total_distance_Ground_Distance = data['GROUND_DISTANCE'].dropna().iloc[-1]
 
-        # for index, row in data.iterrows():
-        #     if row['GROUND_DISTANCE'] >= 100:
+            # for index, row in data.iterrows():
+            #     if row['GROUND_DISTANCE'] >= 100:
 
-        #         distance_interval_groundSpeed = row['GROUND_DISTANCE'] * row['localtime_Diff']
-        #         # Calculate the distance traveled in this interval
-        #         total_distance_Ground_Distance += distance_interval_groundSpeed
-                
-        print("Distance With total_distance_Ground_Distance---------------------->",total_distance_Ground_Distance/1000)
-    ###############
+            #         distance_interval_groundSpeed = row['GROUND_DISTANCE'] * row['localtime_Diff']
+            #         # Calculate the distance traveled in this interval
+            #         total_distance_Ground_Distance += distance_interval_groundSpeed
+
+            print("Distance With total_distance_Ground_Distance---------------------->",total_distance_Ground_Distance/1000)
+        ###############
+        else:
+            total_distance_Ground_Distance =total_distance_with_RPM                                                                 #RPM data will be used as distance if GPS data Not available
 
     
         #Set the 'localtime' column as the index
@@ -389,25 +413,30 @@ def Influx_NDuro_input(input_folder_path):
         # Initialize total distance covered
         total_distance = 0
         distance_per_mode = defaultdict(float)
+
+        if 'Latitude' in data.columns:
     
-        # Iterate over rows to compute distance covered between consecutive points
-        for i in range(len(data) - 1):
+            # Iterate over rows to compute distance covered between consecutive points
+            for i in range(len(data) - 1):
+            
+                # Get latitude and longitude of consecutive points
+                lat1 = data['LATITUDE'].iloc[i]
+                lon1 = data['LONGITUDE'].iloc[i]
+                lat2 = data['LATITUDE'].iloc[i + 1]
+                lon2 = data['LONGITUDE'].iloc[i + 1]
+            
         
-            # Get latitude and longitude of consecutive points
-            lat1 = data['LATITUDE'].iloc[i]
-            lon1 = data['LONGITUDE'].iloc[i]
-            lat2 = data['LATITUDE'].iloc[i + 1]
-            lon2 = data['LONGITUDE'].iloc[i + 1]
+                # Calculate distance between consecutive points
+                distance = haversine(lat1, lon1, lat2, lon2)
         
-    
-            # Calculate distance between consecutive points
-            distance = haversine(lat1, lon1, lat2, lon2)
-    
-            # Add distance to total distance covered
-            total_distance += distance
-    
-            mode = data['Mode_Ack [SA: 02]'].iloc[i]
-            distance_per_mode[mode] += distance
+                # Add distance to total distance covered
+                total_distance += distance
+        
+                mode = data['Mode_Ack [SA: 02]'].iloc[i]
+                distance_per_mode[mode] += distance
+            
+        else:
+            total_distance = total_distance_with_RPM/1000
     
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
     
@@ -687,26 +716,26 @@ def Influx_NDuro_input(input_folder_path):
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             # "Energy consumption Rate(WH/KM)": watt_h / total_distance,
             "Energy consumption Rate(WH/KM)": watt_h / (total_distance_with_RPM/1000),
-            "Total distance - RPM": total_distance_with_RPM/1000,
-            "Total distance covered (km) - Lat & Long(GPS)": total_distance,
-            "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
-            "Mode": "",
-            "Wh/km in Normal mode": wh_per_km_Normal_mode,
-            "Distance travelled in Normal mode":distance_per_mode[2],
-            "Wh/km in Fast Mode": wh_per_km_Fast_mode,
-            "Distance travelled in Fast Mode":distance_per_mode[6],
-            "Wh/km in ECO Mode": wh_per_km_ECO_mode,
-            "Distance travelled in ECO mode":distance_per_mode[4],
-            "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
-            "Distance travelled in LIMP Mode":distance_per_mode[5],
+            "Total distance - RPM {km}": total_distance_with_RPM/1000,
+            "Total distance covered (km) - Lat & Long(GPS) {km}": total_distance,
+            "Total distance - Ground Distance(GPS) {km}": total_distance_Ground_Distance/1000,
+            "Mode (%)": "",
+            # "Wh/km in Normal mode": wh_per_km_Normal_mode,
+            # "Distance travelled in Normal mode":distance_per_mode[2],
+            # "Wh/km in Fast Mode": wh_per_km_Fast_mode,
+            # "Distance travelled in Fast Mode":distance_per_mode[6],
+            # "Wh/km in ECO Mode": wh_per_km_ECO_mode,
+            # "Distance travelled in ECO mode":distance_per_mode[4],
+            # "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
+            # "Distance travelled in LIMP Mode":distance_per_mode[5],
             "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             # "Average_current":abs(average_current),
-            "Average_current (With regen and with Idle )":abs(average_current_withRegen_withIdling),
-            "Average_current (With regen and without Idle )":abs(average_current_withRegen_withoutIdling),
-            "Average_current (Without regen and with Idle )":abs(average_current_withoutRegen_withIdling),
-            "Average_current (Without regen and without Idle )":abs(average_current_withoutRegen_withoutIdling),
+            "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
+            "Average_current (With regen and without Idle) (A)":abs(average_current_withRegen_withoutIdling),
+            "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
+            "Average_current (Without regen and without Idle) (A)":abs(average_current_withoutRegen_withoutIdling),
             "Total Energy Regenerated(Wh)": energy_regenerated,
             "Regenerative Effectiveness(%)": regenerative_effectiveness,
             # "Avg_speed (km/hr)":avg_speed,
@@ -1015,7 +1044,7 @@ def Influx_NDuro_input(input_folder_path):
     
                 # Define columns to plot for idling and speed metrics
             idling_speed_columns = [
-                'Idling time percentage',
+                'Idle time (%)',
                 'Time_0-10 km/h(%)',
                 'Time_10-20 km/h(%)',
                 'Time_20-30 km/h(%)',
@@ -1203,7 +1232,7 @@ def Influx_NDuro_input(input_folder_path):
                     # Iterate through files in the subfolder
                     for file in os.listdir(subfolder_path):
                         if file.startswith('log.') and file.endswith('.csv'):
-                            print("if subfolder_path-------->",subfolder_path)
+                            # print("if subfolder_path-------->",subfolder_path)
                             log_file = os.path.join(subfolder_path, file)
                             log_found = True
                             break  # Stop searching once the log file is found
@@ -1232,3 +1261,5 @@ def Influx_NDuro_input(input_folder_path):
                         print("Log file or KM file not found in subfolder:", subfolder)
             
     mergeExcel(main_folder_path)
+
+Influx_NDuro_input(main_folder_path)
