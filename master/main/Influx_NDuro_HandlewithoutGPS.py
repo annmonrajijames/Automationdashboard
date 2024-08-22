@@ -142,17 +142,17 @@ def Influx_NDuro_input(input_folder_path):
             temp_columns_max = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
             max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
             max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
-            print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+            
     
             # Minimum cell temperature calculation
             temp_columns_min = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
             min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
             min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
-            print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
+            
     
             #Difference between Maximum and Minimum cell Temperature
             CellTempDiff= max_cell_temp-min_cell_temp
-            print("Temperature difference: ",CellTempDiff)
+            
     
         else:
             print("SOC is not maximum!")
@@ -160,17 +160,17 @@ def Influx_NDuro_input(input_folder_path):
             temp_columns_max = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
             max_values = data[temp_columns_max].max(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
             max_cell_temp = max_values.max()                  # Find the maximum among those maximum values
-            print("\nOverall maximum value of cell temperature among those maximum values:", max_cell_temp)
+            
     
             # Minimum cell temperature calculation
             temp_columns_min = [f'Temp{i} [SA: 0A]' for i in range(1, 9)]
             min_values = data[temp_columns_min].min(axis=1)     # Find the maximum value out of 8 columns (from Temp1_10 to Temp8_10)
             min_cell_temp = min_values.min()                  # Find the maximum among those maximum values
-            print("\nOverall minimum value of cell temperature among those minimum values:", min_cell_temp)
+            
     
             #Difference between Maximum and Minimum cell Temperature
             CellTempDiff= max_cell_temp-min_cell_temp
-            print("Temperature difference: ",CellTempDiff)
+            
     
     
         # Define the temperature columns
@@ -193,11 +193,7 @@ def Influx_NDuro_input(input_folder_path):
         # Determine the maximum temperature occurrence in the selected column
         # max_occurrence = data[max_column].value_counts().idxmax()
     
-        # Print the results
-        print(f"Overall maximum value of cell temperature: {max_values.max()}")
-        # print(f"Column(s) with maximum temperature: {max_columns_multiple}")
-        print(f"Column with the highest cell temperature: {max_column}")
-        # print(f"Maximum occurrence temperature: {max_occurrence}")
+
     
     
     
@@ -238,15 +234,9 @@ def Influx_NDuro_input(input_folder_path):
             start_time_str = data['Creation Time'].iloc[0]  # Update this with your actual start time
             # Parse the time, defaulting to ":00" if seconds are missing
             start_time = datetime.strptime(start_time_str, '%d-%m-%y %H:%M')
-            print("1--->",start_time)
+            print("Start_time--->",start_time)
 
-            # # Convert it back to the full format, including seconds
-            # start_time_str = start_time.strftime('%d-%m-%y %H:%M:%S')
-            # print("2--->",start_time_str)
 
-            # # Now use strptime to convert to datetime
-            # start_time = datetime.strptime(start_time_str, '%d-%m-%y %H:%M:%S')
-            # print("3--->",start_time)
 
             
 
@@ -261,7 +251,6 @@ def Influx_NDuro_input(input_folder_path):
 
             # Apply the function to create a new column
             data['DATETIME'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
-            # print("Ann------------------------------>",data['DATETIME'])
 
 
     
@@ -283,8 +272,8 @@ def Influx_NDuro_input(input_folder_path):
         #         # Apply the function to create a new column
         #         # data['FormattedTime'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
         data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-        print("1-------------------------------->")
-        print(data['DATETIME'])
+        # print("1-------------------------------->")
+        # print(data['DATETIME'])
 
 
         data = data.dropna(subset=['DATETIME'])
@@ -339,27 +328,21 @@ def Influx_NDuro_input(input_folder_path):
                 distance_interval = row['Speed_ms'] * row['localtime_Diff']
                 # Calculate the distance traveled in this interval
                 total_distance_with_RPM += distance_interval
+
                 
-        print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
+        total_distance_with_RPM = total_distance_with_RPM/1000
     #################
 
         if 'GROUND_DISTANCE' in data.columns:
         ###########Calculating the Distance based on Ground Distance from GPS Module data
-            # total_distance_Ground_Distance = data['GROUND_DISTANCE'].iloc[-1]
             # Drop any empty values in the 'GROUND_DISTANCE' column and get the last non-empty value
             total_distance_Ground_Distance = data['GROUND_DISTANCE'].dropna().iloc[-1]
 
-            # for index, row in data.iterrows():
-            #     if row['GROUND_DISTANCE'] >= 100:
+            total_distance_Ground_Distance = total_distance_Ground_Distance/1000
 
-            #         distance_interval_groundSpeed = row['GROUND_DISTANCE'] * row['localtime_Diff']
-            #         # Calculate the distance traveled in this interval
-            #         total_distance_Ground_Distance += distance_interval_groundSpeed
-
-            print("Distance With total_distance_Ground_Distance---------------------->",total_distance_Ground_Distance/1000)
         ###############
         else:
-            total_distance_Ground_Distance =total_distance_with_RPM                                                                 #RPM data will be used as distance if GPS data Not available
+            total_distance_Ground_Distance =000  #RPM data will be used as distance if GPS data Not available
 
     
         #Set the 'localtime' column as the index
@@ -436,7 +419,7 @@ def Influx_NDuro_input(input_folder_path):
                 distance_per_mode[mode] += distance
             
         else:
-            total_distance = total_distance_with_RPM/1000
+            total_distance = 000
     
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
     
@@ -503,7 +486,13 @@ def Influx_NDuro_input(input_folder_path):
         # Find the peak power
         peak_power = data_resampled['Power'].min()
         print("Peak Power:", peak_power)
-    
+
+
+        peak_current =data_resampled['PackCurr [SA: 06]'].min()
+
+        peak_voltage =data_resampled['PackVol [SA: 06]'].max()
+
+
         # average_current =data_resampled['PackCurr [SA: 06]'].mean()
         average_current_withRegen_withIdling =data_resampled['PackCurr [SA: 06]'].mean()
 
@@ -539,34 +528,39 @@ def Influx_NDuro_input(input_folder_path):
         # Calculate total energy consumed (in watt-hours)
         total_energy_consumed =  ((data_resampled[data_resampled['Power'] < 0]['Power']*data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours   ######################################################################
     
-        print("total",total_energy_consumed)
-        print("total energy regenerated",energy_regenerated)
     
         # Calculate regenerative effectiveness as a percentage
         if total_energy_consumed != 0:
-            print("-----------------------------------------------------------")
             regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
-            print("Regenerative Effectiveness (%):", regenerative_effectiveness)
+            
         else:
             regenerative_effectiveness = 0
-            print("Total energy consumed is 0, cannot calculate regenerative effectiveness.")
+            
     
         # Calculate idling localtime percentage (RPM was zero for more than 5 seconds)
         idling_localtime = ((data['MotorSpeed [SA: 02]'] <= 0) | data['MotorSpeed [SA: 02]'].isna()).sum()
-        print("data length localtime",len(data))
         idling_percentage = (idling_localtime / len(data)) * 100
-        print("Idling time percentage:", idling_percentage)
     
         # Calculate Time_specific speed ranges
         speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
         speed_range_percentages = {}
+        speed_range_durations = {}
+        total_seconds = total_duration.total_seconds()
     
         for range_ in speed_ranges:
             speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0836 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0836 < range_[1])).sum()
             speed_range_percentage = (speed_range_localtime / len(data)) * 100
-            speed_range_percentages[f"Time_{range_[0]}-{range_[1]} km/h(%)"] = speed_range_percentage
-            print(f"Time_{range_[0]}-{range_[1]} km/h(%): {speed_range_percentage:.2f}%")
-    
+            speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h (in %)"] = speed_range_percentage
+            # print(f"Time spent in {range_[0]}-{range_[1]} km/h (in %): {speed_range_percentage:.2f}%")
+
+              # Calculate the actual duration spent in the current speed range
+            speed_range_duration_seconds = (speed_range_percentage / 100) * total_seconds
+            speed_range_duration = str(timedelta(seconds=int(speed_range_duration_seconds)))
+
+            speed_range_durations[f"Time spent in {range_[0]}-{range_[1]} km/h (HH:MM:SS)"] = speed_range_duration #for displaying the time spent in each speed limit
+                
+                
+        print("Speed range durations and percentages:", speed_range_durations)
             
         # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
         data_resampled['Power'] = -data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]']
@@ -626,9 +620,12 @@ def Influx_NDuro_input(input_folder_path):
     
         # Get the maximum temperature of MCU_Temperature [SA: 03]
         max_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].max()
+        avg_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].mean()
+
     
         # Check for abnormal motor temperature at high RPMs
         max_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].max()
+        avg_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].mean()
     
         # Find the battery voltage
         batteryVoltage = (data_resampled['BatteryVoltage [SA: 02]'].max()) * 10
@@ -651,6 +648,7 @@ def Influx_NDuro_input(input_folder_path):
         max_continuous_duration = 0
         # data_resampled = data_resampled.dropna(subset=['MotorSpeed [SA: 02]'])
         # data_resampled['MotorSpeed [SA: 02]'] = data_resampled['MotorSpeed [SA: 02]'].astype(int)
+        
     
         # for speed in range(int(data_resampled['MotorSpeed [SA: 02]'].min()), int(data_resampled['MotorSpeed [SA: 02]'].max()) + 1):
         #     lower_bound = speed - window_size
@@ -676,14 +674,15 @@ def Influx_NDuro_input(input_folder_path):
     
     
             # Find the maximum value in the 'MotorSpeed [SA: 02]' column
-        Max_motor_rpm = data_resampled['MotorSpeed [SA: 02]'].max()
+        
     
         avg_motor_rpm =data_resampled['MotorSpeed [SA: 02]'].mean()
     
-        # Print the maximum motor speed in RPM
-        print("The maximum motor speed in RPM is:", Max_motor_rpm)
-    
         # Convert the maximum motor speed to speed using the given factor
+        filtered_data_spikeSpeeds = data[data['MotorSpeed [SA: 02]'] <1000]  
+
+        Max_motor_rpm = filtered_data_spikeSpeeds['MotorSpeed [SA: 02]'].max()
+        
         peak_speed = Max_motor_rpm * 0.0836
     
         # avg_speed =avg_motor_rpm * 0.0836
@@ -695,11 +694,11 @@ def Influx_NDuro_input(input_folder_path):
         # Print the maximum speed
         print("The maximum speed is:", peak_speed)
     
-        total_energy_kwh = actual_ah * batteryVoltage / 1000
-        print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
+        # total_energy_kwh = actual_ah * batteryVoltage / 1000
+        # print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
     
-        total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
-        print("Electricity consumption units in kW", (total_energy_kw))
+        # total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
+        # print("Electricity consumption units in kW", (total_energy_kw))
     
         # Add these variables and logic to ppt_data
     
@@ -715,11 +714,11 @@ def Influx_NDuro_input(input_folder_path):
             "Ending SoC (%)": ending_soc_percentage,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             # "Energy consumption Rate(WH/KM)": watt_h / total_distance,
-            "Energy consumption Rate(WH/KM)": watt_h / (total_distance_with_RPM/1000),
-            "Total distance - RPM {km}": total_distance_with_RPM/1000,
-            "Total distance covered (km) - Lat & Long(GPS) {km}": total_distance,
-            "Total distance - Ground Distance(GPS) {km}": total_distance_Ground_Distance/1000,
-            "Mode (%)": "",
+            "Energy consumption Rate(WH/KM)": watt_h / (total_distance_with_RPM),
+            "Total distance - RPM (km)": total_distance_with_RPM,
+            "Total distance covered (km) - Lat & Long(GPS) ": total_distance,
+            "Total distance - Ground Distance(GPS) (km)": total_distance_Ground_Distance,
+            "Mode": "",
             # "Wh/km in Normal mode": wh_per_km_Normal_mode,
             # "Distance travelled in Normal mode":distance_per_mode[2],
             # "Wh/km in Fast Mode": wh_per_km_Fast_mode,
@@ -730,6 +729,8 @@ def Influx_NDuro_input(input_folder_path):
             # "Distance travelled in LIMP Mode":distance_per_mode[5],
             "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
             "Peak Power(W)": peak_power,
+            "Peak current (A)": abs(peak_current),
+            "Peak voltage (V)":abs(peak_voltage),
             "Average Power(W)": average_power,
             # "Average_current":abs(average_current),
             "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
@@ -744,21 +745,23 @@ def Influx_NDuro_input(input_folder_path):
             "Highest Cell Voltage(V)": max_cell_voltage,
             "Lowest Cell Voltage(V)": min_cell_voltage,
             "Difference in Cell Voltage(V)": voltage_difference,
-            "Minimum Temperature(C)": min_temp,
-            "Maximum Temperature(C)": max_temp,
+            "Minimum Battery Temperature(C)": min_temp,
+            "Maximum Battery Temperature(C)": max_temp,
             "Difference in Temperature(C)": max_temp- min_temp,
             "Maximum Fet Temperature-BMS(C)": max_fet_temp,
             "Maximum Afe Temperature-BMS(C)": max_afe_temp,
             "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
             "Maximum MCU Temperature(C)": max_mcu_temp,
             "Maximum Motor Temperature(C)": max_motor_temp,
+            "Average Motor Temperature(C)":avg_mcu_temp,
+            "Average MCU Temperature(C)":avg_motor_temp,
             "Abnormal Motor Temperature Detected(C)": abnormal_motor_temp_detected,
             "highest cell temp(C)": max_cell_temp,
             "lowest cell temp(C)": min_cell_temp,
             "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
             "Battery Voltage(V)": batteryVoltage,
-            "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
-            "Electricity consumption units(kW)": total_energy_kw,
+            # "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
+            # "Electricity consumption units(kW)": total_energy_kw,
             "Cycle Count of battery": cycleCount,
             # "Cruising Speed (Rpm)": cruising_rpm,
             # "cruising_speed (km/hr)":cruise_speed,
@@ -807,13 +810,13 @@ def Influx_NDuro_input(input_folder_path):
         # Add calculated parameters to ppt_data
         ppt_data["Idling time percentage"] = idling_percentage
         ppt_data.update(speed_range_percentages)
+        ppt_data.update(speed_range_durations)
     
         # Calculate power using PackCurr [SA: 06] and PackVol [SA: 06]
         data_resampled['Power'] = -data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]']
     
         # Find the peak power
         peak_power = data_resampled['Power'].max()
-        print("Peak Power:", peak_power)
     
     
         # Filter the DataFrame to include only positive current values
@@ -1042,90 +1045,90 @@ def Influx_NDuro_input(input_folder_path):
             transposed_df = transposed_df[1:]
         
     
-                # Define columns to plot for idling and speed metrics
-            idling_speed_columns = [
-                'Idle time (%)',
-                'Time_0-10 km/h(%)',
-                'Time_10-20 km/h(%)',
-                'Time_20-30 km/h(%)',
-                'Time_30-40 km/h(%)',
-                'Time_40-50 km/h(%)',
-                'Time_50-60 km/h(%)',
-                'Time_60-70 km/h(%)',
-                'Time_70-80 km/h(%)',
-                # 'Time_80-90 km/h'
-            ]
+            #     # Define columns to plot for idling and speed metrics
+            # idling_speed_columns = [
+            #     'Idling time percentage',
+            #     'Time_0-10 km/h(%)',
+            #     'Time_10-20 km/h(%)',
+            #     'Time_20-30 km/h(%)',
+            #     'Time_30-40 km/h(%)',
+            #     'Time_40-50 km/h(%)',
+            #     'Time_50-60 km/h(%)',
+            #     'Time_60-70 km/h(%)',
+            #     'Time_70-80 km/h(%)',
+            #     # 'Time_80-90 km/h'
+            # ]
     
-            # Define columns to plot for Wh/km and distance metrics
-            wh_distance_columns = [
-                'Wh/km in Normal mode',
-                'Distance travelled in Normal mode',
-                'Wh/km in Fast Mode',
-                'Distance travelled in Fast Mode',
-                'Wh/km in ECO Mode',
-                'Distance travelled in ECO mode'
-            ]
+            # # Define columns to plot for Wh/km and distance metrics
+            # wh_distance_columns = [
+            #     'Wh/km in Normal mode',
+            #     'Distance travelled in Normal mode',
+            #     'Wh/km in Fast Mode',
+            #     'Distance travelled in Fast Mode',
+            #     'Wh/km in ECO Mode',
+            #     'Distance travelled in ECO mode'
+            # ]
     
-            # Define colors for idling and speed metrics
-            idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red']
+            # # Define colors for idling and speed metrics
+            # idling_speed_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'red', 'red', 'red']
     
-            # Define colors for Wh/km and distance metrics
-            wh_distance_colors = ['blue', 'blue', 'red', 'red', 'green', 'green']
+            # # Define colors for Wh/km and distance metrics
+            # wh_distance_colors = ['blue', 'blue', 'red', 'red', 'green', 'green']
     
-            # Function to plot and save idling and speed metrics
-            def plot_idling_speed_metrics():
-                plt.figure(figsize=(15, 6))  # Increase figure size
-                bars = plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
-                # plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
-                plt.xlabel('Metrics')
-                plt.ylabel('Values')
-                plt.title('Time_each speed interval')
-                plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
-    
-    
-                # Annotate bars with values
-                for bar in bars:
-                    height = bar.get_height()
-                    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
-    
-                plot_file = f"{folder_path}/Time spent in Speed intervals.png"
-                plt.savefig(plot_file)
-                plt.show()
-                print(f"Idling and speed bar plot saved: {plot_file}")
-    
-                # Insert plots into the Excel worksheet
-                img_idling_speed = Image(plot_file)
-                ws.add_image(img_idling_speed, 'F35')  # Adjust the cell location as needed
-    
-            # Function to plot and save Wh/km and distance metrics
-            def plot_wh_distance_metrics():
-                plt.figure(figsize=(15, 6))  # Increase figure size
-                bars = plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
-                # plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
-                plt.xlabel('Metrics')
-                plt.ylabel('Values')
-                plt.title('Bar Graph of Wh/km and Distance Travelled')
-                plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
+            # # Function to plot and save idling and speed metrics
+            # def plot_idling_speed_metrics():
+            #     plt.figure(figsize=(15, 6))  # Increase figure size
+            #     bars = plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            #     # plt.bar(idling_speed_columns, transposed_df.iloc[0][idling_speed_columns], color=idling_speed_colors)
+            #     plt.xlabel('Metrics')
+            #     plt.ylabel('Values')
+            #     plt.title('Time_each speed interval')
+            #     plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
     
     
-                # Annotate bars with values
-                for bar in bars:
-                    height = bar.get_height()
-                    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
+            #     # Annotate bars with values
+            #     for bar in bars:
+            #         height = bar.get_height()
+            #         plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
     
-                plot_file = f"{folder_path}/wh_distance_bar_plot.png"
-                plt.savefig(plot_file)
-                plt.show()
-                print(f"Wh/km and distance bar plot saved: {plot_file}")
+            #     plot_file = f"{folder_path}/Time spent in Speed intervals.png"
+            #     plt.savefig(plot_file)
+            #     plt.show()
+            #     print(f"Idling and speed bar plot saved: {plot_file}")
     
-                # Insert plots into the Excel worksheet
-                img_wh_distance = Image(f"{folder_path}/wh_distance_bar_plot.png")
-                ws.add_image(img_wh_distance, 'F2')  # Adjust the cell location as needed
+            #     # Insert plots into the Excel worksheet
+            #     img_idling_speed = Image(plot_file)
+            #     ws.add_image(img_idling_speed, 'F35')  # Adjust the cell location as needed
+    
+            # # Function to plot and save Wh/km and distance metrics
+            # def plot_wh_distance_metrics():
+            #     plt.figure(figsize=(15, 6))  # Increase figure size
+            #     bars = plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
+            #     # plt.bar(wh_distance_columns, transposed_df.iloc[0][wh_distance_columns], color=wh_distance_colors)
+            #     plt.xlabel('Metrics')
+            #     plt.ylabel('Values')
+            #     plt.title('Bar Graph of Wh/km and Distance Travelled')
+            #     plt.xticks(rotation=-20, ha='left', fontsize=10)  # Adjust rotation and alignment
     
     
-            # Generate and save the plots
-            plot_idling_speed_metrics()
-            plot_wh_distance_metrics()
+            #     # Annotate bars with values
+            #     for bar in bars:
+            #         height = bar.get_height()
+            #         plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}', ha='center', va='bottom')
+    
+            #     plot_file = f"{folder_path}/wh_distance_bar_plot.png"
+            #     plt.savefig(plot_file)
+            #     plt.show()
+            #     print(f"Wh/km and distance bar plot saved: {plot_file}")
+    
+            #     # Insert plots into the Excel worksheet
+            #     img_wh_distance = Image(f"{folder_path}/wh_distance_bar_plot.png")
+            #     ws.add_image(img_wh_distance, 'F2')  # Adjust the cell location as needed
+    
+    
+            # # Generate and save the plots
+            # plot_idling_speed_metrics()
+            # plot_wh_distance_metrics()
     
             # Save the Excel workbook
             excel_output_file = f"{folder_path}/analysis_{folder_name}.xlsx"
