@@ -268,6 +268,7 @@ def analysis_Energy(data,subfolder_path):
       
     # Convert the DATETIME column to datetime objects
     # Ensure the DATETIME column is read as integers
+    
     data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
 
     # Check for any NaN values which indicate parsing issues
@@ -366,10 +367,22 @@ def analysis_Energy(data,subfolder_path):
  
     # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
 
-
+    current = data_resampled['PackCurr [SA: 06]']
+    # if not pd.isna(current):
+    
     # print(data_resampled['PackCurr [SA: 06]'])
     actual_ah = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
     print("Actual Ampere-hours (Ah):------------------------------------> {:.2f}".format(actual_ah))
+
+    # filtered_data_1 = data[data['SOC [SA: 08]'] > 90] 
+    filtered_data_withoutDischarge = data[data['PackCurr [SA: 06]'] > 0]                   #Only Regen
+    regen_ah = abs((filtered_data_withoutDischarge['PackCurr [SA: 06]'] * filtered_data_withoutDischarge['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+
+    
+
+
+    
+
  
     # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
     watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
@@ -479,7 +492,23 @@ def analysis_Energy(data,subfolder_path):
     peak_power = data_resampled['Power'].min()
     print("Peak Power:", peak_power)
 
-    average_current =data_resampled['PackCurr [SA: 06]'].mean()
+    average_current_withRegen_withIdling =data_resampled['PackCurr [SA: 06]'].mean()
+
+    # filtered_data_1 = data[data['SOC [SA: 08]'] > 90] 
+    filtered_data = data[data['PackCurr [SA: 06]'] < -0.5]                   #removing Regen
+
+    average_current_withoutRegen_withIdling = filtered_data['PackCurr [SA: 06]'].mean()
+    # print("Average_current-------------->",abs(average_current))
+
+    filtered_data2 = filtered_data[filtered_data['MotorSpeed [SA: 02]']>5]          #removing idle time
+    average_current_withoutRegen_withoutIdling = filtered_data2['PackCurr [SA: 06]'].mean()
+    # print("Average_current-------------->",abs(average_current))
+
+    filtered_data3 = data[data['MotorSpeed [SA: 02]']>0]
+    average_current_withRegen_withoutIdling = filtered_data3['PackCurr [SA: 06]'].mean()
+
+
+    
    
     # Calculate the average power
     average_power = abs(data_resampled['Power'].mean())
@@ -499,12 +528,13 @@ def analysis_Energy(data,subfolder_path):
     # Calculate total energy consumed (in watt-hours)
     total_energy_consumed =  ((data_resampled[data_resampled['Power'] < 0]['Power']*data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours   ######################################################################
  
+    
+
     print("total",total_energy_consumed)
     print("total energy regenerated",energy_regenerated)
  
     # Calculate regenerative effectiveness as a percentage
     if total_energy_consumed != 0:
-     print("-----------------------------------------------------------")
      regenerative_effectiveness = abs(energy_regenerated / total_energy_consumed) * 100
      print("Regenerative Effectiveness (%):", regenerative_effectiveness)
     else:
@@ -646,7 +676,10 @@ def analysis_Energy(data,subfolder_path):
     # Convert the maximum motor speed to speed using the given factor
     peak_speed = Max_motor_rpm * 0.0836
 
-    avg_speed =avg_motor_rpm * 0.0836
+    avg_speed_with_idle =avg_motor_rpm * 0.0836
+
+    average_rpm_without_idle = filtered_data3['MotorSpeed [SA: 02]'].mean()
+    avg_speed_without_idle =average_rpm_without_idle * 0.0836
 
     # Print the maximum speed
     print("The maximum speed is:", peak_speed)
@@ -666,10 +699,11 @@ def analysis_Energy(data,subfolder_path):
         "Starting SoC (Ah)": starting_soc_Ah,
         "Ending SoC (Ah)": ending_soc_Ah,
         "Actual Ampere-hours (Ah)": actual_ah,
+        "Regen (Ah)": regen_ah,
         "Starting SoC (%)": starting_soc_percentage,
         "Ending SoC (%)": ending_soc_percentage,
         "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
-        "Energy consumption Rate(WH/KM)": watt_h / total_distance,
+        "Energy consumption Rate(WH/KM)": watt_h / (total_distance_with_RPM/1000),
         "Total distance - RPM": total_distance_with_RPM/1000,
         "Total distance covered (km) - Lat & Long(GPS)": total_distance,
         "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
@@ -685,10 +719,15 @@ def analysis_Energy(data,subfolder_path):
         "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
         "Peak Power(W)": peak_power,
         "Average Power(W)": average_power,
-        "Average_current":abs(average_current),
+        # "Average_current":abs(average_current),
+        "Average_current (With regen and with Idle )":abs(average_current_withRegen_withIdling),
+        "Average_current (With regen and without Idle )":abs(average_current_withRegen_withoutIdling),
+        "Average_current (Without regen and with Idle )":abs(average_current_withoutRegen_withIdling),
+        "Average_current (Without regen and without Idle )":abs(average_current_withoutRegen_withoutIdling),
         "Total Energy Regenerated(Wh)": energy_regenerated,
         "Regenerative Effectiveness(%)": regenerative_effectiveness,
-        "Avg_speed (km/hr)":avg_speed,
+        "Avg_speed with idle(km/hr)":avg_speed_with_idle,
+        "Avg_speed without idle(km/hr)":avg_speed_without_idle,
         "Highest Cell Voltage(V)": max_cell_voltage,
         "Lowest Cell Voltage(V)": min_cell_voltage,
         "Difference in Cell Voltage(V)": voltage_difference,
@@ -764,11 +803,9 @@ def analysis_Energy(data,subfolder_path):
     print("Peak Power:", peak_power)
 
 
-    # Filter the DataFrame to include only positive current values
-    positive_current = data_resampled[data_resampled['PackCurr [SA: 06]'] < 0]
 
     # Calculate the mean of the positive current values
-    average_current = positive_current['PackCurr [SA: 06]'].mean()
+    # average_current = positive_current['PackCurr [SA: 06]'].mean()
 
     # average_current =data_resampled['PackCurr [SA: 06]'].mean()
     
@@ -801,10 +838,10 @@ def analysis_Energy(data,subfolder_path):
     print("Difference in Cell Voltage:", voltage_difference, "V")
  
     # Get the maximum temperature
-    max_temp = data_resampled['MaxTemp [SA: 07]'].max()
+    # max_temp = data_resampled['MaxTemp [SA: 07]'].max()
  
     # Find the index where the maximum temperature occurs
-    max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
+    # max_temp_index = data_resampled['MaxTemp [SA: 07]'].idxmax()
  
     # Retrieve the corresponding temperature ID using the index
     # max_temp_id = data_resampled['MaxTempId [SA: 07]'].loc[max_temp_index]
@@ -1056,7 +1093,7 @@ def capture_analysis_output(log_file,folder_path):
 # Initialize variables to store file paths
 log_file = None
  
-main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\Nduro"
+main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\Nduro_analysis"
 
  
 def mergeExcel(main_folder_path):
@@ -1129,50 +1166,50 @@ def mergeExcel(main_folder_path):
 
 
 # Iterate over immediate subfolders of main_folder_path
-# for subfolder_1 in os.listdir(main_folder_path):
-#     subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+for subfolder_1 in os.listdir(main_folder_path):
+    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
     
-#     # Check if subfolder_1 is a directory
-#     if os.path.isdir(subfolder_1_path):
+    # Check if subfolder_1 is a directory
+    if os.path.isdir(subfolder_1_path):
 
-# Iterate over subfolders within subfolder_1
-for subfolder in os.listdir(main_folder_path):
-    subfolder_path = os.path.join(main_folder_path, subfolder)
-    print(subfolder_path)
-    
-    # Check if subfolder starts with "Battery" and is a directory
-    if os.path.isdir(subfolder_path):                
-        log_file = None
-        log_found = False
-        
-        # Iterate through files in the subfolder
-        for file in os.listdir(subfolder_path):
-            if file.startswith('log.') and file.endswith('.csv'):
-                log_file = os.path.join(subfolder_path, file)
-                log_found = True
-                break  # Stop searching once the log file is found
-        
-        # Process the log file if found
-        if log_found:
-            print(f"Processing log file: {log_file}")
-            try:
-                data = pd.read_csv(log_file)
-                print("file_path--------->",log_file)
-                # Process your data here
-            except Exception as e:
-                print(f"Error processing {log_file}: {e}")
-
-
-            total_duration = 0
-            total_distance = 0
-            Wh_km = 0
-            SOC_consumed = 0
-            mode_values = 0
+        # Iterate over subfolders within subfolder_1
+        for subfolder in os.listdir(subfolder_1_path):
+            subfolder_path = os.path.join(subfolder_1_path, subfolder)
+            print(subfolder_path)
             
-            total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
-            capture_analysis_output(log_file, subfolder_path)
-            
-        else:
-            print("Log file or KM file not found in subfolder:", subfolder)
+            # Check if subfolder starts with "Battery" and is a directory
+            if os.path.isdir(subfolder_path):                
+                log_file = None
+                log_found = False
+                
+                # Iterate through files in the subfolder
+                for file in os.listdir(subfolder_path):
+                    if file.startswith('log.') and file.endswith('.csv'):
+                        log_file = os.path.join(subfolder_path, file)
+                        log_found = True
+                        break  # Stop searching once the log file is found
+                
+                # Process the log file if found
+                if log_found:
+                    print(f"Processing log file: {log_file}")
+                    try:
+                        data = pd.read_csv(log_file)
+                        # print("file_path--------->",log_file)
+                        # Process your data here
+                    except Exception as e:
+                        print(f"Error processing {log_file}: {e}")
+
+
+                    total_duration = 0
+                    total_distance = 0
+                    Wh_km = 0
+                    SOC_consumed = 0
+                    mode_values = 0
+                    
+                    total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
+                    capture_analysis_output(log_file, subfolder_path)
+                    
+                else:
+                    print("Log file or KM file not found in subfolder:", subfolder)
  
 mergeExcel(main_folder_path)

@@ -25,56 +25,18 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 
-main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\Nduro"
-
-
-
-for subfolder in os.listdir(main_folder_path):
-    subfolder_path = os.path.join(main_folder_path, subfolder)
-    print(subfolder_path)
-    
-    # Check if subfolder starts with "Battery" and is a directory
-    if os.path.isdir(subfolder_path):                
-        log_file = None
-        log_found = False
-        
-        # Iterate through files in the subfolder
-        for file in os.listdir(subfolder_path):
-            if file.startswith('log.') and file.endswith('.csv'):
-                log_file = os.path.join(subfolder_path, file)
-                print("file:",log_file)
-                log_found = True
-                break  # Stop searching once the log file is found
-        
-        # Process the log file if found
-        if log_found:
-            print(f"Processing log file: {log_file}")
-            try:
-                data = pd.read_csv(log_file)
-                                # Enter the start time
-                start_time_str = '06:13:00'  # Update this with your actual start time
-                start_time = datetime.strptime(start_time_str, '%H:%M:%S')
-
-                # Function to convert fractional seconds to hh:mm:ss format
-                def convert_to_hhmmss(row, start_time):
-                    # Calculate the time in seconds
-                    seconds = row['Time'] 
-                    # Add these seconds to the start time
-                    new_time = start_time + timedelta(seconds=seconds)
-                    # Return the time in hh:mm:ss format
-                    return new_time.strftime('%H:%M:%S')
-
-                # Apply the function to create a new column
-                # data['FormattedTime'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
-                print("file_path--------->",log_file)
-                # Process your data here
-            except Exception as e:
-                print(f"Error processing {log_file}: {e}")
+main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\Nduro_analysis"
 
 
 
 def plot_ghps(data,Path):
 
+    # filtered_data_1 = data[data['MotorSpeed [SA: 02]'] > 0] 
+    # filtered_data = filtered_data_1[filtered_data_1['PackCurr [SA: 06]']<0]
+
+    # average_current = filtered_data['PackCurr [SA: 06]'].mean()
+    # print("Average_current-------------->",abs(average_current))
+    
       # Convert the Unix timestamps to datetime
     data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
  
@@ -82,14 +44,23 @@ def plot_ghps(data,Path):
     data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
     data['speed'] = data['MotorSpeed [SA: 02]'] * 0.0836
-    print("speed----------->",data['speed'])
 
     # data.set_index('', inplace=True)  # Setting DATETIME as index
     data.set_index('DATETIME', inplace=True)  # Setting DATETIME as index
 
+    data['localtime_Diff'] = data.index.to_series().diff().dt.total_seconds().fillna(0)
+    print(data['localtime_Diff'])
 
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    # Calculate the cumulative Ampere-hours (Ah) over time
+    data['Ah_Cumulative'] = abs(data['PackCurr [SA: 06]'] * data['localtime_Diff']).cumsum() / 3600
+    # data['Max_temp'] = abs(data['MaxTemp [SA: 07]']).cumsum()
+
+
+
+    # fig = make_subplots(specs=[[{"secondary_y": True}]])  # USE IF SECONDARY Y AXIS IS REQUIRE
+    fig = make_subplots()
+
 #     fig.add_trace(go.Scatter(x=data.index, y=-data['PackCurr [SA: 06]'], name='Pack Current', line=dict(color='blue')), secondary_y=False)
 #     fig.add_trace(go.Scatter(x=data.index, y=data['MotorSpeed [SA: 02]'], name='Motor Speed[RPM]', line=dict(color='green')), secondary_y=True)
 #     # fig.add_trace(go.Scatter(x=data.index, y=data['AC_Current [SA: 03]'], name='AC Current', line=dict(color='red')), secondary_y=False)
@@ -111,23 +82,30 @@ def plot_ghps(data,Path):
 #     fig.add_trace(go.Scatter(x=data.index, y=data['ChgFetStatus [SA: 09]']*100, name='Charge Ack', line=dict(color='Red')), secondary_y=True)
 
 #     fig.add_trace(go.Scatter(x=data.index, y=data['IgnitionStatus [SA: 0C]']*100, name='Ignition Status', line=dict(color='Yellow')), secondary_y=True)
-    fig.add_trace(go.Scatter(x=data.index, y=data['speed'], name='Speed', line=dict(color='Red')), secondary_y=True)
+    fig.add_trace(go.Scatter(x=data.index, y=data['speed'], name='Speed', line=dict(color='Blue')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['PackCurr [SA: 06]'], name='Current', line=dict(color='Green')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['SOC [SA: 08]'], name='SOC (%)', line=dict(color='Red')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['Ah_Cumulative'], name='Ampere-hour', line=dict(color='Grey')), secondary_y=False)
+    fig.add_trace(go.Scatter(x=data.index, y=data['MaxTemp [SA: 07]'], name='Maximum Battery Temperature', line=dict(color='Orange')), secondary_y=False)
+
+
+
+    # fig.add_trace(go.Scatter(x=data.index, y=data['Regeneration'], name='Regen', line=dict(color='Black')), secondary_y=False)
 
 
     # fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
     # fig.add_trace(go.Scatter(x=data.index, y=data['DeltaCellVoltage'], name='DeltaCellVoltage', line=dict(color='Purple')), secondary_y=True)
 
-    fig.update_layout(title='Speed vs Time',
-                        xaxis_title='Local localtime',
-                        yaxis_title='Speed',
-                        yaxis2_title='Speed')
+    fig.update_layout(title='Analysis',
+                        xaxis_title='Time',
+                        yaxis_title='Values')
 
     fig.update_xaxes(tickformat='%H:%M:%S')
 
     # Save the plot as an HTML file
     os.makedirs(Path, exist_ok=True)
     graph_path = os.path.join(Path, 'Log.html')
-    print("graph_path")
+    print("graph_Generated")
     fig.write_html(graph_path)
 
 
@@ -137,4 +115,37 @@ def plot_ghps(data,Path):
     # data.set_index('DATETIME', inplace=False)
 
 
-plot_ghps(data,subfolder_path)
+# Iterate over immediate subfolders of main_folder_path
+for subfolder_1 in os.listdir(main_folder_path):
+    subfolder_1_path = os.path.join(main_folder_path, subfolder_1)
+    
+    # Check if subfolder_1 is a directory
+    if os.path.isdir(subfolder_1_path):
+
+        # Iterate over subfolders within subfolder_1
+        for subfolder in os.listdir(subfolder_1_path):
+            subfolder_path = os.path.join(subfolder_1_path, subfolder)
+            print(subfolder_path)
+
+            # Check if subfolder starts with "Battery" and is a directory
+            if os.path.isdir(subfolder_path):                
+                log_file = None
+                log_found = False
+        
+                # Iterate through files in the subfolder
+                for file in os.listdir(subfolder_path):
+                    if file.startswith('log.') and file.endswith('.csv'):
+                        log_file = os.path.join(subfolder_path, file)
+                        print("file:",log_file)
+                        log_found = True
+                        break  # Stop searching once the log file is found
+                
+                # Process the log file if found
+                if log_found:
+                    try:
+                        data = pd.read_csv(log_file)
+                        plot_ghps(data,subfolder_path)
+                        
+                        # Process your data here
+                    except Exception as e:
+                        print(f"Error processing {log_file}: {e}")
