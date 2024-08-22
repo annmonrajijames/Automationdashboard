@@ -294,7 +294,7 @@ def analysis_Energy(data,subfolder_path):
     # print(data['localtime_Diff'])
     
 ###############Calculating the Distance based on RPM
-    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.0160
+    data['Speed_kmh'] = data['MotorSpeed [SA: 02]'] * 0.016
     
     # Convert Speed to m/s
     data['Speed_ms'] = data['Speed_kmh'] / 3.6
@@ -305,7 +305,7 @@ def analysis_Energy(data,subfolder_path):
     total_distance_with_RPM = 0
 
     for index, row in data.iterrows():
-        if row['MotorSpeed [SA: 02]'] >= 100:
+        if row['MotorSpeed [SA: 02]'] >= 0:
 
             distance_interval = row['Speed_ms'] * row['localtime_Diff']
             # Calculate the distance traveled in this interval
