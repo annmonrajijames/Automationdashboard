@@ -23,7 +23,43 @@ def Influx_LXS_input(input_folder_path):
     import plotly.graph_objs as go
     from plotly.subplots import make_subplots
     window_size =5  
-    
+
+    def process_data(file_path):
+        # Read the first line to get the date and time from the header
+        with open(file_path, 'r') as file:
+            first_line = file.readline().strip()
+        date_time = first_line.split(':', 1)[1].strip() if ':' in first_line else first_line
+
+        # Load the data using a chunk size
+        chunk_size = 50000  # Adjust chunk size based on your system's memory
+        chunks = pd.read_csv(file_path, skiprows=1, chunksize=chunk_size)
+        data_frames = []
+        
+        for chunk in chunks:
+            # Insert the date and time as a new column
+            chunk.insert(0, 'Creation Time', date_time)
+            data_frames.append(chunk)
+
+        # Concatenate all chunks into one DataFrame
+        data = pd.concat(data_frames, ignore_index=True)
+
+        # Drop the first three rows which were initially 2nd, 3rd, and 4th in the original code
+        data = data.drop([0, 1, 2])
+
+        # Save the processed data to the same file, overwriting the original
+        data.to_csv(file_path, index=False)
+        
+        return file_path
+
+    def process_files_in_directory(root_directory):
+        # Walk through all directories starting from the root
+        for dirpath, dirnames, filenames in os.walk(root_directory):
+            for filename in filenames:
+                if filename == 'log.csv':  # Check for the specific filename 'log.csv'
+                    file_path = os.path.join(dirpath, filename)
+                    processed_file_path = process_data(file_path)
+                    print(f"Processed file saved to: {processed_file_path}")
+
     # List to store DataFrames from each CSV file
     dfs = []
     def haversine(lat1, lon1, lat2, lon2):
@@ -1037,7 +1073,7 @@ def Influx_LXS_input(input_folder_path):
     log_file = None
     
     main_folder_path = input_folder_path
-    
+    process_files_in_directory(main_folder_path) 
     
     def mergeExcel(main_folder_path):
         def prepare_sheet_in_memory(file_path):
