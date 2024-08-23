@@ -11,7 +11,8 @@ import Bytebeam_NDuro
 import Influx_LX70
 import Influx_LXS
 import Influx_NDuro
- 
+import Influx_NDuro_HandlewithoutGPS
+
 def open_folder():
     global folder_path
     folder_path = filedialog.askdirectory()
@@ -56,6 +57,7 @@ def run_script():
         "Influx_LX70.py": Influx_LX70.Influx_LX70_input,
         "Influx_LXS.py": Influx_LXS.Influx_LXS_input,
         "Influx_NDuro.py": Influx_NDuro.Influx_NDuro_input,
+        "Influx_NDuro_HandlewithoutGPS.py": Influx_NDuro_HandlewithoutGPS.Influx_NDuro_HandlewithoutGPS_input,
     }
 
     # Call the corresponding function
@@ -89,6 +91,7 @@ scripts = {
     "Daily analysis Influx LX70" : "Influx_LX70.py",
     "Daily analysis Influx Enduro" : "Influx_NDuro.py",
     "Daily analysis Influx LXS" : "Influx_LXS.py",
+    "Daily analysis Influx NDuro without GPS": "Influx_NDuro_HandlewithoutGPS.py",
 }
 dropdown = tk.OptionMenu(app, file_var, *scripts.values())
 dropdown.config(bg="lightblue", fg="black", width=20)
