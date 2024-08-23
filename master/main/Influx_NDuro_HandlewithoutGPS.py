@@ -1,4 +1,4 @@
-main_folder_path = r"C:\Users\kamalesh.kb\Nduro_test"
+main_folder_path = r"C:\Users\kamalesh.kb\Nduro_Analaysis_To_do\Nduro_test"
 
 def Influx_NDuro_input(input_folder_path):
     import sys 
@@ -129,9 +129,7 @@ def Influx_NDuro_input(input_folder_path):
     # def analysis_Energy(log_file, km_file):
     def analysis_Energy(data,subfolder_path):
         dayfirst=True
-    
 
-    
         total_duration = 0
         total_distance = 0
         Wh_km = 0
@@ -252,36 +250,31 @@ def Influx_NDuro_input(input_folder_path):
             # Apply the function to create a new column
             data['DATETIME'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
 
-
-    
-        # if 'DATETIME' not in data.columns:
-        #         start_time_str = data['Creation Time'].iloc[0]  # Update this with your actual start time
-        #         print("Annmon----------------------------------->",start_time_str)
-
-        #         start_time = datetime.strptime(start_time_str, '%H:%M:%S')
-
-        #         # Function to convert fractional seconds to hh:mm:ss format
-        #         def convert_to_hhmmss(row, start_time):
-        #             # Calculate the time in seconds
-        #             seconds = row['Time'] 
-        #             # Add these seconds to the start time
-        #             new_time = start_time + timedelta(seconds=seconds)
-        #             # Return the time in hh:mm:ss format
-        #             return new_time.strftime('%H:%M:%S')
-
-        #         # Apply the function to create a new column
-        #         # data['FormattedTime'] = data.apply(convert_to_hhmmss, start_time=start_time, axis=1)
-        data['DATETIME'] = pd.to_datetime(data['DATETIME'])
-        # print("1-------------------------------->")
-        # print(data['DATETIME'])
+            data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
 
-        data = data.dropna(subset=['DATETIME'])
-    
-        data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
-    
+            data = data.dropna(subset=['DATETIME'])
+        
+            data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
+        
 
-        data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+            data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
+        
+        else:
+            data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
+       
+            # Drop or handle NaN values
+            data = data.dropna(subset=['DATETIME'])
+        
+            # Convert the Unix timestamps to datetime
+            data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
+        
+            # Print the converted DATETIME column
+            data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
+
+ 
         
 
 
@@ -323,8 +316,8 @@ def Influx_NDuro_input(input_folder_path):
         total_distance_with_RPM = 0
 
         for index, row in data.iterrows():
-            if row['MotorSpeed [SA: 02]'] > 0:
-
+            # if row['MotorSpeed [SA: 02]'] > 0:
+            if 0 < row['MotorSpeed [SA: 02]'] < 1000:
                 distance_interval = row['Speed_ms'] * row['localtime_Diff']
                 # Calculate the distance traveled in this interval
                 total_distance_with_RPM += distance_interval
@@ -397,7 +390,8 @@ def Influx_NDuro_input(input_folder_path):
         total_distance = 0
         distance_per_mode = defaultdict(float)
 
-        if 'Latitude' in data.columns:
+        if 'LATITUDE' in data.columns:
+            print("")
     
             # Iterate over rows to compute distance covered between consecutive points
             for i in range(len(data) - 1):
@@ -420,8 +414,9 @@ def Influx_NDuro_input(input_folder_path):
             
         else:
             total_distance = 000
-    
+
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
+    
     
         ##############   Wh/Km
         Wh_km = abs(watt_h / total_distance)
@@ -457,25 +452,25 @@ def Influx_NDuro_input(input_folder_path):
     
         # Calculate Wh/km for each mode
         wh_per_km_Normal_mode = calculate_wh_per_km(data_resampled, 2, distance_per_mode[2])
-        print("Normal mode distance-------------->",distance_per_mode[2])
+        # print("Normal mode distance-------------->",distance_per_mode[2])
         wh_per_km_Fast_mode = calculate_wh_per_km(data_resampled, 6, distance_per_mode[6])
-        print("Fast Mode distance-------------->",distance_per_mode[6])
+        # print("Fast Mode distance-------------->",distance_per_mode[6])
         wh_per_km_ECO_mode = calculate_wh_per_km(data_resampled, 4, distance_per_mode[4])
-        print("ECO mode distance-------------->",distance_per_mode[4])
+        # print("ECO mode distance-------------->",distance_per_mode[4])
         wh_per_km_LIMP_mode = calculate_wh_per_km(data_resampled, 5, distance_per_mode[5])
-        print("LIMP mode distance-------------->",distance_per_mode[5])
+        # print("LIMP mode distance-------------->",distance_per_mode[5])
     
     
         # Calculate Wh/km for the entire ride
         watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600
         wh_per_km_total = abs(watt_h / total_distance)
     
-        # Print the results
-        print(f"Wh/km for Normal mode: {wh_per_km_Normal_mode:.2f}")
-        print(f"Wh/km for Fast Mode: {wh_per_km_Fast_mode:.2f}")
-        print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
-        print(f"Wh/km for LIMP mode: {wh_per_km_LIMP_mode:.2f}")
-        print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
+        # # Print the results
+        # print(f"Wh/km for Normal mode: {wh_per_km_Normal_mode:.2f}")
+        # print(f"Wh/km for Fast Mode: {wh_per_km_Fast_mode:.2f}")
+        # print(f"Wh/km for Eco mode: {wh_per_km_ECO_mode:.2f}")
+        # print(f"Wh/km for LIMP mode: {wh_per_km_LIMP_mode:.2f}")
+        # print(f"Wh/km for the entire ride: {wh_per_km_total:.2f}")
     
     
     
@@ -876,7 +871,6 @@ def Influx_NDuro_input(input_folder_path):
         # Calculate the difference in temperature
         temp_difference = max_temp - min_temp
         print("temp_difference------------------------>",temp_difference)
-        print("Total distance------------------------->",total_distance)
     
         # # Print the information
         # print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
