@@ -1,4 +1,4 @@
-def Influx_NDuro_HandlewithoutGPS_input(input_folder_path):
+def Influx_NDuro_NoGPS_input(input_folder_path):
     import sys 
     from matplotlib.mlab import window_none
     import pandas as pd
