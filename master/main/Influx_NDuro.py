@@ -1102,7 +1102,7 @@ def Influx_NDuro_input(input_folder_path):
     
                 plot_file = f"{folder_path}/Time spent in Speed intervals.png"
                 plt.savefig(plot_file)
-                plt.show()
+                # plt.show()
                 print(f"Idling and speed bar plot saved: {plot_file}")
     
                 # Insert plots into the Excel worksheet
@@ -1127,7 +1127,7 @@ def Influx_NDuro_input(input_folder_path):
     
                 plot_file = f"{folder_path}/wh_distance_bar_plot.png"
                 plt.savefig(plot_file)
-                plt.show()
+                # plt.show()
                 print(f"Wh/km and distance bar plot saved: {plot_file}")
     
                 # Insert plots into the Excel worksheet

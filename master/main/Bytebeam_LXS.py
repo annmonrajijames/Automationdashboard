@@ -328,6 +328,7 @@ def Bytebeam_LXS_input(input_folder_path):
             plt.tight_layout()  # Adjust layout to prevent clipping of labels
             # plt.savefig('graph.png')  # Save the plot as an image
         
+
             os.makedirs(Path, exist_ok=True)
             graph_path = os.path.join(Path, 'graph.png')
             plt.savefig(os.path.join(Path, 'graph.png'))  # Save the plot as an image in the specified directory
