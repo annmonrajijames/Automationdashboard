@@ -36,6 +36,14 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # Load the data using a chunk size
         chunk_size = 50000  # Adjust chunk size based on your system's memory
         chunks = pd.read_csv(file_path, skiprows=1, chunksize=chunk_size)
+        
+        # Check if the "Time" column exists in the first chunk
+        first_chunk = next(chunks, None)
+        if first_chunk is None or "Time" not in first_chunk.columns:
+            return file_path  # If no "Time" column, return without processing
+        
+        # If "Time" column exists, reinitialize chunks iterator and proceed with processing
+        chunks = pd.read_csv(file_path, skiprows=1, chunksize=chunk_size)
         data_frames = []
         
         for chunk in chunks:
@@ -46,7 +54,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # Concatenate all chunks into one DataFrame
         data = pd.concat(data_frames, ignore_index=True)
 
-        # Drop the first three rows which were initially 2nd, 3rd, and 4th in the original code
+        # Drop the first three rows which were initially 2nd, 3rd, and 4th in the original file
         data = data.drop([0, 1, 2])
 
         # Save the processed data to the same file, overwriting the original
