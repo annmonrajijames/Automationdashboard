@@ -10,7 +10,7 @@ import Bytebeam_LXS
 import Bytebeam_NDuro
 import Influx_LX70
 import Influx_LXS
-import Influx_NDuro
+# import Influx_NDuro
 import Influx_NDuro_NoGPS
 
 def open_folder():
@@ -56,7 +56,7 @@ def run_script():
         "Bytebeam_NDuro.py": Bytebeam_NDuro.Bytebeam_NDuro_input,
         "Influx_LX70.py": Influx_LX70.Influx_LX70_input,
         "Influx_LXS.py": Influx_LXS.Influx_LXS_input,
-        "Influx_NDuro.py": Influx_NDuro.Influx_NDuro_input,
+        # "Influx_NDuro.py": Influx_NDuro.Influx_NDuro_input,
         "Influx_NDuro_NoGPS.py": Influx_NDuro_NoGPS.Influx_NDuro_NoGPS_input,
     }
 
@@ -89,7 +89,7 @@ scripts = {
     "Daily analysis Enduro": "Bytebeam_NDuro.py",
     "Daily analysis LXS": "Bytebeam_LXS.py",
     "Daily analysis Influx LX70" : "Influx_LX70.py",
-    "Daily analysis Influx Enduro" : "Influx_NDuro.py",
+    # "Daily analysis Influx Enduro" : "Influx_NDuro.py",
     "Daily analysis Influx LXS" : "Influx_LXS.py",
     "Daily analysis Influx NDuro NoGPS": "Influx_NDuro_NoGPS.py",
 }

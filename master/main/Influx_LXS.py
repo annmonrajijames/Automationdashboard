@@ -1045,7 +1045,7 @@ def Influx_LXS_input(input_folder_path):
     
                 plot_file = f"{folder_path}/Time spent in Speed intervals.png"
                 plt.savefig(plot_file)
-                plt.show()
+                # plt.show()
                 print(f"Idling and speed bar plot saved: {plot_file}")
     
                 # Insert plots into the Excel worksheet
@@ -1068,6 +1068,48 @@ def Influx_LXS_input(input_folder_path):
             print("Error:", e)
     
     
+    def current_percentage_calc(data,save_path):
+        # Define the bins and labels for categorization
+        bins = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, float('inf')]
+        labels = ['0 to 10', '10 to 20', '20 to 30', '30 to 40', '40 to 50',
+                '50 to 60', '60 to 70', '70 to 80', '80 to 90', '90 to 100', '> 100']
+      
+
+        # Cut the data into categories using the bins
+        categories = pd.cut(data['Current_value'], bins=bins, labels=labels, right=False)
+
+        # Add the category column to the data
+        data['Category'] = categories
+
+        # Calculate the sum of 'Current_value' values in each category
+        category_sums = data.groupby('Category')['Current_value'].sum()
+
+        # Calculate the absolute sum for percentage calculation
+        total_sum = category_sums.abs().sum()
+
+        # Calculate the percentage each category contributes
+        percentages = (category_sums.abs() / total_sum * 100).reset_index(name='Percentage')
+
+        # Plotting the results
+        plt.figure(figsize=(14, 8))
+        bars = plt.bar(percentages['Category'], percentages['Percentage'], color='skyblue')
+
+        # Adding the percentage labels on top of each bar
+        for bar in bars:
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, f"{round(yval, 2)}%", ha='center', va='bottom')
+
+        plt.xlabel('Current Value Ranges (A)')
+        plt.ylabel('Percentage of Total Current (%)')
+        plt.title('Percentage Distribution of Current Values')
+        plt.xticks(rotation=90)  # Rotate labels for better visibility
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        # Save the plot to the specified path
+        plot_file = f"{save_path}/Current Distribution.png"
+        plt.savefig(plot_file)
+        print("Current distribution Image saved")
+        # plt.show()
     
     # Initialize variables to store file paths
     log_file = None
@@ -1187,6 +1229,7 @@ def Influx_LXS_input(input_folder_path):
                     
                         total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
                         capture_analysis_output(log_file, subfolder_path)
+                        current_percentage_calc(data,subfolder_path)
                     
                     else:
                         print("Log file file not found in subfolder:", subfolder)
