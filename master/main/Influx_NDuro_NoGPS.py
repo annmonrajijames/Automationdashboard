@@ -403,14 +403,46 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         actual_ah = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
         print("Actual Ampere-hours (Ah):------------------------------------> {:.2f}".format(actual_ah))
 
-        # filtered_data_1 = data[data['SOC [SA: 08]'] > 90] 
-        filtered_data_withoutDischarge = data[data['PackCurr [SA: 06]'] > 0]                   #Only Regen
+        
+        # filtered_data_withoutDischarge = data_resampled[0 < data_resampled['PackCurr [SA: 06]'] < 50]                   #Only Regen
+        filtered_data_withoutDischarge = data_resampled[(data_resampled['PackCurr [SA: 06]'] > 0) & (data_resampled['PackCurr [SA: 06]'] < 50)]
         regen_ah = abs((filtered_data_withoutDischarge['PackCurr [SA: 06]'] * filtered_data_withoutDischarge['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+
+        # filtered_data_DischargeCurrent= data_resampled[-200 < data_resampled['PackCurr [SA: 06]'] < 0]                   #Only Discharge
+        filtered_data_DischargeCurrent = data_resampled[(data_resampled['PackCurr [SA: 06]'] > -200) & (data_resampled['PackCurr [SA: 06]'] < 0)]
+        Discharge_ah = abs((filtered_data_DischargeCurrent['PackCurr [SA: 06]'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
 
         # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
         watt_h = abs((data_resampled['PackCurr [SA: 06]'] * data_resampled['PackVol [SA: 06]'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
         print("Actual Watt-hours (Wh):------------------------------------> {:.2f}" .format(watt_h))
-    
+
+        filtered_data_DischargeCurrent['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
+        discharge_wh_hr =abs((filtered_data_DischargeCurrent['PackCurr [SA: 06]'] * filtered_data_DischargeCurrent['PackVol [SA: 06]'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+        print("discharge Watt-hours (Wh):------------------------------------> {:.2f}" .format(discharge_wh_hr))
+
+
+        print("Discharge watt hr---------->",discharge_wh_hr)
+        
+
+        #####calculating the distance with discharge
+        filtered_data_DischargeCurrent['Speed_kmh'] = filtered_data_DischargeCurrent['MotorSpeed [SA: 02]'] * 0.0836
+        
+        # Convert Speed to m/s
+        filtered_data_DischargeCurrent['Speed_ms'] = filtered_data_DischargeCurrent['Speed_kmh'] / 3.6
+        
+
+        total_distance_with_RPM_discharge = 0
+
+        for index, row in filtered_data_DischargeCurrent.iterrows():
+            # if row['MotorSpeed [SA: 02]'] > 0:
+            if 0 < row['MotorSpeed [SA: 02]'] < 1000:
+                distance_interval = row['Speed_ms'] * row['localtime_Diff']
+                # Calculate the distance traveled in this interval
+                total_distance_with_RPM_discharge += distance_interval
+                
+        total_distance_with_RPM_discharge = total_distance_with_RPM_discharge/1000
+        print("---------------------------------------------------------------------------------->",total_distance_with_RPM_discharge)
+        
         #starting and ending ah
         starting_soc_Ah = data['SOCAh [SA: 08]'].iloc[0]
         ending_soc_Ah = data['SOCAh [SA: 08]'].iloc[-1]
@@ -424,6 +456,21 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         ending_soc_percentage = data['SOC [SA: 08]'].min()
         print("Starting SOC:", starting_soc_percentage)
         print("Ending SOC:", ending_soc_percentage)
+
+
+        ending_soc_rows = data[data['SOC [SA: 08]'] == ending_soc_percentage]
+
+
+        if not ending_soc_rows.empty:
+            ending_soc_first_occurrence = ending_soc_rows.iloc[0]
+            ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
+            ending_battery_voltage = ending_battery_voltage*10
+        else:
+             # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            nearest_soc_index = (data['SOC [SA: 08]'] - ending_soc_percentage).abs().idxmin()
+            ending_soc_first_occurrence = data.iloc[nearest_soc_index]
+            ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
+            ending_battery_voltage = ending_battery_voltage*10
     
     
         # Initialize total distance covered
@@ -456,6 +503,24 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             total_distance = 000
 
         print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
+
+
+
+        ###########For initial Temperature
+        Starting_soc_rows = data[data['SOC [SA: 08]'] == starting_soc_percentage]
+
+
+        if not Starting_soc_rows.empty:
+            Starting_soc_first_occurrence = Starting_soc_rows.iloc[0]
+            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
+            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
+            
+        else:
+             # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            nearest_soc_index = (data['SOC [SA: 08]'] - starting_soc_percentage).abs().idxmin()
+            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
+            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
+            
     
     
         ##############   Wh/Km
@@ -663,7 +728,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         avg_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].mean()
     
         # Find the battery voltage
-        batteryVoltage = (data_resampled['BatteryVoltage [SA: 02]'].max()) * 10
+        batteryVoltage = (data_resampled['PackVol [SA: 06]'].max()) * 10
         print( "Battery Voltage", batteryVoltage )
     
         # Check for abnormal motor temperature at high RPMs for at least 15 seconds
@@ -750,6 +815,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             # "Energy consumption Rate(WH/KM)": watt_h / total_distance,
             "Energy consumption Rate(WH/KM)": watt_h / (total_distance_with_RPM),
+            "Discharge Efficiency (WH/KM)":discharge_wh_hr/(total_distance_with_RPM_discharge),
             "Total distance - RPM (km)": total_distance_with_RPM,
             "Total distance covered (km) - Lat & Long(GPS) ": total_distance,
             "Total distance - Ground Distance(GPS) (km)": total_distance_Ground_Distance,
@@ -769,9 +835,9 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Average Power(W)": average_power,
             # "Average_current":abs(average_current),
             "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
-            "Average_current (With regen and without Idle) (A)":abs(average_current_withRegen_withoutIdling),
+            "Average_current (With regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withRegen_withoutIdling),
             "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
-            "Average_current (Without regen and without Idle) (A)":abs(average_current_withoutRegen_withoutIdling),
+            "Average_current (Without regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withoutRegen_withoutIdling),
             "Total Energy Regenerated(Wh)": energy_regenerated,
             "Regenerative Effectiveness(%)": regenerative_effectiveness,
             # "Avg_speed (km/hr)":avg_speed,
@@ -780,14 +846,16 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Highest Cell Voltage(V)": max_cell_voltage,
             "Lowest Cell Voltage(V)": min_cell_voltage,
             "Difference in Cell Voltage(V)": voltage_difference,
-            "Minimum Battery Temperature(C)": min_temp,
+            "Initial Battery Temperature(C)": min_temp,
             "Maximum Battery Temperature(C)": max_temp,
             "Difference in Temperature(C)": max_temp- min_temp,
+            "Initial MCU Temperature (at 100 SOC):":Initial_MCU_TEMP,
+            "Maximum MCU Temperature(C)": max_mcu_temp,
+            "Initial Motor Temperature (at 100 SOC)":Initial_MOTOR_TEMP,
+            "Maximum Motor Temperature(C)": max_motor_temp,
             "Maximum Fet Temperature-BMS(C)": max_fet_temp,
             "Maximum Afe Temperature-BMS(C)": max_afe_temp,
             "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
-            "Maximum MCU Temperature(C)": max_mcu_temp,
-            "Maximum Motor Temperature(C)": max_motor_temp,
             "Average Motor Temperature(C)":avg_mcu_temp,
             "Average MCU Temperature(C)":avg_motor_temp,
             "Abnormal Motor Temperature Detected(C)": abnormal_motor_temp_detected,
@@ -795,6 +863,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "lowest cell temp(C)": min_cell_temp,
             "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
             "Battery Voltage(V)": batteryVoltage,
+            "Voltage at cutoff (V)":ending_battery_voltage,
             # "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
             # "Electricity consumption units(kW)": total_energy_kw,
             "Cycle Count of battery": cycleCount,
@@ -1334,7 +1403,6 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
                         Wh_km = 0
                         SOC_consumed = 0
                         mode_values = 0
-                    
                         total_duration, total_distance, Wh_km, SOC_consumed, ppt_data = analysis_Energy(data,subfolder_path)
                         capture_analysis_output(log_file, subfolder_path)
                         current_percentage_calc(data,subfolder_path)

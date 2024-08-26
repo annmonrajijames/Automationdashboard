@@ -133,8 +133,8 @@ def Influx_LXS_input(input_folder_path):
         fig.add_trace(go.Scatter(x=data.index, y=data['ALTITUDE'], name='ALTITUDE', line=dict(color='red')), secondary_y=True)
         fig.add_trace(go.Scatter(x=data.index, y=data[maxCellTemp], name='MaximumCellTemperature', line=dict(color='orange')), secondary_y=True)
         fig.add_trace(go.Scatter(x=data.index, y=data['FetTemp [SA: 08]'], name='BMS temperature (FET)', line=dict(color='orange')), secondary_y=True)
-        fig.add_trace(go.Scatter(x=data.index, y=data['MCU_Temperature [SA: 03]'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
-        fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temperature [SA: 03]'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
+        fig.add_trace(go.Scatter(x=data.index, y=data['MCS_Temp'], name='MCU temperature', line=dict(color='orange')), secondary_y=True)
+        fig.add_trace(go.Scatter(x=data.index, y=data['Motor_Temp'], name='Motor Temperature', line=dict(color='orange')), secondary_y=True)
         # fig.add_trace(go.Scatter(x=data.index, y=data['Power'], name='DC Power', line=dict(color='Red')), secondary_y=True)
         fig.add_trace(go.Scatter(x=data.index, y=data['DeltaCellVoltage'], name='DeltaCellVoltage', line=dict(color='Purple')), secondary_y=True)
     
@@ -421,6 +421,56 @@ def Influx_LXS_input(input_folder_path):
     
         # print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
         # print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
+
+###################
+
+         # filtered_data_DischargeCurrent= data_resampled[-200 < data_resampled['Current_value'] < 0]                   #Only Discharge
+        filtered_data_DischargeCurrent = data_resampled[(data_resampled['Regeneration']==0)]
+        Discharge_ah = abs((filtered_data_DischargeCurrent['Current_value'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+
+        # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
+        watt_h = abs((data_resampled['Current_value'] * data_resampled['voltage_value'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+        print("Actual Watt-hours (Wh):------------------------------------> {:.2f}" .format(watt_h))
+
+        filtered_data_DischargeCurrent['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
+        discharge_wh_hr =abs((filtered_data_DischargeCurrent['Current_value'] * filtered_data_DischargeCurrent['voltage_value'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+        print("discharge Watt-hours (Wh):------------------------------------> {:.2f}" .format(discharge_wh_hr))
+
+
+        #####calculating the distance with discharge
+        filtered_data_DischargeCurrent['Speed_kmh'] = filtered_data_DischargeCurrent['RPM'] * 0.0836
+        
+        # Convert Speed to m/s
+        filtered_data_DischargeCurrent['Speed_ms'] = filtered_data_DischargeCurrent['Speed_kmh'] / 3.6
+        
+
+        total_distance_with_RPM_discharge = 0
+
+        for index, row in filtered_data_DischargeCurrent.iterrows():
+            # if row['RPM'] > 0:
+            if 0 < row['RPM'] < 1000:
+                distance_interval = row['Speed_ms'] * row['localtime_Diff']
+                # Calculate the distance traveled in this interval
+                total_distance_with_RPM_discharge += distance_interval
+                
+        total_distance_with_RPM_discharge = total_distance_with_RPM_discharge/1000
+        print("total_distance_with_RPM_discharge---------------------------------------------------------------------------------->",total_distance_with_RPM_discharge)
+
+        
+        # avg_discharge_current = filtered_data_DischargeCurrent['Current_value'].mean()
+            # Filter out zeros
+        non_zero_discharge_current = filtered_data_DischargeCurrent[filtered_data_DischargeCurrent['Current_value'] != 0]
+
+        # Calculate the average of non-zero values
+        avg_discharge_current = non_zero_discharge_current['Current_value'].mean()
+        print("Average Discharge Current (ignoring zeros):", avg_discharge_current)
+
+
+        filtered_data_RegenCurrent = data_resampled[(data_resampled['Regeneration']==1)]
+        non_zero_regen_current = filtered_data_RegenCurrent[filtered_data_RegenCurrent['Current_value'] != 0]
+
+        avg_regen_current = non_zero_regen_current['Current_value'].mean()
+###################
     
     
         #Code for SOC_percentage(Starting and Ending SOC)
@@ -611,18 +661,18 @@ def Influx_LXS_input(input_folder_path):
         # # Get the maximum temperature of PcbTemp [SA: 0C]
         # max_pcb_temp = data_resampled['PcbTemp [SA: 0C]'].max()
     
-        # # Get the maximum temperature of MCU_Temperature [SA: 03]
-        # max_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].max()
+        # # Get the maximum temperature of MCS_Temp
+        # max_mcu_temp = data_resampled['MCS_Temp'].max()
     
         # # Check for abnormal motor temperature at high RPMs
-        # max_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].max()
+        # max_motor_temp = data_resampled['Motor_Temp'].max()
     
         # Find the battery voltage
-        # batteryVoltage = (data_resampled['BatteryVoltage [SA: 02]'].max()) * 10
+        # batteryVoltage = (data_resampled['voltage_value'].max()) * 10
         # print( "Battery Voltage", batteryVoltage )
     
         # Check for abnormal motor temperature at high RPMs for at least 15 seconds
-        # abnormal_motor_temp = (data_resampled['Motor_Temperature [SA: 03]'] < 10) & (data_resampled['RPM'] > 3500)
+        # abnormal_motor_temp = (data_resampled['Motor_Temp'] < 10) & (data_resampled['RPM'] > 3500)
         # abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
     
         # # Check if abnormal condition persists for at least 15 seconds
@@ -685,6 +735,55 @@ def Influx_LXS_input(input_folder_path):
         # print("Electricity consumption units in kW", (total_energy_kw))
     
         # Add these variables and logic to ppt_data
+
+        ending_soc_rows = data[data['SOC_value'] == ending_soc_percentage]
+
+
+        if not ending_soc_rows.empty:
+            ending_soc_first_occurrence = ending_soc_rows.iloc[0]
+            ending_battery_voltage = ending_soc_first_occurrence['voltage_value']
+            ending_battery_voltage = ending_battery_voltage
+        else:
+             # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            nearest_soc_index = (data['SOC_value'] - ending_soc_percentage).abs().idxmin()
+            ending_soc_first_occurrence = data.iloc[nearest_soc_index]
+            ending_battery_voltage = ending_soc_first_occurrence['voltage_value']
+            ending_battery_voltage = ending_battery_voltage
+
+
+        ###########For initial Temperature
+        Starting_soc_rows = data[data['SOC_value'] == starting_soc_percentage]
+
+
+        if not Starting_soc_rows.empty:
+            Starting_soc_first_occurrence = Starting_soc_rows.iloc[0]
+            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCS_Temp']
+            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temp']
+            Initial_BATTERY_TEMP = Starting_soc_first_occurrence['Battery_Temperature']
+            
+
+            
+        else:
+             # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            nearest_soc_index = (data['SOC_value'] - starting_soc_percentage).abs().idxmin()
+            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCS_Temp']
+            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temp']
+            Initial_BATTERY_TEMP = Starting_soc_first_occurrence['Battery_Temperature']
+
+        
+        # Get the maximum temperature of MCS_Temp
+        max_mcu_temp = data_resampled['MCS_Temp'].max()
+        avg_mcu_temp = data_resampled['MCS_Temp'].mean()
+
+            # Check for abnormal motor temperature at high RPMs
+        max_motor_temp = data_resampled['Motor_Temp'].max()
+        avg_motor_temp = data_resampled['Motor_Temp'].mean()
+
+        max_BATTERY_temp = data_resampled['Battery_Temperature'].max()
+        avg_BATTERY_temp = data_resampled['Battery_Temperature'].mean()
+
+        
+            
     
         ppt_data = {
             "Date and localtime": str(start_localtime) + " to " + str(end_localtime),
@@ -696,7 +795,8 @@ def Influx_LXS_input(input_folder_path):
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
-            "Energy consumption Rate(WH/KM)": watt_h / total_distance,
+            "Energy consumption Rate(Wh/Km)": watt_h / total_distance,
+            "Discharge Efficiency (Wh/km)":discharge_wh_hr/total_distance_with_RPM_discharge,
             "Total distance - RPM": total_distance_with_RPM/1000,
             "Total distance covered (km) - Lat & Long(GPS)": total_distance,
             "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
@@ -715,9 +815,19 @@ def Influx_LXS_input(input_folder_path):
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             "Average_current":abs(average_current),
+            "Average discharge current (A)":abs(avg_discharge_current),
+            "Average Regen current (A)":abs(avg_regen_current),
             "Total Energy Regenerated(Wh)": energy_regenerated,
             # "Regenerative Effectiveness(%)": regenerative_effectiveness,
             "Avg_speed (km/hr)":avg_speed,
+            "Voltage at cutoff (V)":ending_battery_voltage,
+            "Initial Battery Temperature(C)": Initial_BATTERY_TEMP,
+            "Maximum Battery Temperature(C)": max_BATTERY_temp,
+            "Difference in Temperature(C)": max_BATTERY_temp- Initial_BATTERY_TEMP,
+            "Initial MCU Temperature (at 100 SOC):":Initial_MCU_TEMP,
+            "Maximum MCU Temperature(C)": max_mcu_temp,
+            "Initial Motor Temperature (at 100 SOC)":Initial_MOTOR_TEMP,
+            "Maximum Motor Temperature(C)": max_motor_temp,
             # "Highest Cell Voltage(V)": max_cell_voltage,
             # "Lowest Cell Voltage(V)": min_cell_voltage,
             # "Difference in Cell Voltage(V)": voltage_difference,
@@ -866,19 +976,19 @@ def Influx_LXS_input(input_folder_path):
         # max_pcb_temp = data_resampled['PcbTemp [SA: 0C]'].max()
         # print("Maximum PCB Temperature:", max_pcb_temp, "C")
     
-        # # Get the maximum temperature of MCU_Temperature [SA: 03]
-        # max_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].max()
+        # # Get the maximum temperature of MCS_Temp
+        # max_mcu_temp = data_resampled['MCS_Temp'].max()
         # print("Maximum MCU Temperature:", max_mcu_temp, "C")
     
         # # Check for abnormal motor temperature at high RPMs
-        # max_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].max()
+        # max_motor_temp = data_resampled['Motor_Temp'].max()
     
     
         # print("Maximum Motor Temperature:", max_motor_temp, "C")
     
     
         # # Check for abnormal motor temperature at high RPMs for at least 15 seconds
-        # abnormal_motor_temp = (data_resampled['Motor_Temperature [SA: 03]'] < 10) & (data_resampled['RPM'] > 3500)
+        # abnormal_motor_temp = (data_resampled['Motor_Temp'] < 10) & (data_resampled['RPM'] > 3500)
     
         # # Convert to a binary mask indicating consecutive occurrences
         # abnormal_motor_temp_mask = abnormal_motor_temp.astype(int).groupby(abnormal_motor_temp.ne(abnormal_motor_temp.shift()).cumsum()).cumsum()
