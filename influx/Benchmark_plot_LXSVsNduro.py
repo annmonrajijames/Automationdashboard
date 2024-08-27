@@ -24,15 +24,17 @@ for i, file_name in enumerate(file_names):
         # Read the CSV file into a DataFrame
         data = pd.read_csv(file_path)
         
-        # Determine the correct columns for motor speed, current, and voltage
+        # Determine the correct columns for motor speed, current, voltage, and SOC
         if file_name == 'lxs.csv':
             motor_speed_column = 'RPM'  # For LXS
             current_column = 'Current_value'
             voltage_column = 'voltage_value'
+            soc_column = 'SOC_value'
         else:
             motor_speed_column = 'MotorSpeed [SA: 02]'  # For Nduro
             current_column = 'PackCurr [SA: 06]'
             voltage_column = 'PackVol [SA: 06]'
+            soc_column = 'SOC [SA: 08]'
 
         # Calculate speed from motor speed
         data['Speed_kmh'] = data[motor_speed_column] * 0.0836
@@ -70,17 +72,25 @@ for i, file_name in enumerate(file_names):
         data['distance_km'] = distance_list
         data['watt_hours'] = wh_list
         
-        # Store the data along with average speed
-        data_list.append((data, current_column, voltage_column, avg_motor_speed))
+        # Calculate SOC parameters
+        starting_soc_percentage = data[soc_column].max()
+        cutoff_soc_percentage = data[soc_column].min()
+        soc_consumed = starting_soc_percentage - cutoff_soc_percentage
+        
+        # Add SOC parameters to data
+        data['soc'] = data[soc_column]
+        
+        # Store the data along with average speed and SOC parameters
+        data_list.append((data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed))
     else:
         print(f"File not found: {file_path}")
 
-# Plotting function for speed, current, voltage, distance, and watt-hours
+# Plotting function for speed, current, voltage, distance, watt-hours, and average speed
 def plot_two_vehicles(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Plot data from both vehicles
-    for i, (data, current_column, voltage_column, avg_motor_speed) in enumerate(data_list):
+    for i, (data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed) in enumerate(data_list):
         # Plot speed as scatter plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['Speed_kmh'], 
@@ -141,5 +151,69 @@ def plot_two_vehicles(data_list, labels, output_path):
     fig.write_html(graph_path)
     print(f"Graph saved to {graph_path}")
 
-# Call the plotting function
+# Plotting function for Battery Parameters
+def plot_battery_parameters(data_list, labels, output_path):
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # Plot SOC and SOC parameters from both vehicles
+    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed) in enumerate(data_list):
+        # Plot SOC as a line plot
+        fig.add_trace(go.Scatter(
+            x=data.index, y=data['soc'], 
+            name=f'SOC - {labels[i]}', 
+            marker=dict(color='blue' if i == 0 else 'red')
+        ), secondary_y=False)
+
+        fig.add_trace(go.Scatter(
+            x=[data.index.min(), data.index.max()],
+            y=[cutoff_soc_percentage, cutoff_soc_percentage],
+            mode='lines',
+            line=dict(color='blue' if i == 0 else 'Black'),
+            name=f'cutoff_soc_percentage - {labels[i]}'
+        ), secondary_y=False)
+
+        
+
+        # # Add annotations for SOC parameters
+        # fig.add_annotation(
+        #     x=data.index.max(), 
+        #     y=cutoff_soc_percentage,
+        #     text=f'Cutoff SOC: {cutoff_soc_percentage:.2f}%',
+        #     showarrow=True,
+        #     arrowhead=2
+        # )
+
+        # fig.add_annotation(
+        #     x=data.index.max(), 
+        #     y=starting_soc_percentage,
+        #     text=f'Starting SOC: {starting_soc_percentage:.2f}%',
+        #     showarrow=True,
+        #     arrowhead=2
+        # )
+        
+        # fig.add_annotation(
+        #     x=data.index.max(), 
+        #     y=starting_soc_percentage - soc_consumed,
+        #     text=f'SOC Consumed: {soc_consumed:.2f}%',
+        #     showarrow=True,
+        #     arrowhead=2
+        # )
+    
+    # Update layout
+    fig.update_layout(
+        title='Battery Parameters: SOC, Cutoff SOC, SOC Consumed',
+        xaxis_title='Time',
+        yaxis_title='SOC (%)'
+    )
+    
+    fig.update_xaxes(tickformat='%H:%M:%S')
+    
+    # Save the plot as an HTML file
+    os.makedirs(output_path, exist_ok=True)
+    graph_path = os.path.join(output_path, 'Battery_Parameters.html')
+    fig.write_html(graph_path)
+    print(f"Graph saved to {graph_path}")
+
+# Call the plotting functions
 plot_two_vehicles(data_list, labels, main_folder_path)
+plot_battery_parameters(data_list, labels, main_folder_path)
