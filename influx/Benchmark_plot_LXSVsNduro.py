@@ -5,7 +5,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objs as go
 
 # Define the folder where the CSV files are located
-main_folder_path = r"C:\Users\kamalesh.kb\lXSvsNDURO\LXSVsNduro_Plot\16_aug"
+main_folder_path = r"C:\Users\kamalesh.kb\lXSvsNDURO\LXSVsNduro_Plot\17_aug"
 
 # File names for the two vehicles
 file_names = ['lxs.csv', 'nduro.csv']
@@ -32,24 +32,18 @@ for i, file_name in enumerate(file_names):
             soc_column = 'SOC_value'
 
             filtered_data_DischargeCurrent = data[(data['Regeneration']==0)]
-            Avg_discharge_current = filtered_data_DischargeCurrent[current_column].mean()
+            filtered_data_DischargeCurrent['discharge_current'] = filtered_data_DischargeCurrent[current_column]
 
             filtered_data_regen = data[(data['Regeneration']==1)]
-            Avg_regen_current = filtered_data_regen[current_column].mean()
+            filtered_data_regen['regen_current'] = filtered_data_regen[current_column]
 
 
- 
         else:
             motor_speed_column = 'MotorSpeed [SA: 02]'  # For Nduro
             current_column = 'PackCurr [SA: 06]'
+            data[current_column]=-data[current_column]
             voltage_column = 'PackVol [SA: 06]'
             soc_column = 'SOC [SA: 08]'
-
-            filtered_data_regen = data[(data[current_column] > 0) & (data[current_column] < 50)]
-            Avg_regen_current = filtered_data_regen[current_column].mean()
-
-            filtered_data_DischargeCurrent = data[(data[current_column] > -200) & (data[current_column] < 0)]
-            Avg_discharge_current = filtered_data_DischargeCurrent[current_column].mean()
 
         # Calculate speed from motor speed
         data['Speed_kmh'] = data[motor_speed_column] * 0.0836
@@ -92,10 +86,6 @@ for i, file_name in enumerate(file_names):
         cutoff_soc_percentage = data[soc_column].min()
         soc_consumed = starting_soc_percentage - cutoff_soc_percentage
 
-
-
-
-
         ending_soc_rows = data[data[soc_column] == cutoff_soc_percentage]
 
 
@@ -113,7 +103,7 @@ for i, file_name in enumerate(file_names):
         data['soc'] = data[soc_column]
         
         # Store the data along with average speed and SOC parameters
-        data_list.append((data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage,Avg_regen_current,Avg_discharge_current))
+        data_list.append((data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage))
     else:
         print(f"File not found: {file_path}")
 
@@ -122,40 +112,62 @@ def plot_two_vehicles(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Plot data from both vehicles
-    for i, (data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage,Avg_regen_current,Avg_discharge_current) in enumerate(data_list):
+    for i, (data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage) in enumerate(data_list):
+
+          # Plot SOC as a line plot
+        fig.add_trace(go.Scatter(
+            x=data.index, y=data['soc'], 
+            name=f'SOC - {labels[i]}', 
+            marker=dict(color='blue' if i == 0 else 'green')
+        ), secondary_y=False)
+
+        # if i == 0:        # Plot SOC as a line plot
+        #     fig.add_trace(go.Scatter(
+        #         x=data.index, y=-filtered_data_regen['regen_current'], 
+        #         name=f'regen current - {labels[i]}', 
+        #         marker=dict(color='Green' if i == 0 else 'red')
+        #     ), secondary_y=True)
+
+        #         # Plot SOC as a line plot
+        #     fig.add_trace(go.Scatter(
+        #         x=data.index, y=filtered_data_DischargeCurrent['discharge_current'], 
+        #         name=f'discharge current - {labels[i]}', 
+        #         marker=dict(color='Red' if i == 0 else 'red')
+        #     ), secondary_y=True)
+        
         # Plot speed as scatter plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['Speed_kmh'], 
             name=f'Speed - {labels[i]}', 
-            marker=dict(color='blue' if i == 0 else 'red')
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
         
         # Plot current as scatter plot on secondary y-axis
         fig.add_trace(go.Scatter(
             x=data.index, y=data[current_column], 
             name=f'Current - {labels[i]}', 
-            marker=dict(color='blue' if i == 0 else 'orange')
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=True)
 
         # Plot voltage as scatter plot on secondary y-axis
         fig.add_trace(go.Scatter(
             x=data.index, y=data[voltage_column], 
             name=f'Voltage - {labels[i]}', 
-            marker=dict(color='blue' if i == 0 else 'brown')
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=True)
 
         # Plot distance as a separate line plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['distance_km'], 
             name=f'Distance - {labels[i]}', 
-            marker=dict(color='blue' if i == 0 else 'brown')
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
 
         # Plot watt-hours as a separate line plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['watt_hours'], 
             name=f'Watt-hours - {labels[i]}', 
-            marker=dict(color='blues' if i == 0 else 'gray')
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
 
         # Add a horizontal line for average speed
@@ -163,7 +175,7 @@ def plot_two_vehicles(data_list, labels, output_path):
             x=[data.index.min(), data.index.max()],
             y=[avg_motor_speed, avg_motor_speed],
             mode='lines',
-            line=dict(color='blue' if i == 0 else 'red', dash='dash'),
+            line=dict(color='blue' if i == 0 else 'green', dash='dash'),
             name=f'Avg Speed - {labels[i]}'
         ), secondary_y=False)
     
@@ -188,19 +200,14 @@ def plot_battery_parameters(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Plot SOC and SOC parameters from both vehicles
-    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage,Avg_regen_current,Avg_discharge_current) in enumerate(data_list):
-        # Plot SOC as a line plot
-        fig.add_trace(go.Scatter(
-            x=data.index, y=data['soc'], 
-            name=f'SOC - {labels[i]}', 
-            marker=dict(color='blue' if i == 0 else 'red')
-        ), secondary_y=False)
+    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage) in enumerate(data_list):
+      
 
         fig.add_trace(go.Scatter(
             x=[data.index.min(), data.index.max()],
             y=[cutoff_soc_percentage, cutoff_soc_percentage],
             mode='lines',
-            line=dict(color='blue' if i == 0 else 'Black'),
+            line=dict(color='blue' if i == 0 else 'green'),
             name=f'Cut-off SoC (%) - {labels[i]}'
         ), secondary_y=False)
 
@@ -208,24 +215,8 @@ def plot_battery_parameters(data_list, labels, output_path):
             x=[data.index.min(), data.index.max()],
             y=[ending_battery_voltage, ending_battery_voltage],
             mode='lines',
-            line=dict(color='blue' if i == 0 else 'Black'),
+            line=dict(color='blue' if i == 0 else 'green'),
             name=f'Cut-off voltage (V) - {labels[i]}'
-        ), secondary_y=False)
-
-        fig.add_trace(go.Scatter(
-            x=[data.index.min(), data.index.max()],
-            y=[Avg_discharge_current, Avg_discharge_current],
-            mode='lines',
-            line=dict(color='blue' if i == 0 else 'Red'),
-            name=f'Avg_discharge_current (A)- {labels[i]}'
-        ), secondary_y=False)
-
-        fig.add_trace(go.Scatter(
-            x=[data.index.min(), data.index.max()],
-            y=[Avg_regen_current, Avg_regen_current],
-            mode='lines',
-            line=dict(color='blue' if i == 0 else 'Green'),
-            name=f'Avg_regen_current (A) - {labels[i]}'
         ), secondary_y=False)
 
 
