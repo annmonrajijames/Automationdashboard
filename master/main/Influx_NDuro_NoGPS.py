@@ -408,6 +408,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         filtered_data_withoutDischarge = data_resampled[(data_resampled['PackCurr [SA: 06]'] > 0) & (data_resampled['PackCurr [SA: 06]'] < 50)]
         regen_ah = abs((filtered_data_withoutDischarge['PackCurr [SA: 06]'] * filtered_data_withoutDischarge['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
 
+        avg_regen_current = filtered_data_withoutDischarge['PackCurr [SA: 06]'].mean()
+
         # filtered_data_DischargeCurrent= data_resampled[-200 < data_resampled['PackCurr [SA: 06]'] < 0]                   #Only Discharge
         filtered_data_DischargeCurrent = data_resampled[(data_resampled['PackCurr [SA: 06]'] > -200) & (data_resampled['PackCurr [SA: 06]'] < 0)]
         Discharge_ah = abs((filtered_data_DischargeCurrent['PackCurr [SA: 06]'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
@@ -608,6 +610,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
 
         filtered_data3 = data[data['MotorSpeed [SA: 02]']>0]
         average_current_withRegen_withoutIdling = filtered_data3['PackCurr [SA: 06]'].mean()
+
+
 
     
         # Calculate the average power
@@ -838,6 +842,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Average_current (With regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withRegen_withoutIdling),
             "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
             "Average_current (Without regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withoutRegen_withoutIdling),
+            "Average Regen current (A)":abs(avg_regen_current),
             "Total Energy Regenerated(Wh)": energy_regenerated,
             "Regenerative Effectiveness(%)": regenerative_effectiveness,
             # "Avg_speed (km/hr)":avg_speed,
