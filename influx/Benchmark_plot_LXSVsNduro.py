@@ -36,14 +36,22 @@ for i, file_name in enumerate(file_names):
 
             filtered_data_regen = data[(data['Regeneration']==1)]
             filtered_data_regen['regen_current'] = filtered_data_regen[current_column]
-
-
+            
+            battery_temp_column = 'Battery_Temperature'
+            Motor_temp_column = 'Motor_Temp'
+            MCU_temp_column= 'MCS_Temp'
+   
+                
         else:
             motor_speed_column = 'MotorSpeed [SA: 02]'  # For Nduro
             current_column = 'PackCurr [SA: 06]'
             data[current_column]=-data[current_column]
             voltage_column = 'PackVol [SA: 06]'
             soc_column = 'SOC [SA: 08]'
+
+            battery_temp_column = 'MaxTemp [SA: 07]'
+            Motor_temp_column= 'Motor_Temperature [SA: 03]'
+            MCU_temp_column= 'MCU_Temperature [SA: 03]'
 
         # Calculate speed from motor speed
         data['Speed_kmh'] = data[motor_speed_column] * 0.0836
@@ -76,7 +84,10 @@ for i, file_name in enumerate(file_names):
 
             distance_list.append(total_distance_with_RPM / 1000)  # Convert to km
             wh_list.append(total_watt_h)
-        
+
+        # data['Battery'] = abs(data['PackCurr [SA: 06]'] * data['localtime_Diff']).cumsum() / 3600         //for incrementing and storing
+        # data_resampled['Battery_Temperature']
+
         # Add the distance and watt-hours columns to the data
         data['distance_km'] = distance_list
         data['watt_hours'] = wh_list
@@ -101,7 +112,10 @@ for i, file_name in enumerate(file_names):
 
         # Add SOC parameters to data
         data['soc'] = data[soc_column]
-        
+        data['battery_temp']= data[battery_temp_column]
+        data['Motor_temp']= data[Motor_temp_column]
+        data['MCU_temp']= data[MCU_temp_column]
+                
         # Store the data along with average speed and SOC parameters
         data_list.append((data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage))
     else:
@@ -163,21 +177,39 @@ def plot_two_vehicles(data_list, labels, output_path):
             marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
 
-        # Plot watt-hours as a separate line plot
+          # Plot distance as a separate line plot
         fig.add_trace(go.Scatter(
-            x=data.index, y=data['watt_hours'], 
-            name=f'Watt-hours - {labels[i]}', 
+            x=data.index, y=data['battery_temp'], 
+            name=f'Battery Temperature - {labels[i]}', 
             marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
 
-        # Add a horizontal line for average speed
+          # Plot distance as a separate line plot
         fig.add_trace(go.Scatter(
-            x=[data.index.min(), data.index.max()],
-            y=[avg_motor_speed, avg_motor_speed],
-            mode='lines',
-            line=dict(color='blue' if i == 0 else 'green', dash='dash'),
-            name=f'Avg Speed - {labels[i]}'
+            x=data.index, y= data['Motor_temp'], 
+            name=f'Motor Temperature - {labels[i]}', 
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
+
+          # Plot distance as a separate line plot
+        fig.add_trace(go.Scatter(
+            x=data.index, y=data['MCU_temp'], 
+            name=f'MCU Temperature - {labels[i]}', 
+            marker=dict(color='blue' if i == 0 else 'green')
+        ), secondary_y=False)
+
+
+
+     
+
+        # # Add a horizontal line for average speed
+        # fig.add_trace(go.Scatter(
+        #     x=[data.index.min(), data.index.max()],
+        #     y=[avg_motor_speed, avg_motor_speed],
+        #     mode='lines',
+        #     line=dict(color='blue' if i == 0 else 'green', dash='dash'),
+        #     name=f'Avg Speed - {labels[i]}'
+        # ), secondary_y=False)
     
     # Update layout
     fig.update_layout(
@@ -217,6 +249,13 @@ def plot_battery_parameters(data_list, labels, output_path):
             mode='lines',
             line=dict(color='blue' if i == 0 else 'green'),
             name=f'Cut-off voltage (V) - {labels[i]}'
+        ), secondary_y=False)
+
+           # Plot watt-hours as a separate line plot
+        fig.add_trace(go.Scatter(
+            x=data.index, y=data['watt_hours'], 
+            name=f'Watt-hours - {labels[i]}', 
+            marker=dict(color='blue' if i == 0 else 'green')
         ), secondary_y=False)
 
 
