@@ -76,12 +76,25 @@ for i, file_name in enumerate(file_names):
         starting_soc_percentage = data[soc_column].max()
         cutoff_soc_percentage = data[soc_column].min()
         soc_consumed = starting_soc_percentage - cutoff_soc_percentage
-        
+
+        ending_soc_rows = data[data[soc_column] == cutoff_soc_percentage]
+
+
+        if not ending_soc_rows.empty:
+            ending_soc_first_occurrence = ending_soc_rows.iloc[0]
+            ending_battery_voltage = ending_soc_first_occurrence[voltage_column]
+        else:
+             # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            nearest_soc_index = (data[soc_column] - cutoff_soc_percentage).abs().idxmin()
+            ending_soc_first_occurrence = data.iloc[nearest_soc_index]
+            ending_battery_voltage = ending_soc_first_occurrence[voltage_column]
+            
+
         # Add SOC parameters to data
         data['soc'] = data[soc_column]
         
         # Store the data along with average speed and SOC parameters
-        data_list.append((data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed))
+        data_list.append((data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage))
     else:
         print(f"File not found: {file_path}")
 
@@ -90,7 +103,7 @@ def plot_two_vehicles(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Plot data from both vehicles
-    for i, (data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed) in enumerate(data_list):
+    for i, (data, current_column, voltage_column, avg_motor_speed, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage) in enumerate(data_list):
         # Plot speed as scatter plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['Speed_kmh'], 
@@ -156,7 +169,7 @@ def plot_battery_parameters(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Plot SOC and SOC parameters from both vehicles
-    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed) in enumerate(data_list):
+    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage) in enumerate(data_list):
         # Plot SOC as a line plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['soc'], 
@@ -169,8 +182,17 @@ def plot_battery_parameters(data_list, labels, output_path):
             y=[cutoff_soc_percentage, cutoff_soc_percentage],
             mode='lines',
             line=dict(color='blue' if i == 0 else 'Black'),
-            name=f'cutoff_soc_percentage - {labels[i]}'
+            name=f'Cut-off SoC (%) - {labels[i]}'
         ), secondary_y=False)
+
+        fig.add_trace(go.Scatter(
+            x=[data.index.min(), data.index.max()],
+            y=[ending_battery_voltage, ending_battery_voltage],
+            mode='lines',
+            line=dict(color='blue' if i == 0 else 'Black'),
+            name=f'Cut-off voltage (V) - {labels[i]}'
+        ), secondary_y=False)
+
 
         
 
