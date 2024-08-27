@@ -1,10 +1,11 @@
 import os
 import pandas as pd
+from collections import defaultdict
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
 
 # Define the folder where the CSV files are located
-main_folder_path = r"C:\Users\kamalesh.kb\Influx_master\lxsVsNduro\lxsVsNduro_plot"
+main_folder_path = r"C:\Users\kamalesh.kb\lXSvsNDURO\LXSVsNduro_Plot\16_aug"
 
 # File names for the two vehicles
 file_names = ['lxs.csv', 'nduro.csv']
@@ -32,16 +33,37 @@ for i, file_name in enumerate(file_names):
             current_column = 'PackCurr [SA: 06]'
 
         # Calculate speed from motor speed
-        data['speed'] = data[motor_speed_column] * 0.0836
+        data['Speed_kmh'] = data[motor_speed_column] * 0.0836
+        data['Speed_ms'] = data['Speed_kmh'] / 3.6
+
+        avg_motor_rpm =data[motor_speed_column].mean()
+        avg_motor_speed = avg_motor_rpm * 0.0836
+        
+        # Convert DATETIME to datetime format and calculate time differences
         data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
+        data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
         data.set_index('DATETIME', inplace=True)
+        
+        # Initialize total distance covered
+        total_distance_with_RPM = 0
+        distance_list = []
+
+        # Calculate distance incrementally
+        for index, row in data.iterrows():
+            if 0 < row[motor_speed_column] < 1000:
+                distance_interval = row['Speed_ms'] * row['localtime_Diff']
+                total_distance_with_RPM += distance_interval
+            distance_list.append(total_distance_with_RPM / 1000)  # Convert to km
+
+        # Add the distance column to the data
+        data['distance_km'] = distance_list
         
         # Store the data
         data_list.append((data, current_column))
     else:
         print(f"File not found: {file_path}")
 
-# Plotting function for two datasets (speed and current)
+# Plotting function for two datasets (speed, current, and distance)
 def plot_two_vehicles(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
@@ -49,8 +71,7 @@ def plot_two_vehicles(data_list, labels, output_path):
     for i, (data, current_column) in enumerate(data_list):
         # Plot speed as scatter plot
         fig.add_trace(go.Scatter(
-            x=data.index, y=data['speed'], 
-            # mode='markers',  # Set mode to 'markers' for scatter plot
+            x=data.index, y=data['Speed_kmh'], 
             name=f'Speed - {labels[i]}', 
             marker=dict(color='blue' if i == 0 else 'red')
         ), secondary_y=False)
@@ -58,16 +79,22 @@ def plot_two_vehicles(data_list, labels, output_path):
         # Plot current as scatter plot on secondary y-axis
         fig.add_trace(go.Scatter(
             x=data.index, y=data[current_column], 
-            # mode='markers',  # Set mode to 'markers' for scatter plot
             name=f'Current - {labels[i]}', 
             marker=dict(color='green' if i == 0 else 'orange')
+        ), secondary_y=False)
+
+        # Plot distance as a separate line plot
+        fig.add_trace(go.Scatter(
+            x=data.index, y=data['distance_km'], 
+            name=f'Distance - {labels[i]}', 
+            marker=dict(color='purple' if i == 0 else 'brown')
         ), secondary_y=True)
     
     # Update layout
     fig.update_layout(
-        title='Speed and Current vs Time for Two Vehicles',
+        title='Speed, Current, and Distance vs Time for Two Vehicles',
         xaxis_title='Time',
-        yaxis_title='Speed (km/h)',
+        yaxis_title='Speed (km/h) and Distance (km)',
         yaxis2_title='Current (A)'
     )
     
@@ -75,7 +102,7 @@ def plot_two_vehicles(data_list, labels, output_path):
     
     # Save the plot as an HTML file
     os.makedirs(output_path, exist_ok=True)
-    graph_path = os.path.join(output_path, 'Benchmark_Speed_Current_Comparison.html')
+    graph_path = os.path.join(output_path, 'Benchmark_Speed_Current_Distance_Comparison.html')
     fig.write_html(graph_path)
     print(f"Graph saved to {graph_path}")
 
