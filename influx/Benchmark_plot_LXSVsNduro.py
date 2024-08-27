@@ -35,14 +35,15 @@ for i, file_name in enumerate(file_names):
         # Calculate speed from motor speed
         data['Speed_kmh'] = data[motor_speed_column] * 0.0836
         data['Speed_ms'] = data['Speed_kmh'] / 3.6
-
-        avg_motor_rpm =data[motor_speed_column].mean()
-        avg_motor_speed = avg_motor_rpm * 0.0836
         
         # Convert DATETIME to datetime format and calculate time differences
         data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
         data['localtime_Diff'] = data['DATETIME'].diff().dt.total_seconds().fillna(0)
         data.set_index('DATETIME', inplace=True)
+        
+        # Calculate average speed
+        avg_motor_rpm = data[motor_speed_column].mean()
+        avg_motor_speed = avg_motor_rpm * 0.0836
         
         # Initialize total distance covered
         total_distance_with_RPM = 0
@@ -58,8 +59,8 @@ for i, file_name in enumerate(file_names):
         # Add the distance column to the data
         data['distance_km'] = distance_list
         
-        # Store the data
-        data_list.append((data, current_column))
+        # Store the data along with average speed
+        data_list.append((data, current_column, avg_motor_speed))
     else:
         print(f"File not found: {file_path}")
 
@@ -68,7 +69,7 @@ def plot_two_vehicles(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Plot data from both vehicles
-    for i, (data, current_column) in enumerate(data_list):
+    for i, (data, current_column, avg_motor_speed) in enumerate(data_list):
         # Plot speed as scatter plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['Speed_kmh'], 
@@ -81,18 +82,27 @@ def plot_two_vehicles(data_list, labels, output_path):
             x=data.index, y=data[current_column], 
             name=f'Current - {labels[i]}', 
             marker=dict(color='green' if i == 0 else 'orange')
-        ), secondary_y=False)
+        ), secondary_y=True)
 
         # Plot distance as a separate line plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['distance_km'], 
             name=f'Distance - {labels[i]}', 
             marker=dict(color='purple' if i == 0 else 'brown')
-        ), secondary_y=True)
+        ), secondary_y=False)
+
+        # Add a horizontal line for average speed
+        fig.add_trace(go.Scatter(
+            x=[data.index.min(), data.index.max()],
+            y=[avg_motor_speed, avg_motor_speed],
+            mode='lines',
+            line=dict(color='blue' if i == 0 else 'red'),
+            name=f'Avg Speed - {labels[i]}'
+        ), secondary_y=False)
     
     # Update layout
     fig.update_layout(
-        title='Speed, Current, and Distance vs Time for Two Vehicles',
+        title='Speed, Current, Distance, and Average Speed vs Time for Two Vehicles',
         xaxis_title='Time',
         yaxis_title='Speed (km/h) and Distance (km)',
         yaxis2_title='Current (A)'
