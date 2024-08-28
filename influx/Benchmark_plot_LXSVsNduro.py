@@ -5,7 +5,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objs as go
  
 # Define the folder where the CSV files are located
-main_folder_path = r"C:\Users\annmon.james\Downloads\LXSVsNduro_Plot\19_aug"
+main_folder_path = r"C:\Users\annmon.james\Downloads\LXSVsNduro_Plot\16_aug"
  
 # File names for the two vehicles
 file_names = ['lxs.csv', 'nduro.csv']
@@ -265,16 +265,21 @@ def plot_two_vehicles(data_list, labels, output_path):
 # Plotting function for Battery Parameters
 def plot_battery_parameters(data_list, labels, output_path):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-   
-    # Plot SOC and SOC parameters from both vehicles
-    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed,ending_battery_voltage) in enumerate(data_list):
+
+    # Define contrasting color maps for each vehicle
+    colors = [
+        {'cutoff': 'blue', 'voltage': 'navy', 'watt_hours': 'deepskyblue', 'temp': 'cyan', 'delta_voltage': 'purple', 'max_temp': 'orchid', 'delta_temp': 'violet'},
+        {'cutoff': 'red', 'voltage': 'darkred', 'watt_hours': 'salmon', 'temp': 'darkorange', 'delta_voltage': 'brown', 'max_temp': 'coral', 'delta_temp': 'chocolate'}
+    ]
+    
+    # Plot SOC and other parameters from both vehicles
+    for i, (data, _, _, _, soc_column, starting_soc_percentage, cutoff_soc_percentage, soc_consumed, ending_battery_voltage) in enumerate(data_list):
      
- 
         fig.add_trace(go.Scatter(
             x=[data.index.min(), data.index.max()],
             y=[cutoff_soc_percentage, cutoff_soc_percentage],
             mode='lines',
-            line=dict(color='blue' if i == 0 else 'green'),
+            line=dict(color=colors[i]['cutoff'], dash='dash' if i == 0 else 'solid'),
             name=f'Cut-off SoC (%) - {labels[i]}'
         ), secondary_y=False)
  
@@ -282,77 +287,49 @@ def plot_battery_parameters(data_list, labels, output_path):
             x=[data.index.min(), data.index.max()],
             y=[ending_battery_voltage, ending_battery_voltage],
             mode='lines',
-            line=dict(color='blue' if i == 0 else 'green'),
+            line=dict(color=colors[i]['voltage'], dash='dash' if i == 0 else 'solid'),
             name=f'Cut-off voltage (V) - {labels[i]}'
         ), secondary_y=False)
  
-           # Plot watt-hours as a separate line plot
+        # Plot watt-hours as a separate line plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['watt_hours'],
             name=f'Watt-hours - {labels[i]}',
-            marker=dict(color='blue' if i == 0 else 'green')
+            marker=dict(color=colors[i]['watt_hours']),
+            line=dict(dash='dash' if i == 0 else 'solid')
         ), secondary_y=False)
  
-                  # Plot distance as a separate line plot
+        # Plot battery temperature as a separate line plot
         fig.add_trace(go.Scatter(
             x=data.index, y=data['battery_temp'],
             name=f'Battery Temperature - {labels[i]}',
-            marker=dict(color='blue' if i == 0 else 'green')
+            marker=dict(color=colors[i]['temp']),
+            line=dict(dash='dash' if i == 0 else 'solid')
         ), secondary_y=False)
  
-        if i == 1:
-             # Plot cell voltage difference as a separate line plot
+        if i == 1:  # Assume these parameters are only available for the second vehicle
+            # Plot cell voltage difference as a separate line plot
             fig.add_trace(go.Scatter(
                 x=data.index, y=data['DeltaCellVoltage'],
                 name=f'DeltaCellVoltage - {labels[i]}',
-                marker=dict(color='blue' if i == 0 else 'green')
+                marker=dict(color=colors[i]['delta_voltage']),
+                line=dict(dash='dash' if i == 0 else 'solid')
             ), secondary_y=False)
  
             fig.add_trace(go.Scatter(
                 x=data.index, y=data['Max_Cell_Temperature'],
                 name=f'Max_Cell_Temperature - {labels[i]}',
-                marker=dict(color='blue' if i == 0 else 'green')
+                marker=dict(color=colors[i]['max_temp']),
+                line=dict(dash='dash' if i == 0 else 'solid')
             ), secondary_y=False)
- 
  
             fig.add_trace(go.Scatter(
                 x=data.index, y=data['Delta_Cell_Temperature'],
                 name=f'Delta_Cell_Temperature - {labels[i]}',
-                marker=dict(color='blue' if i == 0 else 'green')
+                marker=dict(color=colors[i]['delta_temp']),
+                line=dict(dash='dash' if i == 0 else 'solid')
             ), secondary_y=False)
  
-       
- 
- 
- 
- 
-       
- 
-        # # Add annotations for SOC parameters
-        # fig.add_annotation(
-        #     x=data.index.max(),
-        #     y=cutoff_soc_percentage,
-        #     text=f'Cutoff SOC: {cutoff_soc_percentage:.2f}%',
-        #     showarrow=True,
-        #     arrowhead=2
-        # )
- 
-        # fig.add_annotation(
-        #     x=data.index.max(),
-        #     y=starting_soc_percentage,
-        #     text=f'Starting SOC: {starting_soc_percentage:.2f}%',
-        #     showarrow=True,
-        #     arrowhead=2
-        # )
-       
-        # fig.add_annotation(
-        #     x=data.index.max(),
-        #     y=starting_soc_percentage - soc_consumed,
-        #     text=f'SOC Consumed: {soc_consumed:.2f}%',
-        #     showarrow=True,
-        #     arrowhead=2
-        # )
-   
     # Update layout
     fig.update_layout(
         title='Battery Parameters',
@@ -367,6 +344,8 @@ def plot_battery_parameters(data_list, labels, output_path):
     graph_path = os.path.join(output_path, 'Battery_Parameters.html')
     fig.write_html(graph_path)
     print(f"Graph saved to {graph_path}")
+
+
  
 # Call the plotting functions
 plot_two_vehicles(data_list, labels, main_folder_path)
