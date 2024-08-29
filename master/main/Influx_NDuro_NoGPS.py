@@ -466,13 +466,13 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         if not ending_soc_rows.empty:
             ending_soc_first_occurrence = ending_soc_rows.iloc[0]
             ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
-            ending_battery_voltage = ending_battery_voltage*10
+            ending_battery_voltage = ending_battery_voltage
         else:
              # If exact starting SOC percentage is not found, find the nearest SOC percentage
             nearest_soc_index = (data['SOC [SA: 08]'] - ending_soc_percentage).abs().idxmin()
             ending_soc_first_occurrence = data.iloc[nearest_soc_index]
             ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
-            ending_battery_voltage = ending_battery_voltage*10
+            ending_battery_voltage = ending_battery_voltage
     
     
         # Initialize total distance covered
@@ -853,11 +853,13 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Difference in Cell Voltage(V)": voltage_difference,
             "Initial Battery Temperature(C)": min_temp,
             "Maximum Battery Temperature(C)": max_temp,
-            "Difference in Temperature(C)": max_temp- min_temp,
+            "Delta (Battery Temperature(C))": max_temp- min_temp,
             "Initial MCU Temperature (at 100 SOC):":Initial_MCU_TEMP,
             "Maximum MCU Temperature(C)": max_mcu_temp,
+            "Delta (MCU Temperature(C))":max_mcu_temp-Initial_MCU_TEMP,
             "Initial Motor Temperature (at 100 SOC)":Initial_MOTOR_TEMP,
             "Maximum Motor Temperature(C)": max_motor_temp,
+            "Delta (Motor Temperature(C))":max_motor_temp-Initial_MOTOR_TEMP,
             "Maximum Fet Temperature-BMS(C)": max_fet_temp,
             "Maximum Afe Temperature-BMS(C)": max_afe_temp,
             "Maximum PCB Temperature-BMS(C)": max_pcb_temp,

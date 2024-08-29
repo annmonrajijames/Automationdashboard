@@ -367,6 +367,7 @@ def Influx_LXS_input(input_folder_path):
                 total_distance_with_RPM += distance_interval
                 
         print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
+        total_distance_with_RPM = total_distance_with_RPM/1000
     #################
 
     ###########Calculating the Distance based on Ground Distance from GPS Module data
@@ -413,6 +414,20 @@ def Influx_LXS_input(input_folder_path):
         # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
         watt_h = abs((data_resampled['Current_value'] * data_resampled['voltage_value'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
         print("Actual Watt-hours (Wh):------------------------------------> {:.2f}" .format(watt_h))
+
+
+                 # filtered_data_RegenCurrent= data_resampled[-200 < data_resampled['Current_value'] < 0]                   #Only regen
+        filtered_data_RegenCurrent = data_resampled[(data_resampled['Regeneration']==1)]
+        regen_ah = abs((filtered_data_RegenCurrent['Current_value'] * filtered_data_RegenCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+
+ 
+
+        filtered_data_RegenCurrent['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
+        regen_wh_hr =abs((filtered_data_RegenCurrent['Current_value'] * filtered_data_RegenCurrent['voltage_value'] * filtered_data_RegenCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
+        print("regen Watt-hours (Wh):------------------------------------> {:.2f}" .format(regen_wh_hr))
+
+        watt_hr_subtracting_regen_wattHr= watt_h - regen_wh_hr
+        print("Actual Watt-hours (Wh):------------------------------------> {:.2f}" .format(watt_hr_subtracting_regen_wattHr))
     
     ####Commented because soc ah is not available in LXS dbc
         #starting and ending ah
@@ -428,9 +443,7 @@ def Influx_LXS_input(input_folder_path):
         filtered_data_DischargeCurrent = data_resampled[(data_resampled['Regeneration']==0)]
         Discharge_ah = abs((filtered_data_DischargeCurrent['Current_value'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
 
-        # Calculate the actual Watt-hours (Wh) using the trapezoidal rule for numerical integration
-        watt_h = abs((data_resampled['Current_value'] * data_resampled['voltage_value'] * data_resampled['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
-        print("Actual Watt-hours (Wh):------------------------------------> {:.2f}" .format(watt_h))
+ 
 
         filtered_data_DischargeCurrent['localtime_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
         discharge_wh_hr =abs((filtered_data_DischargeCurrent['Current_value'] * filtered_data_DischargeCurrent['voltage_value'] * filtered_data_DischargeCurrent['localtime_Diff']).sum()) / 3600  # Convert seconds to hours
@@ -546,9 +559,6 @@ def Influx_LXS_input(input_folder_path):
     
     
     
-        # Calculate Wh/km for the entire ride
-        watt_h = abs((data_resampled['Current_value'] * data_resampled['voltage_value'] * data_resampled['localtime_Diff']).sum()) / 3600
-        # wh_per_km_total = abs(watt_h / total_distance)    
     
     
     
@@ -795,9 +805,10 @@ def Influx_LXS_input(input_folder_path):
             "Starting SoC (%)": starting_soc_percentage,
             "Ending SoC (%)": ending_soc_percentage,
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
-            "Energy consumption Rate(Wh/Km)": watt_h / total_distance,
-            "Discharge Efficiency (Wh/km)":discharge_wh_hr/total_distance_with_RPM_discharge,
-            "Total distance - RPM": total_distance_with_RPM/1000,
+            "Energy consumption Rate(Wh/Km)": watt_h / total_distance_with_RPM,
+            "Efficiency (subtracting_regen_wattHr) (wh/km) ":watt_hr_subtracting_regen_wattHr/total_distance_with_RPM,
+            "Discharge Efficiency (Wh/km)":discharge_wh_hr/total_distance_with_RPM,
+            "Total distance - RPM": total_distance_with_RPM,
             "Total distance covered (km) - Lat & Long(GPS)": total_distance,
             "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
             # "Mode": "",
@@ -812,6 +823,7 @@ def Influx_LXS_input(input_folder_path):
             "Eco_Mode_Percentage":eco_percentage,
             "Power_Mode_Percentage":power_percentage,
             "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
+            "watt_hr_subtracting_regen_wattHr":watt_hr_subtracting_regen_wattHr,
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
             "Average_current":abs(average_current),
