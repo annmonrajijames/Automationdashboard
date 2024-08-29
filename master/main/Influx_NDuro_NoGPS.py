@@ -460,19 +460,21 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         print("Ending SOC:", ending_soc_percentage)
 
 
-        ending_soc_rows = data[data['SOC [SA: 08]'] == ending_soc_percentage]
+        # ending_soc_rows = data[data['SOC [SA: 08]'] == ending_soc_percentage]voltage_at_cutoff
 
 
-        if not ending_soc_rows.empty:
-            ending_soc_first_occurrence = ending_soc_rows.iloc[0]
-            ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
-            ending_battery_voltage = ending_battery_voltage
-        else:
-             # If exact starting SOC percentage is not found, find the nearest SOC percentage
-            nearest_soc_index = (data['SOC [SA: 08]'] - ending_soc_percentage).abs().idxmin()
-            ending_soc_first_occurrence = data.iloc[nearest_soc_index]
-            ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
-            ending_battery_voltage = ending_battery_voltage
+        # if not ending_soc_rows.empty:
+        #     ending_soc_first_occurrence = ending_soc_rows.iloc[0]
+        #     ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
+        #     ending_battery_voltage = ending_battery_voltage
+        # else:
+        #      # If exact starting SOC percentage is not found, find the nearest SOC percentage
+        #     nearest_soc_index = (data['SOC [SA: 08]'] - ending_soc_percentage).abs().idxmin()
+        #     ending_soc_first_occurrence = data.iloc[nearest_soc_index]
+        #     ending_battery_voltage = ending_soc_first_occurrence['PackVol [SA: 06]']
+        #     ending_battery_voltage = ending_battery_voltage
+
+        voltage_at_cutoff= data_resampled['PackVol [SA: 06]'].min()
     
     
         # Initialize total distance covered
@@ -511,18 +513,35 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         ###########For initial Temperature
         Starting_soc_rows = data[data['SOC [SA: 08]'] == starting_soc_percentage]
 
-
         if not Starting_soc_rows.empty:
+            # Get the first occurrence of the starting SOC
             Starting_soc_first_occurrence = Starting_soc_rows.iloc[0]
-            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
-            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
             
+            # Check if the Motor and MCU temperatures are NaN
+            if pd.isna(Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']) or pd.isna(Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']):
+                # Find the next non-NaN value for MCU and Motor temperatures
+                Initial_MCU_TEMP = Starting_soc_rows['MCU_Temperature [SA: 03]'].dropna().iloc[0]
+                Initial_MOTOR_TEMP = Starting_soc_rows['Motor_Temperature [SA: 03]'].dropna().iloc[0]
+            else:
+                # If they are not NaN, use the values from the first occurrence
+                Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
+                Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
+                        
         else:
-             # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            # If exact starting SOC percentage is not found, find the nearest SOC percentage
             nearest_soc_index = (data['SOC [SA: 08]'] - starting_soc_percentage).abs().idxmin()
-            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
-            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
-            
+            nearest_soc_row = data.loc[nearest_soc_index]
+
+            # Handle NaN values for MCU and Motor temperatures
+            if pd.isna(nearest_soc_row['MCU_Temperature [SA: 03]']) or pd.isna(nearest_soc_row['Motor_Temperature [SA: 03]']):
+                # Find the next non-NaN value for MCU and Motor temperatures after the nearest SOC index
+                Initial_MCU_TEMP = data['MCU_Temperature [SA: 03]'].iloc[nearest_soc_index:].dropna().iloc[0]
+                Initial_MOTOR_TEMP = data['Motor_Temperature [SA: 03]'].iloc[nearest_soc_index:].dropna().iloc[0]
+            else:
+                # If they are not NaN, use the values from the nearest SOC row
+                Initial_MCU_TEMP = nearest_soc_row['MCU_Temperature [SA: 03]']
+                Initial_MOTOR_TEMP = nearest_soc_row['Motor_Temperature [SA: 03]']
+
     
     
         ##############   Wh/Km
@@ -809,7 +828,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         ppt_data = {
             "Date and localtime": str(start_localtime) + " to " + str(end_localtime),
             # "INFLUX ID ": InfluxId,
-            "Total Time taken for the ride": total_duration,
+            "Total Time taken for the ride (HH:MM:SS) ": total_duration,
             "Starting SoC (Ah)": starting_soc_Ah,
             "Ending SoC (Ah)": ending_soc_Ah,
             "Actual Ampere-hours (Ah)": actual_ah,
@@ -819,7 +838,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Total SOC consumed(%)":starting_soc_percentage- ending_soc_percentage,
             # "Energy consumption Rate(WH/KM)": watt_h / total_distance,
             "Energy consumption Rate(WH/KM)": watt_h / (total_distance_with_RPM),
-            "Discharge Efficiency (WH/KM)":discharge_wh_hr/(total_distance_with_RPM_discharge),
+            "Discharge Efficiency (WH/KM)":discharge_wh_hr/(total_distance_with_RPM),
             "Total distance - RPM (km)": total_distance_with_RPM,
             "Total distance covered (km) - Lat & Long(GPS) ": total_distance,
             "Total distance - Ground Distance(GPS) (km)": total_distance_Ground_Distance,
@@ -832,14 +851,14 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             # "Distance travelled in ECO mode":distance_per_mode[4],
             # "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
             # "Distance travelled in LIMP Mode":distance_per_mode[5],
-            "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
+            "Actual Watt-hours (Wh)": watt_h,
             "Peak Power(W)": peak_power,
             "Peak current (A)": abs(peak_current),
             "Peak voltage (V)":abs(peak_voltage),
             "Average Power(W)": average_power,
             # "Average_current":abs(average_current),
             "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
-            "Average_current (With regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withRegen_withoutIdling),
+            "Average_current (With regen and without Idle) (A)":abs(average_current_withRegen_withoutIdling),
             "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
             "Average_current (Without regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withoutRegen_withoutIdling),
             "Average Regen current (A)":abs(avg_regen_current),
@@ -870,7 +889,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "lowest cell temp(C)": min_cell_temp,
             "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
             "Battery Voltage(V)": batteryVoltage,
-            "Voltage at cutoff (V)":ending_battery_voltage,
+            "Voltage at cutoff (V)":voltage_at_cutoff,
             # "Total energy charged(kWh)- Calculated_BatteryData": total_energy_kwh,
             # "Electricity consumption units(kW)": total_energy_kw,
             "Cycle Count of battery": cycleCount,
