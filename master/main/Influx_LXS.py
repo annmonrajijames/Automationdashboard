@@ -746,39 +746,61 @@ def Influx_LXS_input(input_folder_path):
     
         # Add these variables and logic to ppt_data
 
-        ending_soc_rows = data[data['SOC_value'] == ending_soc_percentage]
+        # ending_soc_rows = data[data['SOC_value'] == ending_soc_percentage]
 
 
-        if not ending_soc_rows.empty:
-            ending_soc_first_occurrence = ending_soc_rows.iloc[0]
-            ending_battery_voltage = ending_soc_first_occurrence['voltage_value']
-            ending_battery_voltage = ending_battery_voltage
-        else:
-             # If exact starting SOC percentage is not found, find the nearest SOC percentage
-            nearest_soc_index = (data['SOC_value'] - ending_soc_percentage).abs().idxmin()
-            ending_soc_first_occurrence = data.iloc[nearest_soc_index]
-            ending_battery_voltage = ending_soc_first_occurrence['voltage_value']
-            ending_battery_voltage = ending_battery_voltage
+        # if not ending_soc_rows.empty:
+        #     ending_soc_first_occurrence = ending_soc_rows.iloc[0]
+        #     ending_battery_voltage = ending_soc_first_occurrence['voltage_value']
+        #     ending_battery_voltage = ending_battery_voltage
+        # else:
+        #      # If exact starting SOC percentage is not found, find the nearest SOC percentage
+        #     nearest_soc_index = (data['SOC_value'] - ending_soc_percentage).abs().idxmin()
+        #     ending_soc_first_occurrence = data.iloc[nearest_soc_index]
+        #     ending_battery_voltage = ending_soc_first_occurrence['voltage_value']
+        #     ending_battery_voltage = ending_battery_voltage
 
+        ending_battery_voltage = data_resampled['voltage_value'].min()
 
         ###########For initial Temperature
         Starting_soc_rows = data[data['SOC_value'] == starting_soc_percentage]
 
-
         if not Starting_soc_rows.empty:
+            # Get the first occurrence of the starting SOC
             Starting_soc_first_occurrence = Starting_soc_rows.iloc[0]
-            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCS_Temp']
-            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temp']
-            Initial_BATTERY_TEMP = Starting_soc_first_occurrence['Battery_Temperature']
             
-
+            # Check if the Motor and MCU temperatures are NaN
+            if pd.isna(Starting_soc_first_occurrence['MCS_Temp']) or pd.isna(Starting_soc_first_occurrence['Motor_Temp']) or pd.isna(Starting_soc_first_occurrence['Motor_Temp']):
+                # Find the next non-NaN value for MCU and Motor temperatures
+                Initial_MCU_TEMP = Starting_soc_rows['MCS_Temp'].dropna().iloc[0]
+                Initial_MOTOR_TEMP = Starting_soc_rows['Motor_Temp'].dropna().iloc[0]
+                Initial_Battery_Temperature = data['Battery_Temperature'].dropna().iloc[0]
+                
+            else:
+                # If they are not NaN, use the values from the first occurrence
+                Initial_MCU_TEMP = Starting_soc_first_occurrence['MCS_Temp']
+                Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temp']
+                Initial_Battery_Temperature = Starting_soc_first_occurrence['Battery_Temperature']
+                
             
         else:
-             # If exact starting SOC percentage is not found, find the nearest SOC percentage
-            nearest_soc_index = (data['SOC_value'] - starting_soc_percentage).abs().idxmin()
-            Initial_MCU_TEMP = Starting_soc_first_occurrence['MCS_Temp']
-            Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temp']
-            Initial_BATTERY_TEMP = Starting_soc_first_occurrence['Battery_Temperature']
+            # If exact starting SOC percentage is not found, find the nearest SOC percentage
+            nearest_soc_index = (data['SOC [SA: 08]'] - starting_soc_percentage).abs().idxmin()
+            nearest_soc_row = data.loc[nearest_soc_index]
+
+            # Handle NaN values for MCU and Motor temperatures
+            if pd.isna(nearest_soc_row['MCS_Temp']) or pd.isna(nearest_soc_row['Motor_Temp'] or pd.isna(nearest_soc_row['Battery_Temperature'])):
+                # Find the next non-NaN value for MCU and Motor temperatures after the nearest SOC index
+                Initial_MCU_TEMP = data['MCS_Temp'].iloc[nearest_soc_index:].dropna().iloc[0]
+                Initial_MOTOR_TEMP = data['Motor_Temp'].iloc[nearest_soc_index:].dropna().iloc[0]
+                Initial_Battery_Temperature = data['Battery_Temperature'].iloc[nearest_soc_index:].dropna().iloc[0]
+            
+            else:
+                # If they are not NaN, use the values from the nearest SOC row
+                Initial_MCU_TEMP = nearest_soc_row['MCS_Temp']
+                Initial_MOTOR_TEMP = nearest_soc_row['Motor_Temp']
+                Initial_Battery_Temperature = nearest_soc_row['Battery_Temperature']
+
 
         
         # Get the maximum temperature of MCS_Temp
@@ -833,9 +855,9 @@ def Influx_LXS_input(input_folder_path):
             # "Regenerative Effectiveness(%)": regenerative_effectiveness,
             "Avg_speed (km/hr)":avg_speed,
             "Voltage at cutoff (V)":ending_battery_voltage,
-            "Initial Battery Temperature(C)": Initial_BATTERY_TEMP,
+            "Initial Battery Temperature(C)": Initial_Battery_Temperature,
             "Maximum Battery Temperature(C)": max_BATTERY_temp,
-            "Difference in Temperature(C)": max_BATTERY_temp- Initial_BATTERY_TEMP,
+            "Difference in Temperature(C)": max_BATTERY_temp- Initial_Battery_Temperature,
             "Initial MCU Temperature (at 100 SOC):":Initial_MCU_TEMP,
             "Maximum MCU Temperature(C)": max_mcu_temp,
             "Initial Motor Temperature (at 100 SOC)":Initial_MOTOR_TEMP,
