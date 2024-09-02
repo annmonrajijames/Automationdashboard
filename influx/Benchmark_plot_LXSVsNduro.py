@@ -5,10 +5,10 @@ from plotly.subplots import make_subplots
 import plotly.graph_objs as go
 
 # Define the folder where the CSV files are located
-main_folder_path = r"C:\Users\annmon.james\Downloads\LXSVsNduro_Plot\20_aug"
+main_folder_path = r"C:\Users\kamalesh.kb\lXSvsNDURO\LXSVsNduro_Plot\16_aug"
 
 # File names for the two vehicles
-file_names = ['lxs.csv', 'nduro.csv']
+file_names = ['LXS.csv', 'Nduro.csv']
 
 # Initialize lists to store data and labels
 data_list = []
@@ -25,7 +25,7 @@ for i, file_name in enumerate(file_names):
         data = pd.read_csv(file_path)
        
         # Determine the correct columns for motor speed, current, voltage, and SOC
-        if file_name == 'lxs.csv':
+        if file_name == 'LXS.csv':
             motor_speed_column = 'RPM'  # For LXS
             current_column = 'Current_value'
             voltage_column = 'voltage_value'
@@ -124,16 +124,19 @@ for i, file_name in enumerate(file_names):
         cutoff_soc_percentage = data[soc_column].min()
         soc_consumed = starting_soc_percentage - cutoff_soc_percentage
 
-        ending_soc_rows = data[data[soc_column] == cutoff_soc_percentage]
+        # ending_soc_rows = data[data[soc_column] == cutoff_soc_percentage]
 
-        if not ending_soc_rows.empty:
-            ending_soc_first_occurrence = ending_soc_rows.iloc[0]
-            ending_battery_voltage = ending_soc_first_occurrence[voltage_column]
-        else:
-            # If exact starting SOC percentage is not found, find the nearest SOC percentage
-            nearest_soc_index = (data[soc_column] - cutoff_soc_percentage).abs().idxmin()
-            ending_soc_first_occurrence = data.iloc[nearest_soc_index]
-            ending_battery_voltage = ending_soc_first_occurrence[voltage_column]
+        # if not ending_soc_rows.empty:
+        #     ending_soc_first_occurrence = ending_soc_rows.iloc[0]
+        #     ending_battery_voltage = ending_soc_first_occurrence[voltage_column]
+        # else:
+        #     # If exact starting SOC percentage is not found, find the nearest SOC percentage
+        #     nearest_soc_index = (data[soc_column] - cutoff_soc_percentage).abs().idxmin()
+        #     ending_soc_first_occurrence = data.iloc[nearest_soc_index]
+        #     ending_battery_voltage = ending_soc_first_occurrence[voltage_column]
+
+        filtered_data_battery_voltage = data[data[voltage_column] > 40]        
+        ending_battery_voltage = filtered_data_battery_voltage[voltage_column].min()
            
         # Add SOC parameters to data
         data['soc'] = data[soc_column]
@@ -298,14 +301,15 @@ def plot_combined(data_list, labels, output_path):
         title='Vehicle Data with Battery Parameters',
         xaxis_title='Time',
         yaxis_title='Y1',
-        yaxis2_title='Y2'
+        yaxis2_title='Y2',
+        plot_bgcolor='white',  # Set the background of the plot area to white
     )
     
     fig.update_xaxes(tickformat='%H:%M:%S')
 
     # Save the plot as an HTML file
     os.makedirs(output_path, exist_ok=True)
-    graph_path = os.path.join(output_path, 'Combined_Vehicle_Battery_Data.html')
+    graph_path = os.path.join(output_path, 'LXSvsNduro.html')
     fig.write_html(graph_path)
     print(f"Graph saved to {graph_path}")
 
