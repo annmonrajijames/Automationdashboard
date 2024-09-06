@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 class PlotApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Data Plotter")
+        self.root.title("dyno_analysis")
 
         # Folder Path Input
         self.label = tk.Label(root, text="Enter Folder Path or Drag & Drop:")
@@ -59,9 +59,18 @@ class PlotApp:
             widget.destroy()
 
         # Load CSV and extract column names for both files
+        self.data_list.clear()  # Clear previous data
         for file_path in self.file_paths:
             try:
                 data = pd.read_csv(file_path)
+
+                # Ensure the 'Time' column is in datetime format
+                data['Time'] = pd.to_datetime(data['Time'])
+
+                # Create 'derived_time' column that starts from 00:00:00
+                data['derived_time'] = (data['Time'] - data['Time'].min()).dt.total_seconds()
+
+                # Append to the data_list for plotting later
                 self.data_list.append(data)
 
                 # Create checkboxes for each column
@@ -94,15 +103,16 @@ class PlotApp:
         for i, data in enumerate(self.data_list):
             for col in columns:
                 if col in data.columns:
+                    # Use derived_time as x-axis
                     fig.add_trace(go.Scatter(
-                        x=data.index, 
+                        x=data['derived_time'], 
                         y=data[col], 
                         name=f"{col} (File {i+1})", 
                         line=dict(color=colors[i], dash='solid')
                     ))
 
         fig.update_layout(title='Combined Plot for Two Files',
-                          xaxis_title='Index',
+                          xaxis_title='Derived Time (seconds)',
                           yaxis_title='Values')
 
         # Save the plot as an HTML file
