@@ -22,6 +22,10 @@ class PlotApp:
         self.browse_button = tk.Button(root, text="Browse", command=self.browse_folder)
         self.browse_button.pack(pady=5)
 
+        # Select Files Button to select two CSV files
+        self.file_button = tk.Button(root, text="Select Files", command=self.select_files)
+        self.file_button.pack(pady=5)
+
         # Frame for column checkboxes
         self.checkbox_frame = tk.Frame(root)
         self.checkbox_frame.pack(pady=10)
@@ -30,78 +34,80 @@ class PlotApp:
         self.submit_button = tk.Button(root, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
 
-        # To hold the extracted column names and their corresponding checkboxes
-        self.column_names = []
+        # To hold the selected file paths, extracted column names, and checkboxes for both files
+        self.file_paths = []
         self.column_checkboxes = {}
-        self.data = None
+        self.data_list = []
 
     def browse_folder(self):
         folder_path = filedialog.askdirectory()
         self.path_entry.delete(0, tk.END)
         self.path_entry.insert(0, folder_path)
 
-        # After folder selection, extract columns
-        self.load_data_and_columns(folder_path)
+    def select_files(self):
+        # Allow the user to select two files
+        file_paths = filedialog.askopenfilenames(
+            title="Select two CSV files", filetypes=[("CSV Files", "*.csv")], initialdir=self.path_entry.get())
+        
+        if len(file_paths) == 2:
+            self.file_paths = file_paths
+            self.load_data_and_columns()
 
-    def load_data_and_columns(self, folder_path):
-        # Clear the previous checkboxes
+    def load_data_and_columns(self):
+        # Clear previous checkboxes
         for widget in self.checkbox_frame.winfo_children():
             widget.destroy()
 
-        # Load CSV and extract column names
-        if os.path.isdir(folder_path):
-            log_file = None
-            for file in os.listdir(folder_path):
-                if file.startswith('NDURO') and file.endswith('.csv'):
-                    log_file = os.path.join(folder_path, file)
-                    break
+        # Load CSV and extract column names for both files
+        for file_path in self.file_paths:
+            try:
+                data = pd.read_csv(file_path)
+                self.data_list.append(data)
 
-            if log_file:
-                try:
-                    self.data = pd.read_csv(log_file)
-                    # Extract column names
-                    self.column_names = self.data.columns.tolist()
-
-                    # Create checkboxes for each column
-                    for col in self.column_names:
+                # Create checkboxes for each column
+                column_names = data.columns.tolist()
+                for col in column_names:
+                    if col not in self.column_checkboxes:
                         var = tk.BooleanVar()
                         cb = tk.Checkbutton(self.checkbox_frame, text=col, variable=var)
                         cb.pack(anchor='w')
                         self.column_checkboxes[col] = var
 
-                    print("Columns available for plotting:", self.column_names)
-                except Exception as e:
-                    print(f"Error loading data: {e}")
+            except Exception as e:
+                print(f"Error loading data from {file_path}: {e}")
 
     def submit(self):
         # Get the columns that are checked
         selected_columns = [col for col, var in self.column_checkboxes.items() if var.get()]
 
-        if self.data is not None and selected_columns:
-            # Plot the selected columns
+        if len(self.data_list) == 2 and selected_columns:
+            # Plot the selected columns from both files
             self.plot_columns(selected_columns, self.path_entry.get())
 
     def plot_columns(self, columns, save_path):
-        # Set the index to 'Time'
-        if 'Time' in self.data.columns:
-            self.data.set_index('Time', inplace=True)
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        # Plot using Plotly
-        fig = make_subplots()
+        # Define colors for each file
+        colors = ['blue', 'orange']
 
-        # Add trace for each selected column
-        for col in columns:
-            fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col))
+        # Loop through each file's data and plot the selected columns
+        for i, data in enumerate(self.data_list):
+            for col in columns:
+                if col in data.columns:
+                    fig.add_trace(go.Scatter(
+                        x=data.index, 
+                        y=data[col], 
+                        name=f"{col} (File {i+1})", 
+                        line=dict(color=colors[i], dash='solid')
+                    ))
 
-        fig.update_layout(title=f'Analysis',
-                          xaxis_title='Time',
-                          yaxis_title='Value')
-
-        fig.update_xaxes(tickformat='%H:%M:%S')
+        fig.update_layout(title='Combined Plot for Two Files',
+                          xaxis_title='Index',
+                          yaxis_title='Values')
 
         # Save the plot as an HTML file
         os.makedirs(save_path, exist_ok=True)
-        graph_path = os.path.join(save_path, 'Generated_Plot.html')
+        graph_path = os.path.join(save_path, 'Combined_Plot.html')
         fig.write_html(graph_path)
         print(f"Plot saved at: {graph_path}")
 
