@@ -83,10 +83,8 @@ class PlotApp:
 
                 data['Time'] = pd.to_datetime(data['Time'])
 
-                 # Create 'derived_time' column that starts from 00:00:00
+                # Create 'derived_time' column that starts from 00:00:00
                 data['derived_time'] = (data['Time'] - data['Time'].min()).dt.total_seconds()
-
-
 
                 # Ensure the 'Udc4' and 'Idc4' columns exist
                 if 'Udc4' not in data.columns or 'Idc4' not in data.columns:
@@ -120,12 +118,14 @@ class PlotApp:
                 self.result_label.config(text="Please enter valid numeric distances for both files.", fg="red")
                 return
 
-            # Calculate Wh/km for both files
-            wh_per_km_1 = self.calculate_wh_per_km(self.data_list[0], total_distance_km_1)
-            wh_per_km_2 = self.calculate_wh_per_km(self.data_list[1], total_distance_km_2)
+            # Calculate Wh/km for both files and return extra values
+            wh_per_km_1, wh_regen_1, wh_consumed_1, total_energy_wh_1, regen_percentage_1 = self.calculate_wh_per_km(self.data_list[0], total_distance_km_1)
+            wh_per_km_2, wh_regen_2, wh_consumed_2, total_energy_wh_2, regen_percentage_2 = self.calculate_wh_per_km(self.data_list[1], total_distance_km_2)
 
-            # Plot the selected columns from both files and add Wh/km annotations
-            self.plot_columns(selected_columns, self.path_entry.get(), wh_per_km_1, wh_per_km_2)
+            # Plot the selected columns from both files and add annotations
+            self.plot_columns(selected_columns, self.path_entry.get(),
+                              wh_per_km_1, wh_regen_1, wh_consumed_1, total_energy_wh_1, regen_percentage_1,
+                              wh_per_km_2, wh_regen_2, wh_consumed_2, total_energy_wh_2, regen_percentage_2)
 
     def calculate_wh_per_km(self, df, total_distance_km):
         # Constants
@@ -145,12 +145,15 @@ class PlotApp:
         wh_consumed = positive_power * time_step_hours           # Energy consumed (positive power)
         wh_regen = abs(negative_power * time_step_hours)         # Energy regenerated (negative power)
 
+        regen_percentage = (wh_regen / (wh_consumed + wh_regen)) * 100 if wh_consumed + wh_regen > 0 else 0
+        
         # Calculate Wh/km (total energy in Wh / total distance in km)
         wh_per_km = total_energy_wh / total_distance_km if total_distance_km > 0 else 0
 
-        return wh_per_km
+        return wh_per_km, wh_regen, wh_consumed, total_energy_wh, regen_percentage
 
-    def plot_columns(self, columns, save_path, wh_per_km_1, wh_per_km_2):
+    def plot_columns(self, columns, save_path, wh_per_km_1, wh_regen_1, wh_consumed_1, total_energy_wh_1, regen_percentage_1,
+                     wh_per_km_2, wh_regen_2, wh_consumed_2, total_energy_wh_2, regen_percentage_2):
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
         # Define colors for each file
@@ -165,25 +168,24 @@ class PlotApp:
                         # x=data.index,
                         x=data['derived_time'],
                         y=data[col], 
-                        # name=f"{col} ({self.file_names[i]})",  # Use file name instead of "File {i+1}"
-                        name=f"{col} ({i+1})", 
+                        name=f"{col} ({i+1})",  # Use short alias
                         line=dict(color=colors[i], dash='solid')
                     ))
 
-        # Add Wh/km annotations to the plot
-        fig.add_annotation(
-            text=f"Wh/km for {self.file_names[0]}: {wh_per_km_1:.2f}",
-            xref="paper", yref="paper",
-            x=0.99, y=0.99, showarrow=False, font=dict(size=12, color="blue")
-        )
-        fig.add_annotation(
-            text=f"Wh/km for {self.file_names[1]}: {wh_per_km_2:.2f}",
-            xref="paper", yref="paper",
-            x=0.99, y=0.97, showarrow=False, font=dict(size=12, color="orange")
-        )
+        # Add Wh/km and other metrics as annotations for file 1
+        fig.add_annotation(text=f"File 1: Wh/km: {wh_per_km_1:.2f}, Regen: {wh_regen_1:.2f} Wh, Consumed: {wh_consumed_1:.2f} Wh",
+                           xref="paper", yref="paper", x=1.01, y=0.99, showarrow=False, font=dict(size=12, color="blue"))
+        fig.add_annotation(text=f"Total Energy: {total_energy_wh_1:.2f} Wh, Regen%: {regen_percentage_1:.2f}%",
+                           xref="paper", yref="paper", x=1.01, y=0.97, showarrow=False, font=dict(size=12, color="blue"))
+
+        # Add Wh/km and other metrics as annotations for file 2
+        fig.add_annotation(text=f"File 2: Wh/km: {wh_per_km_2:.2f}, Regen: {wh_regen_2:.2f} Wh, Consumed: {wh_consumed_2:.2f} Wh",
+                           xref="paper", yref="paper", x=1.01, y=0.95, showarrow=False, font=dict(size=12, color="orange"))
+        fig.add_annotation(text=f"Total Energy: {total_energy_wh_2:.2f} Wh, Regen%: {regen_percentage_2:.2f}%",
+                           xref="paper", yref="paper", x=1.01, y=0.93, showarrow=False, font=dict(size=12, color="orange"))
 
         fig.update_layout(title='Combined Plot for Two Files',
-                          xaxis_title='Time(in seconds)',
+                          xaxis_title='Time (in seconds)',
                           yaxis_title='Values')
 
         # Save the plot as an HTML file
