@@ -53,6 +53,7 @@ class PlotApp:
         self.file_paths = []
         self.column_checkboxes = {}
         self.data_list = []
+        self.file_names = []  # Store CSV file names
 
     def browse_folder(self):
         folder_path = filedialog.askdirectory()
@@ -66,6 +67,7 @@ class PlotApp:
         
         if len(file_paths) == 2:
             self.file_paths = file_paths
+            self.file_names = [os.path.basename(fp) for fp in file_paths]  # Get only file names
             self.load_data_and_columns()
 
     def load_data_and_columns(self):
@@ -78,6 +80,13 @@ class PlotApp:
         for file_path in self.file_paths:
             try:
                 data = pd.read_csv(file_path)
+
+                data['Time'] = pd.to_datetime(data['Time'])
+
+                 # Create 'derived_time' column that starts from 00:00:00
+                data['derived_time'] = (data['Time'] - data['Time'].min()).dt.total_seconds()
+
+
 
                 # Ensure the 'Udc4' and 'Idc4' columns exist
                 if 'Udc4' not in data.columns or 'Idc4' not in data.columns:
@@ -115,12 +124,8 @@ class PlotApp:
             wh_per_km_1 = self.calculate_wh_per_km(self.data_list[0], total_distance_km_1)
             wh_per_km_2 = self.calculate_wh_per_km(self.data_list[1], total_distance_km_2)
 
-            # Display the results in the UI
-            result_text = f"File 1 (Wh/km): {wh_per_km_1:.2f}\nFile 2 (Wh/km): {wh_per_km_2:.2f}"
-            self.result_label.config(text=result_text, fg="blue")
-
-            # Plot the selected columns from both files
-            self.plot_columns(selected_columns, self.path_entry.get())
+            # Plot the selected columns from both files and add Wh/km annotations
+            self.plot_columns(selected_columns, self.path_entry.get(), wh_per_km_1, wh_per_km_2)
 
     def calculate_wh_per_km(self, df, total_distance_km):
         # Constants
@@ -145,7 +150,7 @@ class PlotApp:
 
         return wh_per_km
 
-    def plot_columns(self, columns, save_path):
+    def plot_columns(self, columns, save_path, wh_per_km_1, wh_per_km_2):
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
         # Define colors for each file
@@ -157,14 +162,28 @@ class PlotApp:
                 if col in data.columns:
                     # Use index as x-axis
                     fig.add_trace(go.Scatter(
-                        x=data.index, 
+                        # x=data.index,
+                        x=data['derived_time'],
                         y=data[col], 
-                        name=f"{col} (File {i+1})", 
+                        # name=f"{col} ({self.file_names[i]})",  # Use file name instead of "File {i+1}"
+                        name=f"{col} ({i+1})", 
                         line=dict(color=colors[i], dash='solid')
                     ))
 
+        # Add Wh/km annotations to the plot
+        fig.add_annotation(
+            text=f"Wh/km for {self.file_names[0]}: {wh_per_km_1:.2f}",
+            xref="paper", yref="paper",
+            x=0.99, y=0.99, showarrow=False, font=dict(size=12, color="blue")
+        )
+        fig.add_annotation(
+            text=f"Wh/km for {self.file_names[1]}: {wh_per_km_2:.2f}",
+            xref="paper", yref="paper",
+            x=0.99, y=0.97, showarrow=False, font=dict(size=12, color="orange")
+        )
+
         fig.update_layout(title='Combined Plot for Two Files',
-                          xaxis_title='Index',
+                          xaxis_title='Time(in seconds)',
                           yaxis_title='Values')
 
         # Save the plot as an HTML file
