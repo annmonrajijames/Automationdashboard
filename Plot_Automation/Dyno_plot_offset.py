@@ -155,7 +155,7 @@ class PlotApp:
             nonlocal flag  # Use nonlocal to modify the flag inside the nested function
             # If flag is 0 and 'Idc' is less than 0.5, remove this row
             if flag == 0:
-                if row['Idc4'] < 0:
+                if row['Idc4'] < 0.5:
                     return False  # Remove this row
                 else:
                     flag = 1  # Once 'Idc' >= 0.5 is found, set the flag to 1
@@ -254,12 +254,9 @@ class PlotApp:
 
         # Define colors for each file (loop to extend for multiple files)
         colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown']
+        initial_opacity = 0.6  # Initial opacity for the lines
 
-        # Print the first 1000 rows of 'Idc4' column for each dataframe
-        for i, df in enumerate(self.data_list):
-            print(f"DataFrame {i} 'Idc4' column (first 1000 rows):")
-            print(df['Idc4'].head(1000))
-            print("\n")
+    
         
     # Add dummy data and plot
         for i, (data, result) in enumerate(zip(self.data_list, results)):
@@ -275,7 +272,8 @@ class PlotApp:
                         x=data_for_plotting['derived_time'],
                         y=data_for_plotting[col],
                         name=f"{col} ({i+1})",
-                        line=dict(color=colors[i % len(colors)], dash='solid')
+                        line=dict(color=colors[i % len(colors)], dash='solid'),
+                        opacity=initial_opacity  # Set initial opacity
                     ))
 
             # Add Wh/km and other metrics as annotations
@@ -284,9 +282,54 @@ class PlotApp:
             fig.add_annotation(text=f"Total Energy: {total_energy_wh:.2f} Wh, Regen%: {regen_percentage:.2f}%",
                                xref="paper", yref="paper", x=1.01, y=0.97 - (i * 0.05), showarrow=False, font=dict(size=12, color=colors[i % len(colors)]))
 
-        fig.update_layout(title='Combined Plot for Selected Files',
-                          xaxis_title='Time (in seconds)',
-                          yaxis_title='Values')
+        # fig.update_layout(title='Combined Plot for Selected Files',
+        #                   xaxis_title='Time (in seconds)',
+        #                   yaxis_title='Values')
+        
+
+        fig.update_layout(
+        title='Combined Plot for Selected Files',
+        xaxis_title='Time (in seconds)',
+        yaxis_title='Values',
+        updatemenus=[
+            {
+                'buttons': [
+                    {
+                        'args': [{'opacity': 0.2}],  # Low opacity
+                        'label': '20%',
+                        'method': 'restyle'
+                    },
+                    {
+                        'args': [{'opacity': 0.4}],  # Medium opacity
+                        'label': '40%',
+                        'method': 'restyle'
+                    },
+                    {
+                        'args': [{'opacity': 0.6}],  # Default opacity
+                        'label': '60%',
+                        'method': 'restyle'
+                    },
+                    {
+                        'args': [{'opacity': 0.8}],  # Higher opacity
+                        'label': '80%',
+                        'method': 'restyle'
+                    },
+                    {
+                        'args': [{'opacity': 1}],  # Full opacity
+                        'label': '100%',
+                        'method': 'restyle'
+                    }
+                ],
+                'direction': 'down',  # Dropdown direction
+                'showactive': True,
+                'x': 1.05,  # X position of dropdown
+                'xanchor': 'left',
+                'y': 1.20,
+                'yanchor': 'top'
+            }
+        ]
+    )
+
 
         # Save the plot as an HTML file
         os.makedirs(save_path, exist_ok=True)
