@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+import webbrowser  # Add the webbrowser module
 
 # Tkinter GUI Setup
 class PlotApp:
@@ -176,7 +177,8 @@ class PlotApp:
                     fig.add_trace(go.Scatter(
                         x=data['derived_time'],
                         y=data[col], 
-                        name=f"{col} ({self.file_names[i]})",  # Use file name in the legend
+                        # name=f"{col} (i)",  # Use file name in the legend
+                        name=f"{col} ({i+1})",
                         line=dict(color=colors[i % len(colors)], dash='solid')
                     ))
 
@@ -196,6 +198,8 @@ class PlotApp:
         fig.write_html(graph_path)
         print(f"Plot saved at: {graph_path}")
 
+            # Automatically open the saved plot in the default web browser
+        webbrowser.open('file://' + os.path.realpath(graph_path))  # Open the HTML file
 
 if __name__ == "__main__":
     root = tk.Tk()
