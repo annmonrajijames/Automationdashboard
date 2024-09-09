@@ -68,6 +68,66 @@ class PlotApp:
             # Create dynamic distance entry fields based on number of files selected
             self.create_distance_entries()
 
+    # def synchronize_starting_indexes(self,data):
+    #     """Synchronize the start of all filtered dataframes based on the highest index."""
+    #     # Get the starting index for each filtered dataframe
+    #     start_indexes = [data.index[0] for data in self.data_list]
+    
+
+    #     # Find the highest starting index
+    #     highest_start_index = max(start_indexes)
+
+    #     # Synchronize all dataframes to start from this highest index
+    #     for i in range(len(self.data_list)):
+    #         self.data_list[i] = self.data_list[i][self.data_list[i].index >= highest_start_index]
+
+    def synchronize_starting_indexes(self, data):
+        """Synchronize the start of all filtered dataframes based on the highest index."""
+        # Get the starting index for each filtered dataframe
+        start_indexes = [df.index[0] for df in self.data_list]
+        
+
+        # Find the highest starting index
+        highest_start_index = max(start_indexes)
+        
+        
+        # Shift each dataframe so that they all start at the highest index
+        for i in range(len(self.data_list)):
+            df = self.data_list[i]
+            current_start_index = self.data_list[i].index[0]   
+            print("curr",current_start_index)
+            print("high",highest_start_index)
+            if current_start_index < highest_start_index:
+                print(current_start_index) 
+                shift_amount = highest_start_index - current_start_index
+                print("shift",shift_amount)
+                print(self.data_list[i]['Idc4'])
+                self.data_list[i].index = self.data_list[i].index + shift_amount
+                print(self.data_list[i]['Idc4'])
+
+                data['Time'] = pd.to_datetime(data['Time'])
+
+                # Create 'derived_time' column that starts from 00:00:00
+                data['derived_time'] = (data['Time'] - data['Time'].min()).dt.total_seconds()
+
+                        # Convert 'Time' column to datetime
+            if 'Time' in df.columns:
+                df['Time'] = pd.to_datetime(df['Time'])
+                
+                # Create 'derived_time' column that starts from 00:00:00
+                df['derived_time'] = (df['Time'] - df['Time'].min()).dt.total_seconds()
+
+
+
+        # Optionally, you can also crop the dataframes to ensure they all end at the same index
+        # This step is not included in the provided code but may be necessary depending on your use case
+        # for i in range(len(self.data_list)):
+        #     self.data_list[i] = self.data_list[i][self.data_list[i].index <= highest_start_index]
+
+        # Print the new starting indexes for verification
+        new_start_indexes = [df.index[0] for df in self.data_list]
+        print("New start indexes:", new_start_indexes)
+
     def load_data_and_columns(self):
         # Clear previous checkboxes
         for widget in self.checkbox_frame.winfo_children():
@@ -75,26 +135,25 @@ class PlotApp:
 
         # Load CSV and extract column names for all files
         self.data_list.clear()
-        self.filtered_data_list.clear()  # Clear previous filtered data
         self.column_checkboxes.clear()
+
         for file_path in self.file_paths:
             try:
                 data = pd.read_csv(file_path)
                 data['Time'] = pd.to_datetime(data['Time'])
 
-
                 # Create 'derived_time' column that starts from 00:00:00
                 data['derived_time'] = (data['Time'] - data['Time'].min()).dt.total_seconds()
 
-
                 # Apply the filtering based on 'Idc' column
                 filtered_data = self.filter_data_by_idc(data)
+                print("Filtered data--------------------->",filtered_data)
+                
+                # Append to the data_list for further processing
+                self.data_list.append(filtered_data)
 
-                # Store the filtered data for later use
-                self.filtered_data_list.append(filtered_data)
-
-                # Create checkboxes for each column (using the filtered data)
-                column_names = filtered_data.columns.tolist()
+                # Create checkboxes for each column
+                column_names = data.columns.tolist()
                 for col in column_names:
                     if col not in self.column_checkboxes:
                         var = tk.BooleanVar()
@@ -105,6 +164,9 @@ class PlotApp:
             except Exception as e:
                 print(f"Error loading data from {file_path}: {e}")
 
+        # Synchronize starting indexes after all files have been filtered
+        self.synchronize_starting_indexes(filtered_data)
+
     def filter_data_by_idc(self, data):
         """Filters the data based on the 'Idc' column using a flag."""
         flag = 0  # Initialize the flag to 0
@@ -114,7 +176,7 @@ class PlotApp:
             nonlocal flag  # Use nonlocal to modify the flag inside the nested function
             # If flag is 0 and 'Idc' is less than 0.5, remove this row
             if flag == 0:
-                if row['Idc4'] < 0.5:
+                if row['Idc4'] < 0:
                     return False  # Remove this row
                 else:
                     flag = 1  # Once 'Idc' >= 0.5 is found, set the flag to 1
@@ -123,9 +185,7 @@ class PlotApp:
 
         # Apply the filter function to each row
         filtered_df = data[data.apply(filter_idc, axis=1)].copy()  # Use .copy() to avoid warnings
-        print("Filtered_df---------------->", filtered_df['Idc4'])
         return filtered_df
-        
 
     def create_distance_entries(self):
         # Clear previous distance entries
@@ -142,22 +202,28 @@ class PlotApp:
             self.distance_entries.append(entry)
 
     def submit(self):
+        print("submit")
         # Get the columns that are checked
         selected_columns = [col for col, var in self.column_checkboxes.items() if var.get()]
+        print("out",selected_columns)
+        print("Meeeeeeeee",self.data_list)
 
-        if self.filtered_data_list and selected_columns:
+        if self.data_list and selected_columns:
+            print("in")
             # Get total distances entered by the user for each file
             try:
+                print("try")
                 total_distances = [float(entry.get()) for entry in self.distance_entries]
             except ValueError:
+                print("exceprt")
                 self.result_label.config(text="Please enter valid numeric distances for all files.", fg="red")
                 return
-
+            print("2222222")
             # Calculate Wh/km and other metrics for each file
             results = []
-            for data, total_distance_km in zip(self.filtered_data_list, total_distances):
+            for data, total_distance_km in zip(self.data_list, total_distances):
                 results.append(self.calculate_wh_per_km(data, total_distance_km))
-
+            print("1")
             # Plot the selected columns from all files and add annotations
             self.plot_columns(selected_columns, self.path_entry.get(), results)
 
@@ -187,13 +253,24 @@ class PlotApp:
         return wh_per_km, wh_regen, wh_consumed, total_energy_wh, regen_percentage
 
     def plot_columns(self, columns, save_path, results):
+        print("plot_columns")
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
         # Define colors for each file (loop to extend for multiple files)
         colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown']
         
         # Loop through each file's data and plot the selected columns
-        for i, (data, result) in enumerate(zip(self.filtered_data_list, results)):
+        # # print("kamal----------->",self.data_list['Idc4'])
+        # print("kamal----------->", self.data_list[0]['Idc4'])
+        # print("kamal----------->", self.data_list[1]['Idc4'])
+        # Print the first 1000 rows of 'Idc4' column for each dataframe
+        for i, df in enumerate(self.data_list):
+            print(f"DataFrame {i} 'Idc4' column (first 1000 rows):")
+            print(df['Idc4'].head(1000))
+            print("\n")
+        
+
+        for i, (data, result) in enumerate(zip(self.data_list, results)):
             wh_per_km, wh_regen, wh_consumed, total_energy_wh, regen_percentage = result
             for col in columns:
                 if col in data.columns:
@@ -218,7 +295,7 @@ class PlotApp:
 
         # Save the plot as an HTML file
         os.makedirs(save_path, exist_ok=True)
-        graph_path = os.path.join(save_path, 'Combined_Plot.html')
+        graph_path = os.path.join(save_path, 'Combined_Plot_2.html')
         fig.write_html(graph_path)
         print(f"Plot saved at: {graph_path}")
 
