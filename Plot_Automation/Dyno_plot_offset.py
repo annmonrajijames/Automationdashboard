@@ -68,19 +68,6 @@ class PlotApp:
             # Create dynamic distance entry fields based on number of files selected
             self.create_distance_entries()
 
-    # def synchronize_starting_indexes(self,data):
-    #     """Synchronize the start of all filtered dataframes based on the highest index."""
-    #     # Get the starting index for each filtered dataframe
-    #     start_indexes = [data.index[0] for data in self.data_list]
-    
-
-    #     # Find the highest starting index
-    #     highest_start_index = max(start_indexes)
-
-    #     # Synchronize all dataframes to start from this highest index
-    #     for i in range(len(self.data_list)):
-    #         self.data_list[i] = self.data_list[i][self.data_list[i].index >= highest_start_index]
-
     def synchronize_starting_indexes(self, data):
         """Synchronize the start of all filtered dataframes based on the highest index."""
         # Get the starting index for each filtered dataframe
@@ -101,9 +88,7 @@ class PlotApp:
                 print(current_start_index) 
                 shift_amount = highest_start_index - current_start_index
                 print("shift",shift_amount)
-                print(self.data_list[i]['Idc4'])
                 self.data_list[i].index = self.data_list[i].index + shift_amount
-                print(self.data_list[i]['Idc4'])
 
                 data['Time'] = pd.to_datetime(data['Time'])
 
@@ -117,12 +102,6 @@ class PlotApp:
                 # Create 'derived_time' column that starts from 00:00:00
                 df['derived_time'] = (df['Time'] - df['Time'].min()).dt.total_seconds()
 
-
-
-        # Optionally, you can also crop the dataframes to ensure they all end at the same index
-        # This step is not included in the provided code but may be necessary depending on your use case
-        # for i in range(len(self.data_list)):
-        #     self.data_list[i] = self.data_list[i][self.data_list[i].index <= highest_start_index]
 
         # Print the new starting indexes for verification
         new_start_indexes = [df.index[0] for df in self.data_list]
@@ -205,20 +184,16 @@ class PlotApp:
         print("submit")
         # Get the columns that are checked
         selected_columns = [col for col, var in self.column_checkboxes.items() if var.get()]
-        print("out",selected_columns)
-        print("Meeeeeeeee",self.data_list)
 
-        if self.data_list and selected_columns:
-            print("in")
-            # Get total distances entered by the user for each file
+
+        if self.data_list and selected_columns:    
+        # Get total distances entered by the user for each file
             try:
-                print("try")
                 total_distances = [float(entry.get()) for entry in self.distance_entries]
             except ValueError:
-                print("exceprt")
                 self.result_label.config(text="Please enter valid numeric distances for all files.", fg="red")
                 return
-            print("2222222")
+
             # Calculate Wh/km and other metrics for each file
             results = []
             for data, total_distance_km in zip(self.data_list, total_distances):
@@ -259,10 +234,6 @@ class PlotApp:
         # Define colors for each file (loop to extend for multiple files)
         colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown']
         
-        # Loop through each file's data and plot the selected columns
-        # # print("kamal----------->",self.data_list['Idc4'])
-        # print("kamal----------->", self.data_list[0]['Idc4'])
-        # print("kamal----------->", self.data_list[1]['Idc4'])
         # Print the first 1000 rows of 'Idc4' column for each dataframe
         for i, df in enumerate(self.data_list):
             print(f"DataFrame {i} 'Idc4' column (first 1000 rows):")
