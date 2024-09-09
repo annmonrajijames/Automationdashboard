@@ -226,6 +226,27 @@ class PlotApp:
         wh_per_km = total_energy_wh / total_distance_km if total_distance_km > 0 else 0
 
         return wh_per_km, wh_regen, wh_consumed, total_energy_wh, regen_percentage
+    
+
+    def add_dummy_rows_for_plotting(self, data, num_rows=25):
+        """Adds dummy rows with zero values at the start of the dataframe for better visualization."""
+        # Get the column names and create a dictionary of zeros for each column
+        dummy_row = {col: 0 for col in data.columns}
+
+        # Add dummy values for 'derived_time' so that they align correctly on the x-axis
+        dummy_row['derived_time'] = data['derived_time'].min() - (num_rows * 1)  # Subtract num_rows seconds
+        
+        # Create a DataFrame with dummy rows
+        dummy_df = pd.DataFrame([dummy_row] * num_rows)
+
+        # Concatenate the dummy rows with the original dataframe
+        data_with_dummy = pd.concat([dummy_df, data]).reset_index(drop=True)
+
+        print("data with dummy",data_with_dummy)
+
+        return data_with_dummy
+    
+
 
     def plot_columns(self, columns, save_path, results):
         print("plot_columns")
@@ -233,23 +254,26 @@ class PlotApp:
 
         # Define colors for each file (loop to extend for multiple files)
         colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown']
-        
+
         # Print the first 1000 rows of 'Idc4' column for each dataframe
         for i, df in enumerate(self.data_list):
             print(f"DataFrame {i} 'Idc4' column (first 1000 rows):")
             print(df['Idc4'].head(1000))
             print("\n")
         
-
+    # Add dummy data and plot
         for i, (data, result) in enumerate(zip(self.data_list, results)):
             wh_per_km, wh_regen, wh_consumed, total_energy_wh, regen_percentage = result
+
+            # Add dummy rows for better visualization
+            data_for_plotting = self.add_dummy_rows_for_plotting(data)
+
             for col in columns:
                 if col in data.columns:
-                    # Use derived time as x-axis
+                    # Use derived time as x-axis with dummy rows
                     fig.add_trace(go.Scatter(
-                        x=data['derived_time'],
-                        y=data[col], 
-                        # name=f"{col} ({self.file_names[i]})",
+                        x=data_for_plotting['derived_time'],
+                        y=data_for_plotting[col],
                         name=f"{col} ({i+1})",
                         line=dict(color=colors[i % len(colors)], dash='solid')
                     ))
