@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+import webbrowser  # Add the webbrowser module
 
 # Tkinter GUI Setup
 class PlotApp:
@@ -146,9 +147,49 @@ class PlotApp:
         for col in columns:
             fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col))
 
-        fig.update_layout(title=f'Analysis',
-                          xaxis_title=index_column,
-                          yaxis_title='Value')
+        # Add opacity modification dropdown
+        fig.update_layout(
+            title=f'Analysis',
+            xaxis_title=index_column,
+            yaxis_title='Value',
+            updatemenus=[
+                {
+                    'buttons': [
+                        {
+                            'args': [{'opacity': 0.2}],  # Low opacity
+                            'label': '20%',
+                            'method': 'restyle'
+                        },
+                        {
+                            'args': [{'opacity': 0.4}],  # Medium opacity
+                            'label': '40%',
+                            'method': 'restyle'
+                        },
+                        {
+                            'args': [{'opacity': 0.6}],  # Default opacity
+                            'label': '60%',
+                            'method': 'restyle'
+                        },
+                        {
+                            'args': [{'opacity': 0.8}],  # Higher opacity
+                            'label': '80%',
+                            'method': 'restyle'
+                        },
+                        {
+                            'args': [{'opacity': 1}],  # Full opacity
+                            'label': '100%',
+                            'method': 'restyle'
+                        }
+                    ],
+                    'direction': 'down',  # Dropdown direction
+                    'showactive': True,
+                    'x': 1.05,  # X position of dropdown
+                    'xanchor': 'left',
+                    'y': 1.20,
+                    'yanchor': 'top'
+                }
+            ]
+        )
 
         fig.update_xaxes(tickformat='%H:%M:%S')
 
@@ -157,6 +198,9 @@ class PlotApp:
         graph_path = os.path.join(save_path, 'Generated_Plot.html')
         fig.write_html(graph_path)
         print(f"Plot saved at: {graph_path}")
+
+        # Automatically open the saved plot in the default web browser
+        webbrowser.open('file://' + os.path.realpath(graph_path))  # Open the HTML file
 
 
 if __name__ == "__main__":
