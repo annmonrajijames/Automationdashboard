@@ -22,9 +22,23 @@ class PlotApp:
         self.browse_button = tk.Button(root, text="Browse", command=self.browse_file)
         self.browse_button.pack(pady=5)
 
-        # Frame for column checkboxes
-        self.checkbox_frame = tk.Frame(root)
-        self.checkbox_frame.pack(pady=10)
+        # Frame for column selection
+        self.column_frame = tk.Frame(root)
+        self.column_frame.pack(pady=10)
+
+        # Scrollable Listbox for column selection
+        self.listbox_label = tk.Label(root, text="Select Columns to Plot (Use Ctrl or Shift for multiple selection):")
+        self.listbox_label.pack(pady=5)
+
+        # Create a scrollable listbox for columns
+        self.listbox_frame = tk.Frame(root)
+        self.listbox_frame.pack(pady=5)
+
+        self.listbox_scrollbar = tk.Scrollbar(self.listbox_frame, orient=tk.VERTICAL)
+        self.column_listbox = tk.Listbox(self.listbox_frame, selectmode=tk.MULTIPLE, yscrollcommand=self.listbox_scrollbar.set, width=50, height=10)
+        self.listbox_scrollbar.config(command=self.column_listbox.yview)
+        self.listbox_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.column_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Dropdown for Index Column Selection
         self.index_label = tk.Label(root, text="Select Index Column:")
@@ -36,9 +50,8 @@ class PlotApp:
         self.submit_button = tk.Button(root, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
 
-        # To hold the extracted column names and their corresponding checkboxes
+        # To hold the extracted column names
         self.column_names = []
-        self.column_checkboxes = {}
         self.data = None
 
     def browse_file(self):
@@ -51,9 +64,8 @@ class PlotApp:
         self.load_data_and_columns(file_path)
 
     def load_data_and_columns(self, file_path):
-        # Clear the previous checkboxes and dropdown
-        for widget in self.checkbox_frame.winfo_children():
-            widget.destroy()
+        # Clear the previous listbox and dropdown
+        self.column_listbox.delete(0, tk.END)
         self.index_column_dropdown.set('')
 
         # Load the file based on its extension
@@ -69,23 +81,21 @@ class PlotApp:
                 # Extract column names
                 self.column_names = self.data.columns.tolist()
 
-                # Create checkboxes for each column
+                # Populate the listbox with column names
                 for col in self.column_names:
-                    var = tk.BooleanVar()
-                    cb = tk.Checkbutton(self.checkbox_frame, text=col, variable=var)
-                    cb.pack(anchor='w')
-                    self.column_checkboxes[col] = var
+                    self.column_listbox.insert(tk.END, col)
 
                 # Populate the dropdown with column names for index selection
                 self.index_column_dropdown['values'] = self.column_names
 
-                print("Columns available for plotting:", self.column_names)
+                # print("Columns available for plotting:", self.column_names)
             except Exception as e:
                 print(f"Error loading data: {e}")
 
     def submit(self):
-        # Get the columns that are checked
-        selected_columns = [col for col, var in self.column_checkboxes.items() if var.get()]
+        # Get the columns that are selected from the listbox
+        selected_indices = self.column_listbox.curselection()
+        selected_columns = [self.column_names[i] for i in selected_indices]
 
         # Get the selected index column from the dropdown
         selected_index_column = self.index_column_dropdown.get()
