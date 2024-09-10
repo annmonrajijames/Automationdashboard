@@ -11,15 +11,15 @@ class PlotApp:
         self.root = root
         self.root.title("Data Plotter")
 
-        # Folder Path Input
-        self.label = tk.Label(root, text="Enter Folder Path or Drag & Drop:")
+        # File Path Input
+        self.label = tk.Label(root, text="Select File (CSV or Excel):")
         self.label.pack(pady=5)
 
         self.path_entry = tk.Entry(root, width=50)
         self.path_entry.pack(pady=5)
 
-        # Browse Button to select folder
-        self.browse_button = tk.Button(root, text="Browse", command=self.browse_folder)
+        # Browse Button to select file
+        self.browse_button = tk.Button(root, text="Browse", command=self.browse_file)
         self.browse_button.pack(pady=5)
 
         # Frame for column checkboxes
@@ -41,47 +41,47 @@ class PlotApp:
         self.column_checkboxes = {}
         self.data = None
 
-    def browse_folder(self):
-        folder_path = filedialog.askdirectory()
+    def browse_file(self):
+        # Allow the user to select either a CSV or Excel file
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         self.path_entry.delete(0, tk.END)
-        self.path_entry.insert(0, folder_path)
+        self.path_entry.insert(0, file_path)
 
-        # After folder selection, extract columns
-        self.load_data_and_columns(folder_path)
+        # After file selection, extract columns
+        self.load_data_and_columns(file_path)
 
-    def load_data_and_columns(self, folder_path):
+    def load_data_and_columns(self, file_path):
         # Clear the previous checkboxes and dropdown
         for widget in self.checkbox_frame.winfo_children():
             widget.destroy()
         self.index_column_dropdown.set('')
 
-        # Load CSV and extract column names
-        if os.path.isdir(folder_path):
-            log_file = None
-            for file in os.listdir(folder_path):
-                if file.endswith('.csv'):
-                    log_file = os.path.join(folder_path, file)
-                    break
+        # Load the file based on its extension
+        if os.path.isfile(file_path):
+            try:
+                if file_path.endswith('.csv'):
+                    self.data = pd.read_csv(file_path)
+                elif file_path.endswith('.xlsx'):
+                    self.data = pd.read_excel(file_path)
+                else:
+                    raise ValueError("Unsupported file format")
 
-            if log_file:
-                try:
-                    self.data = pd.read_csv(log_file)
-                    # Extract column names
-                    self.column_names = self.data.columns.tolist()
+                # Extract column names
+                self.column_names = self.data.columns.tolist()
 
-                    # Create checkboxes for each column
-                    for col in self.column_names:
-                        var = tk.BooleanVar()
-                        cb = tk.Checkbutton(self.checkbox_frame, text=col, variable=var)
-                        cb.pack(anchor='w')
-                        self.column_checkboxes[col] = var
+                # Create checkboxes for each column
+                for col in self.column_names:
+                    var = tk.BooleanVar()
+                    cb = tk.Checkbutton(self.checkbox_frame, text=col, variable=var)
+                    cb.pack(anchor='w')
+                    self.column_checkboxes[col] = var
 
-                    # Populate the dropdown with column names for index selection
-                    self.index_column_dropdown['values'] = self.column_names
+                # Populate the dropdown with column names for index selection
+                self.index_column_dropdown['values'] = self.column_names
 
-                    print("Columns available for plotting:", self.column_names)
-                except Exception as e:
-                    print(f"Error loading data: {e}")
+                print("Columns available for plotting:", self.column_names)
+            except Exception as e:
+                print(f"Error loading data: {e}")
 
     def submit(self):
         # Get the columns that are checked
@@ -92,7 +92,7 @@ class PlotApp:
 
         if self.data is not None and selected_columns and selected_index_column:
             # Plot the selected columns with the selected index
-            self.plot_columns(selected_columns, selected_index_column, self.path_entry.get())
+            self.plot_columns(selected_columns, selected_index_column, os.path.dirname(self.path_entry.get()))
 
     def plot_columns(self, columns, index_column, save_path):
         # Set the selected column as index
