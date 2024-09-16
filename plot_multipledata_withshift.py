@@ -174,28 +174,32 @@ class PlotApp:
         # Create individual sliders for each trace to allow horizontal movement
         sliders = []
         
+        # Iterate over each trace and create a unique slider for it
         for i, trace in enumerate(fig.data):
             steps = []
             
             # Create steps for moving the trace horizontally (adjusting x-values)
-            # for shift in range(-5.0, 5.0):  # You can adjust this range for more/less shifting
-            for shift in np.arange(-5.0, 5.0, 0.5):  # Adjust the step size as needed (e.g., 0.1 for finer shifts)
+            for shift in np.arange(-5.0, 5.0, 0.5):  # Adjust the step size as needed
                 if index_is_numeric:
                     shifted_x = original_x_values[i] + shift  # Shift numeric x-values
                 else:
                     shifted_x = original_x_values[i] + pd.Timedelta(days=shift)  # Shift datetime x-values
 
+                # Append each step for this trace
                 steps.append({
                     'method': 'restyle',
-                    'args': [{'x': [shifted_x]}, [i]],  # Apply the shift to the x-values of the i-th trace
-                    'label': str(shift)
+                    'args': [{'x': [shifted_x]}, [i]],  # Apply the shift only to the i-th trace
+                    'label': str(round(shift, 2))  # Label shows the amount of shift
                 })
 
-            # Append the slider for this specific trace
+            # Append a unique slider for this trace
             sliders.append({
                 'active': 10,  # The default position (no shift)
                 'currentvalue': {"prefix": f"File {i + 1} shift: "},
-                'steps': steps
+                'steps': steps,
+                'len': 0.9,  # Length of the slider bar (adjust this if needed)
+                'x': 0,    # Position of the slider on the x-axis
+                'y': 1.5 - (i * 0.05),  # Stack sliders vertically (adjust spacing as needed)
             })
 
         # Update layout with the sliders
@@ -203,7 +207,8 @@ class PlotApp:
             sliders=sliders,
             xaxis_title="Time",
             yaxis_title="Values",
-            title="Comparing Traces with Horizontal Shifts"
+            # title="Comparing Traces with Individual Horizontal Shifts",
+            height=600 + 50 * len(fig.data)  # Adjust height based on number of traces
         )
 
         # Save the plot as an HTML file
@@ -214,6 +219,7 @@ class PlotApp:
 
         # Automatically open the saved plot in the default web browser
         webbrowser.open('file://' + os.path.realpath(graph_path))  # Open the HTML file
+
 
 
 
