@@ -146,30 +146,21 @@ class PlotApp:
         # Create the subplots
         fig = make_subplots()
 
-        # Variable to track if index is numeric or datetime
-        index_is_numeric = True
-
         # List to store the original x-values (to apply shifts later)
         original_x_values = []
 
         # Loop through each dataframe (for each file)
         for i, data in enumerate(self.data_frames):
-            # Set the selected column as index
-            if index_column in data.columns:
-                data.set_index(index_column, inplace=True)
-
-            # Check if the index is numeric, else handle as datetime
-            if not pd.api.types.is_numeric_dtype(data.index):
-                index_is_numeric = False  # Set flag if index is not numeric
-                data.index = pd.to_datetime(data.index)  # Convert index to datetime
-
-            # Store original x-values for shifting purposes
-            original_x_values.append(data.index)
+            # Create a relative x-axis (just use the row number as index)
+            relative_x = np.arange(len(data))  # Use the row index (0, 1, 2, ...) for comparison
+            
+            # Store original x-values for shifting purposes (row indices)
+            original_x_values.append(relative_x)
 
             # Add trace for each selected column from the corresponding file
             for col in columns:
                 trace_name = f"File {i + 1}: {col}"
-                fig.add_trace(go.Scatter(x=data.index, y=data[col], name=trace_name))
+                fig.add_trace(go.Scatter(x=relative_x, y=data[col], name=trace_name))
 
         # Create individual sliders for each trace to allow horizontal movement
         sliders = []
@@ -179,35 +170,31 @@ class PlotApp:
             steps = []
             
             # Create steps for moving the trace horizontally (adjusting x-values)
-            for shift in np.arange(-5.0, 5.0, 0.5):  # Adjust the step size as needed
-                if index_is_numeric:
-                    shifted_x = original_x_values[i] + shift  # Shift numeric x-values
-                else:
-                    shifted_x = original_x_values[i] + pd.Timedelta(days=shift)  # Shift datetime x-values
+            for shift in np.arange(-50.0, 50.0, 1):  # Shift steps (adjust the range as needed)
+                shifted_x = original_x_values[i] + shift  # Shift by relative positions
 
                 # Append each step for this trace
                 steps.append({
                     'method': 'restyle',
                     'args': [{'x': [shifted_x]}, [i]],  # Apply the shift only to the i-th trace
-                    'label': str(round(shift, 2))  # Label shows the amount of shift
+                    'label': f"{int(shift)}"  # Label shows the amount of shift
                 })
 
             # Append a unique slider for this trace
             sliders.append({
-                'active': 10,  # The default position (no shift)
+                'active': 50,  # Start at the default position (no shift)
                 'currentvalue': {"prefix": f"File {i + 1} shift: "},
                 'steps': steps,
                 'len': 0.9,  # Length of the slider bar (adjust this if needed)
                 'x': 0,    # Position of the slider on the x-axis
-                'y': 1.5 - (i * 0.05),  # Stack sliders vertically (adjust spacing as needed)
+                'y': 1.5 - (i * 0.25),  # Stack sliders vertically (adjust spacing as needed)
             })
 
         # Update layout with the sliders
         fig.update_layout(
             sliders=sliders,
-            xaxis_title="Time",
+            xaxis_title="Relative Position (Index)",
             yaxis_title="Values",
-            # title="Comparing Traces with Individual Horizontal Shifts",
             height=600 + 50 * len(fig.data)  # Adjust height based on number of traces
         )
 
@@ -219,6 +206,7 @@ class PlotApp:
 
         # Automatically open the saved plot in the default web browser
         webbrowser.open('file://' + os.path.realpath(graph_path))  # Open the HTML file
+
 
 
 
