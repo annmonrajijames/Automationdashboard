@@ -162,40 +162,75 @@ class PlotApp:
                 trace_name = f"File {i + 1}: {col}"
                 fig.add_trace(go.Scatter(x=relative_x, y=data[col], name=trace_name))
 
-        # Create individual sliders for each trace to allow horizontal movement
-        sliders = []
+        # Create a dropdown and a slider for each trace to allow custom shifting
+        updatemenus = []
         
-        # Iterate over each trace and create a unique slider for it
+        # Iterate over each trace and create a unique dropdown + slider for it
         for i, trace in enumerate(fig.data):
-            steps = []
-            
-            # Create steps for moving the trace horizontally (adjusting x-values)
-            for shift in np.arange(-50.0, 50.0, 1):  # Shift steps (adjust the range as needed)
-                shifted_x = original_x_values[i] + shift  # Shift by relative positions
+            # Define a range of shift values for dropdown (user can pick a value)
+            predefined_shifts = [-5000, -3000, -1000, 0, 1000, 3000, 5000]
 
-                # Append each step for this trace
-                steps.append({
-                    'method': 'restyle',
+            buttons = []
+            
+            for shift in predefined_shifts:
+                # Shift the x-values by the specified amount
+                shifted_x = original_x_values[i] + shift
+                buttons.append({
                     'args': [{'x': [shifted_x]}, [i]],  # Apply the shift only to the i-th trace
-                    'label': f"{int(shift)}"  # Label shows the amount of shift
+                    'label': f"File {i+1} Shift by {shift}",
+                    'method': 'restyle'
                 })
 
-            # Append a unique slider for this trace
-            sliders.append({
-                'active': 50,  # Start at the default position (no shift)
-                'currentvalue': {"prefix": f"File {i + 1} shift: "},
-                'steps': steps,
-                'len': 0.9,  # Length of the slider bar (adjust this if needed)
-                'x': 0,    # Position of the slider on the x-axis
-                'y': 1.5 - (i * 0.25),  # Stack sliders vertically (adjust spacing as needed)
+            # Add a custom option for user-defined shifts
+            buttons.append({
+                'args': [{'x': [original_x_values[i]]}, [i]],  # No initial shift for custom
+                'label': "Custom",
+                'method': 'restyle'
             })
 
-        # Update layout with the sliders
+            # Append dropdown menu for this trace
+            updatemenus.append({
+                'buttons': buttons,
+                'direction': 'down',  # Dropdown direction
+                'showactive': True,
+                'x': 1.05,  # X position of dropdown
+                'xanchor': 'left',
+                # 'y': 1.15 - (i * 0.1),  # Stack dropdowns vertically
+                'y': 1.15 - (i * 0.1),  # Stack sliders vertically (adjust spacing as needed)
+                'yanchor': 'top',
+                'pad': {'r': 10},  # Adjust padding between dropdowns
+                'name': f'Shift File {i+1}'
+            })
+
+        # Create sliders for custom shifts (users can slide to adjust custom values)
+        sliders = []
+        
+        # Slider for each trace
+        for i, original_x in enumerate(original_x_values):
+            sliders.append({
+                'currentvalue': {"prefix": f"Custom Shift for File {i + 1}: "},
+                'steps': [
+                    {
+                        'method': 'restyle',
+                        'label': f'{shift}',
+                        'args': [{'x': [original_x + shift]}, [i]],  # Apply shift
+                    } for shift in range(-5000, 5001, 500)  # Slider range from -5000 to 5000
+                ],
+                'x': 0.3,  # Adjust position of the slider
+                'len': 0.6,  # Length of the slider
+                # 'y': 1.0 - (i * 0.1)  # Stack sliders vertically
+                'y': 1.20 - (i * 0.15),  # Stack sliders vertically (adjust spacing as needed)
+            })
+
+        # Add the dropdowns and sliders to the plot layout
         fig.update_layout(
-            sliders=sliders,
+            title='Comparison Plot with Shift Controls',
             xaxis_title="Relative Position (Index)",
             yaxis_title="Values",
-            height=600 + 50 * len(fig.data)  # Adjust height based on number of traces
+            updatemenus=updatemenus,  # Add the dropdown menus
+            sliders=sliders,  # Add the sliders
+            height=600 + 100 * len(fig.data),  # Adjust height based on number of traces
+            margin=dict(r=150)  # Add margin to the right for dropdowns
         )
 
         # Save the plot as an HTML file
@@ -206,6 +241,7 @@ class PlotApp:
 
         # Automatically open the saved plot in the default web browser
         webbrowser.open('file://' + os.path.realpath(graph_path))  # Open the HTML file
+
 
 
 
