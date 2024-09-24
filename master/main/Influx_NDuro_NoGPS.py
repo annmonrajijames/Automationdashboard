@@ -751,7 +751,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         avg_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].mean()
     
         # Find the battery voltage
-        batteryVoltage = (data_resampled['PackVol [SA: 06]'].max()) * 10
+        batteryVoltage = (data_resampled['PackVol [SA: 06]'].max()) 
         print( "Battery Voltage", batteryVoltage )
     
         # Check for abnormal motor temperature at high RPMs for at least 15 seconds
@@ -843,14 +843,6 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Total distance covered (km) - Lat & Long(GPS) ": total_distance,
             "Total distance - Ground Distance(GPS) (km)": total_distance_Ground_Distance,
             "Mode": "",
-            # "Wh/km in Normal mode": wh_per_km_Normal_mode,
-            # "Distance travelled in Normal mode":distance_per_mode[2],
-            # "Wh/km in Fast Mode": wh_per_km_Fast_mode,
-            # "Distance travelled in Fast Mode":distance_per_mode[6],
-            # "Wh/km in ECO Mode": wh_per_km_ECO_mode,
-            # "Distance travelled in ECO mode":distance_per_mode[4],
-            # "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
-            # "Distance travelled in LIMP Mode":distance_per_mode[5],
             "Actual Watt-hours (Wh)": watt_h,
             "Peak Power(W)": peak_power,
             "Peak current (A)": abs(peak_current),
