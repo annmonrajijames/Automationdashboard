@@ -456,11 +456,14 @@ def Bytebeam_NDuro_input(input_folder_path):
 
             for index, row in data.iterrows():
                 if row['MotorSpeed_340920578'] > 0:
-
+                    print("row['Time_Diff']",row['Time_Diff'])
                     distance_interval = row['Speed_ms'] * row['Time_Diff']
                     # Calculate the distance traveled in this interval
                     total_distance_with_RPM += distance_interval
+
+                    print(total_distance_with_RPM)
                     
+
             print("Distance With RPM---------------------->",total_distance_with_RPM/1000)
 #################
             
@@ -478,7 +481,7 @@ def Bytebeam_NDuro_input(input_folder_path):
         
             # Calculate the time difference between consecutive rows
             data_resampled['Time_Diff'] = data_resampled.index.to_series().diff().dt.total_seconds().fillna(0)
-
+ 
 
             # Calculate the actual Ampere-hours (Ah) using the trapezoidal rule for numerical integration
             actual_ah = abs((data_resampled['PackCurr_6'] * data_resampled['Time_Diff']).sum()) / 3600  # Convert seconds to hours
@@ -506,6 +509,27 @@ def Bytebeam_NDuro_input(input_folder_path):
             avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
             avg_speed =avg_motor_rpm * 0.0836
 
+            voltage_at_cutoff= data_resampled['PackVol_6'].min()
+
+
+            avg_speed_with_idle =avg_motor_rpm * 0.0836
+
+            filtered_data3 = data[data['MotorSpeed_340920578']>0]
+            average_current_withRegen_withoutIdling = filtered_data3['PackCurr_6'].mean()
+            
+            average_rpm_without_idle = filtered_data3['MotorSpeed_340920578'].mean()
+            avg_speed_without_idle =average_rpm_without_idle * 0.0836
+
+            # average_current =data_resampled['PackCurr [SA``: 06]'].mean()
+            average_current_withRegen_withIdling =data_resampled['PackCurr_6'].mean()
+ 
+            filtered_data = data[data['PackCurr_6'] < -0.5]                   #removing Regen
+            average_current_withoutRegen_withIdling = filtered_data['PackCurr_6'].mean()
+
+            filtered_data2 = filtered_data[filtered_data['MotorSpeed_340920578']>5]          #removing idle time
+            average_current_withoutRegen_withoutIdling = filtered_data2['PackCurr_6'].mean()
+
+            
             # Initialize total distance covered
             total_distance = 0
             distance_per_mode = defaultdict(float)
@@ -530,8 +554,6 @@ def Bytebeam_NDuro_input(input_folder_path):
                 mode = data['Mode_Ack_408094978'].iloc[i]
                 distance_per_mode[mode] += distance
 
-                
-            
             print("Total distance covered (in kilometers):{:.2f}".format(total_distance))
         
             ##############   Wh/Km
@@ -730,7 +752,7 @@ def Bytebeam_NDuro_input(input_folder_path):
             max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
         
             # Find the battery voltage
-            batteryVoltage = (data_resampled['BatteryVoltage_340920578'].max()) * 10
+            batteryVoltage = (data_resampled['BatteryVoltage_340920578'].max()) 
             print( "Battery Voltage", batteryVoltage )
         
             # Check for abnormal motor temperature at high RPMs for at least 15 seconds
@@ -785,12 +807,17 @@ def Bytebeam_NDuro_input(input_folder_path):
         
             # Print the maximum speed
             print("The maximum speed is:", peak_speed)
+
+            print("actual ahhhhhhhhhh---------->",actual_ah)
+            print("Battery_voltage------------->",batteryVoltage)
         
             total_energy_kwh = actual_ah * batteryVoltage / 1000
             print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
+
+            # print("")
         
-            total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
-            print("Electricity consumption units in kW", (total_energy_kw))
+            # total_energy_kw = total_energy_kwh / total_duration.seconds / 3600
+            # print("Electricity consumption units in kW", (total_energy_kw))
 
             print("wh/km----------->",wh_per_km_total)
         
@@ -812,14 +839,14 @@ def Bytebeam_NDuro_input(input_folder_path):
                 "Total distance covered (kms) - Lat & Long (GPS)": total_distance,
                 "Energy Consumption Rate(WH/KM)- ENTIRE RIDE": watt_h / total_distance,
                 "Mode": "",
-                "Wh/km in Normal mode": wh_per_km_Normal_mode,
-                "Distance travelled in Normal mode":distance_per_mode[2],
-                "Wh/km in Fast Mode": wh_per_km_Fast_mode,
-                "Distance travelled in Fast Mode":distance_per_mode[6],
-                "Wh/km in ECO mode": wh_per_km_ECO_mode,
-                "Distance travelled in ECO mode":distance_per_mode[4],
-                "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
-                "Distance travelled in LIMP Mode":distance_per_mode[5],
+                # "Wh/km in Normal mode": wh_per_km_Normal_mode,
+                # "Distance travelled in Normal mode":distance_per_mode[2],
+                # "Wh/km in Fast Mode": wh_per_km_Fast_mode,
+                # "Distance travelled in Fast Mode":distance_per_mode[6],
+                # "Wh/km in ECO mode": wh_per_km_ECO_mode,
+                # "Distance travelled in ECO mode":distance_per_mode[4],
+                # "Wh/km in LIMP Mode": wh_per_km_LIMP_mode,
+                # "Distance travelled in LIMP Mode":distance_per_mode[5],
                 "Peak_current":peak_current,
                 "Average_current":abs(average_current),
                 "Peak Power(W)": peak_power,
@@ -843,13 +870,20 @@ def Bytebeam_NDuro_input(input_folder_path):
                 "Difference between Highest and Lowest Cell Temperature at 100% SOC(C)": CellTempDiff,
                 "Battery Voltage(V)": batteryVoltage,
                 "Total energy charged(kWh)- Calculated_Using_BatteryData": total_energy_kwh,
-                "Electricity consumption units(kW)": total_energy_kw,
+                # "Electricity consumption units(kW)": total_energy_kw,
                 "Cycle Count of battery": cycleCount,
                 "Cruising Speed (Rpm)": cruising_rpm,
                 "cruising_speed (km/hr)":cruise_speed,
                 "Maximum Motor speed (RPM)":Max_motor_rpm,
                 "Peak speed (Km/hr)":peak_speed,
-                "average_speed":avg_speed
+                "average_speed":avg_speed,
+                "Voltage at cutoff (V)":voltage_at_cutoff,
+                "Avg_speed with idle(km/hr)":avg_speed_with_idle,
+                "Avg_speed without idle(km/hr)":avg_speed_without_idle,
+                "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
+                "Average_current (With regen and without Idle) (A)":abs(average_current_withRegen_withoutIdling),
+                "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
+                "Average_current (Without regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withoutRegen_withoutIdling),
                 }
         
             mode_values = data_resampled['Mode_Ack_408094978'].unique()
@@ -1110,13 +1144,13 @@ def Bytebeam_NDuro_input(input_folder_path):
                     '20 to 30', '30 to 40', '40 to 50', '50 to 60', '60 to 70', '70 to 80', '80 to 90', '90 to 100', '> 100']
 
             # Cut the data into categories using the bins
-            categories = pd.cut(data['PackCurr [SA: 06]'], bins=bins, labels=labels, right=False)
+            categories = pd.cut(data['PackCurr_6'], bins=bins, labels=labels, right=False)
 
             # Add the category column to the data
             data['Category'] = categories
 
-            # Calculate the sum of 'PackCurr [SA: 06]' values in each category
-            category_sums = data.groupby('Category')['PackCurr [SA: 06]'].sum()
+            # Calculate the sum of 'PackCurr_6' values in each category
+            category_sums = data.groupby('Category')['PackCurr_6'].sum()
 
             # Calculate the absolute sum for percentage calculation
             total_sum = category_sums.abs().sum()
