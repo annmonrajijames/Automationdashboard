@@ -680,6 +680,28 @@ def Influx_LX70_input(input_folder_path):
 
         avg_speed =avg_motor_rpm * 0.01606
 
+        voltage_at_cutoff= data_resampled['PackVol [SA: 06]'].min()
+
+        avg_speed_with_idle =avg_motor_rpm * 0.016
+
+        filtered_data3 = data[data['MotorSpeed [SA: 02]']>0]
+        average_current_withRegen_withoutIdling = filtered_data3['PackCurr [SA: 06]'].mean()
+        
+        
+        average_rpm_without_idle = filtered_data3['MotorSpeed [SA: 02]'].mean()
+        avg_speed_without_idle =average_rpm_without_idle * 0.016
+        print("Average RPM",average_rpm_without_idle)
+
+        # average_current =data_resampled['PackCurr [SA``: 06]'].mean()
+        average_current_withRegen_withIdling =data_resampled['PackCurr [SA: 06]'].mean()
+
+        filtered_data = data[data['PackCurr [SA: 06]'] < -0.5]                   #removing Regen
+        average_current_withoutRegen_withIdling = filtered_data['PackCurr [SA: 06]'].mean()
+
+        filtered_data2 = filtered_data[filtered_data['MotorSpeed [SA: 02]']>5]          #removing idle time
+        average_current_withoutRegen_withoutIdling = filtered_data2['PackCurr [SA: 06]'].mean()
+    
+
         # Print the maximum speed
         print("The maximum speed is:", peak_speed)
     
@@ -707,12 +729,12 @@ def Influx_LX70_input(input_folder_path):
             "Total distance covered (km) - Lat & Long(GPS)": total_distance,
             "Total distance - Ground Distance(GPS)": total_distance_Ground_Distance/1000,
             "Mode": "", 
-            "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
-            "Distance_Custom mode":distance_per_mode[3],
-            "Wh/km in POWER mode": wh_per_km_POWER_mode,
-            "Distance_POWER mode":distance_per_mode[2],
-            "Wh/km in ECO mode": wh_per_km_ECO_mode,
-            "Distance_ECO mode":distance_per_mode[1],       
+            # "Wh/km in CUSTOM mode": wh_per_km_CUSTOM_mode,
+            # "Distance_Custom mode":distance_per_mode[3],
+            # "Wh/km in POWER mode": wh_per_km_POWER_mode,
+            # "Distance_POWER mode":distance_per_mode[2],
+            # "Wh/km in ECO mode": wh_per_km_ECO_mode,
+            # "Distance_ECO mode":distance_per_mode[1],       
             "Actual Watt-hours (Wh)- Calculated_UsingFormala 'watt_h= 1/3600(|∑(V(t)⋅I(t)⋅Δt)|)'": watt_h,
             "Peak Power(W)": peak_power,
             "Average Power(W)": average_power,
@@ -743,6 +765,13 @@ def Influx_LX70_input(input_folder_path):
             # "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed,
+            "Voltage at cutoff (V)":voltage_at_cutoff,
+            "Avg_speed with idle(km/hr)":avg_speed_with_idle,
+            "Avg_speed without idle(km/hr)":avg_speed_without_idle,
+            "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
+            "Average_current (With regen and without Idle) (A)":abs(average_current_withRegen_withoutIdling),
+            "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
+            "Average_current (Without regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withoutRegen_withoutIdling),
             }
         
         mode_values = data_resampled['Mode_Ack [SA: 02]'].unique() #If Mode_Ack [SA: 02] has values [1, 2, 2, 3, 1], unique() will return array([1, 2, 3]).
@@ -1121,13 +1150,13 @@ def Influx_LX70_input(input_folder_path):
                 '20 to 30', '30 to 40', '40 to 50', '50 to 60', '60 to 70', '70 to 80', '80 to 90', '90 to 100', '> 100']
 
         # Cut the data into categories using the bins
-        categories = pd.cut(data['PackCurr_6'], bins=bins, labels=labels, right=False)
+        categories = pd.cut(data['PackCurr [SA: 06]'], bins=bins, labels=labels, right=False)
 
         # Add the category column to the data
         data['Category'] = categories
 
-        # Calculate the sum of 'PackCurr_6' values in each category
-        category_sums = data.groupby('Category')['PackCurr_6'].sum()
+        # Calculate the sum of 'PackCurr [SA: 06]' values in each category
+        category_sums = data.groupby('Category')['PackCurr [SA: 06]'].sum()
 
         # Calculate the absolute sum for percentage calculation
         total_sum = category_sums.abs().sum()

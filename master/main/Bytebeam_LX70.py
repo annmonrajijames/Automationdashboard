@@ -500,6 +500,25 @@ def Bytebeam_LX70_input(input_folder_path):
             avg_motor_rpm =data_resampled['MotorSpeed_340920578'].mean()
             avg_speed =avg_motor_rpm * 0.01606
 
+            voltage_at_cutoff= data_resampled['PackVol_6'].min()
+
+            avg_speed_with_idle =avg_motor_rpm * 0.016
+
+            filtered_data3 = data[data['MotorSpeed_340920578']>0]
+            average_current_withRegen_withoutIdling = filtered_data3['PackCurr_6'].mean()
+            
+            average_rpm_without_idle = filtered_data3['MotorSpeed_340920578'].mean()
+            avg_speed_without_idle =average_rpm_without_idle * 0.016
+            print("Average RPM Without idle--->",average_rpm_without_idle)
+
+            # average_current =data_resampled['PackCurr [SA``: 06]'].mean()
+            average_current_withRegen_withIdling =data_resampled['PackCurr_6'].mean()
+ 
+            filtered_data = data[data['PackCurr_6'] < -0.5]                   #removing Regen
+            average_current_withoutRegen_withIdling = filtered_data['PackCurr_6'].mean()
+
+            filtered_data2 = filtered_data[filtered_data['MotorSpeed_340920578']>5]          #removing idle time
+            average_current_withoutRegen_withoutIdling = filtered_data2['PackCurr_6'].mean()
         
             # Iterate over rows to compute distance covered between consecutive points
             for i in range(len(data) - 1):
@@ -881,7 +900,14 @@ def Bytebeam_LX70_input(input_folder_path):
                 "cruising_speed (km/hr)":cruise_speed,
                 "Maximum Motor speed (RPM)":Max_motor_rpm,
                 "Peak speed (Km/hr)":peak_speed,
-                "Average_speed":avg_speed
+                "Average_speed":avg_speed,
+                "Voltage at cutoff (V)":voltage_at_cutoff,
+                "Avg_speed with idle(km/hr)":avg_speed_with_idle,
+                "Avg_speed without idle(km/hr)":avg_speed_without_idle,
+                "Average_current (With regen and with Idle) (A)":abs(average_current_withRegen_withIdling),
+                "Average_current (With regen and without Idle) (A)":abs(average_current_withRegen_withoutIdling),
+                "Average_current (Without regen and with Idle) (A)":abs(average_current_withoutRegen_withIdling),
+                "Average_current (Without regen and without Idle) (A)- (Avg. Discharge Current)":abs(average_current_withoutRegen_withoutIdling),
                 }
         
             # Check if the mode remains constant or changes
