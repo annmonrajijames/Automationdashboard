@@ -24,8 +24,8 @@ class FileProcessorApp:
         self.process_button.pack(pady=10)
 
     def browse_file(self):
-        # Allow the user to select either a CSV or Excel file
-        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        # Allow the user to select any file
+        file_path = filedialog.askopenfilename(filetypes=[("All files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         if file_path:
             self.path_entry.delete(0, tk.END)
             self.path_entry.insert(0, file_path)
