@@ -50,6 +50,16 @@ class PlotApp:
         self.canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
 
+        # "Select All" checkbox
+        self.select_all_var = tk.BooleanVar()
+        self.select_all_checkbox = tk.Checkbutton(
+            self.scrollable_frame,
+            text="Select All",
+            variable=self.select_all_var,
+            command=self.toggle_all_checkboxes
+        )
+        self.select_all_checkbox.pack(anchor='w')
+
         # Dropdown for Index Column Selection
         self.index_label = tk.Label(root, text="Select Index Column:")
         self.index_label.pack(pady=5)
@@ -81,6 +91,15 @@ class PlotApp:
         self.index_column_dropdown.set('')
         self.checkbox_vars.clear()
 
+        # Re-add the "Select All" checkbox
+        self.select_all_checkbox = tk.Checkbutton(
+            self.scrollable_frame,
+            text="Select All",
+            variable=self.select_all_var,
+            command=self.toggle_all_checkboxes
+        )
+        self.select_all_checkbox.pack(anchor='w')
+
         # Load the file based on its extension
         if os.path.isfile(file_path):
             try:
@@ -111,9 +130,10 @@ class PlotApp:
         # Filter the column names based on the search query
         filtered_columns = [col for col in self.column_names if search_query in col.lower()]
 
-        # Clear the current checkboxes
+        # Clear the current checkboxes except the "Select All" checkbox
         for widget in self.scrollable_frame.winfo_children():
-            widget.destroy()
+            if widget != self.select_all_checkbox:
+                widget.destroy()
 
         # Add checkboxes for the filtered columns
         for col in filtered_columns:
@@ -123,6 +143,20 @@ class PlotApp:
 
             cb = tk.Checkbutton(self.scrollable_frame, text=col, variable=self.checkbox_vars[col])
             cb.pack(anchor='w')
+
+        # Update the "Select All" checkbox state based on the filtered checkboxes
+        self.update_select_all_state()
+
+    def update_select_all_state(self):
+        # Check if all filtered checkboxes are selected
+        all_selected = all(var.get() for col, var in self.checkbox_vars.items() if col in self.column_names)
+        self.select_all_var.set(all_selected)
+
+    def toggle_all_checkboxes(self):
+        # Toggle all checkboxes based on the "Select All" checkbox state
+        select_all_state = self.select_all_var.get()
+        for col, var in self.checkbox_vars.items():
+            var.set(select_all_state)
 
     def submit(self):
         # Get the columns that are checked
