@@ -173,6 +173,7 @@ class PlotApp:
         # Set the selected column as index
         if index_column in self.data.columns:
             self.data.set_index(index_column, inplace=True)
+            columns.remove(index_column)
 
         # Plot using Plotly
         fig = make_subplots()
