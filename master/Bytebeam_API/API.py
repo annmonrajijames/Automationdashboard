@@ -11,11 +11,9 @@ headers = {
 }
 
 columns = [
-    "CellUnderVolWarn_9", "percentage_of_can_ids", "Dchg_Accumulative_Ah_14", "CellOverVolProt_9",
+    "timestamp", "id", "CellUnderVolWarn_9", "percentage_of_can_ids", "Dchg_Accumulative_Ah_14", "CellOverVolProt_9",
     "ChargerType_12", "CellVol02_1", "AC_Current_340920579", "PcbTemp_12", "Reverse_Pulse_408094978",
-    "MotorSpeed_340920578", "LatchProtection_12", "Temp6_10", "Temp3_10", "ForwardParking_Mode_Ack_408094978",
-    # Add the rest of the columns here...
-    "ActiveCellBalStatus_9"
+    "MotorSpeed_340920578", "LatchProtection_12", "Temp6_10", "Temp3_10", "ForwardParking_Mode_Ack_408094978"
 ]
 
 def fetch_and_export_data(column_pair):
@@ -60,19 +58,28 @@ def fetch_and_export_data(column_pair):
 def split_and_fetch_data():
     combined_df = pd.DataFrame()
 
-    # Split columns into pairs
-    for i in range(0, len(columns), 2):
+    # Split columns into pairs, starting from index 2 to skip 'timestamp' and 'id'
+    for i in range(2, len(columns), 2):
         column_pair = columns[i:i + 2]
         print(f"Fetching data for columns: {column_pair}")
 
         # Fetch data for the current pair of columns
         df = fetch_and_export_data(column_pair)
 
-        # Append to the combined dataframe
-        combined_df = pd.concat([combined_df, df], axis=1)
+        # Append to the combined dataframe, avoiding duplicate columns
+        if combined_df.empty:
+            combined_df = df
+        else:
+            # Keep only new columns
+            df = df[df.columns.difference(combined_df.columns)]
+            combined_df = pd.concat([combined_df, df], axis=1)
 
         # Delay of 2 seconds between calls
         time.sleep(2)
+
+    # Reorder columns to ensure 'timestamp' and 'id' are first
+    final_columns = ['timestamp', 'id'] + [col for col in combined_df.columns if col not in ['timestamp', 'id']]
+    combined_df = combined_df[final_columns]
 
     # Export combined DataFrame to Excel
     with pd.ExcelWriter('can_parsed_joined_data.xlsx', engine='openpyxl') as writer:
