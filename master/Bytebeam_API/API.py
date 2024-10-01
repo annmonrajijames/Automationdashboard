@@ -13,10 +13,14 @@ headers = {
 columns = [
     "timestamp", "id", "CellUnderVolWarn_9", "percentage_of_can_ids", "Dchg_Accumulative_Ah_14", "CellOverVolProt_9",
     "ChargerType_12", "CellVol02_1", "AC_Current_340920579", "PcbTemp_12", "Reverse_Pulse_408094978",
-    "MotorSpeed_340920578", "LatchProtection_12", "Temp6_10", "Temp3_10", "ForwardParking_Mode_Ack_408094978"
+    "MotorSpeed_340920578", "LatchProtection_12", "Temp6_10", "Temp3_10", "ForwardParking_Mode_Ack_408094978",
+    "ActiveCellBalStatus_9"
 ]
 
-def fetch_and_export_data(column_pair):
+# Number of columns to fetch per API call, adjustable by the user
+columns_per_call = 5  # Set this value as needed
+
+def fetch_and_export_data(column_subset):
     data = {
         "startTime": 1721714472168,
         "endTime": 1724392872168,
@@ -25,7 +29,7 @@ def fetch_and_export_data(column_pair):
         "panels": [{
             "type": "timeseries_table",
             "table": "can_parsed_joined",
-            "columns": column_pair,
+            "columns": column_subset,
             "sortOrder": "desc",
             "rowsPerPage": 1000,
             "page": 1
@@ -58,13 +62,13 @@ def fetch_and_export_data(column_pair):
 def split_and_fetch_data():
     combined_df = pd.DataFrame()
 
-    # Split columns into pairs, starting from index 2 to skip 'timestamp' and 'id'
-    for i in range(2, len(columns), 2):
-        column_pair = columns[i:i + 2]
-        print(f"Fetching data for columns: {column_pair}")
+    # Split columns into subsets according to 'columns_per_call'
+    for i in range(2, len(columns), columns_per_call):
+        column_subset = columns[i:i + columns_per_call]
+        print(f"Fetching data for columns: {column_subset}")
 
-        # Fetch data for the current pair of columns
-        df = fetch_and_export_data(column_pair)
+        # Fetch data for the current subset of columns
+        df = fetch_and_export_data(column_subset)
 
         # Append to the combined dataframe, avoiding duplicate columns
         if combined_df.empty:
