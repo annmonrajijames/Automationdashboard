@@ -446,8 +446,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         print("---------------------------------------------------------------------------------->",total_distance_with_RPM_discharge)
         
         #starting and ending ah
-        starting_soc_Ah = data['SOCAh [SA: 08]'].iloc[0]
-        ending_soc_Ah = data['SOCAh [SA: 08]'].iloc[-1]
+        starting_soc_Ah = data['SOCAh [SA: 08]'].max()
+        ending_soc_Ah = data['SOCAh [SA: 08]'].min()
     
         print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
         print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))

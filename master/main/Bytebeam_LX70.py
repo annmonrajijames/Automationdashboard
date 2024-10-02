@@ -483,8 +483,8 @@ def Bytebeam_LX70_input(input_folder_path):
             print("Actual Watt-hours (Wh):{:.2f}" .format(watt_h))
         
             ###########   starting and ending ah
-            starting_soc_Ah = data['SOCAh_8'].iloc[-1]
-            ending_soc_Ah = data['SOCAh_8'].iloc[0]
+            starting_soc_Ah = data['SOCAh_8'].max()
+            ending_soc_Ah = data['SOCAh_8'].min()
         
             print("Starting SoC (Ah):{:.2f}".format (starting_soc_Ah))
             print("Ending SoC (Ah):{:.2f}".format  (ending_soc_Ah))
