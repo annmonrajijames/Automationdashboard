@@ -77,7 +77,7 @@ class PlotApp:
 
     def browse_file(self):
         # Allow the user to select either a CSV or Excel file
-        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"),("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         self.path_entry.delete(0, tk.END)
         self.path_entry.insert(0, file_path)
 
@@ -109,6 +109,11 @@ class PlotApp:
                     self.data = pd.read_excel(file_path)
                 else:
                     raise ValueError("Unsupported file format")
+                
+                 # Add an explicit index column to the data
+                self.data.insert(0, 'Index', range(1, len(self.data) + 1))
+                
+                
 
                 # Extract column names
                 self.column_names = self.data.columns.tolist()
@@ -180,8 +185,10 @@ class PlotApp:
 
         # Add trace for each selected column
         for col in columns:
-            fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col))
-
+            # fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col))
+            # Plot each point without connecting them (just markers)
+            fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col, mode='markers'))
+    
         # Add opacity modification dropdown
         fig.update_layout(
             title=f'Analysis',
