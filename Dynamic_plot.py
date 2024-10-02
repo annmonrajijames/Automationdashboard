@@ -76,13 +76,21 @@ class PlotApp:
         self.data = None
 
     def browse_file(self):
+        
+        
         # Allow the user to select either a CSV or Excel file
         file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"),("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         self.path_entry.delete(0, tk.END)
         self.path_entry.insert(0, file_path)
 
+         # Extract the input file name and base name
+        self.input_file_name = os.path.basename(file_path)  # File name with extension
+        
+        #self.input_file_base_name = os.path.splitext(self.input_file_name)[0]  # Base name without extension
+
         # After file selection, extract columns
         self.load_data_and_columns(file_path)
+        
 
     def load_data_and_columns(self, file_path):
         # Clear the previous checkboxes and dropdown
@@ -124,7 +132,7 @@ class PlotApp:
                 # Populate the dropdown with column names for index selection
                 self.index_column_dropdown['values'] = self.column_names
 
-                print("Columns available for plotting:", self.column_names)
+                # print("Columns available for plotting:", self.column_names)
             except Exception as e:
                 print(f"Error loading data: {e}")
 
@@ -175,31 +183,39 @@ class PlotApp:
             self.plot_columns(selected_columns, selected_index_column, os.path.dirname(self.path_entry.get()))
 
     def plot_columns(self, columns, index_column, save_path):
+        print("chosen columns",columns)
         # Set the selected column as index
-        if index_column in self.data.columns:
+        if index_column in columns:
             self.data.set_index(index_column, inplace=True)
             columns.remove(index_column)
 
-        # Plot using Plotly
-        fig = make_subplots()
+        else:
+            self.data.set_index(index_column, inplace=True)
 
-        # Add trace for each selected column
-        for col in columns:
-            # fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col))
-            # Plot each point without connecting them (just markers)
-            fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col, mode='markers'))
+        # Plot using Plotly
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Add trace for each selected column
+        for i, col in enumerate(columns):
+            # Assign y-axis based on index (e.g., first column to 'y', second to 'y2', etc.)
+            axis_name = f'y{i+1}' if i < 2 else f'y{i+2}'  # Primary ('y1') and secondary ('y2') for first two, then others
+            fig.add_trace(go.Scatter(x=self.data.index, y=self.data[col], name=col), secondary_y=(i > 0))
+
     
         # Add opacity modification dropdown
         fig.update_layout(
-            title=f'Analysis',
+            title=f'Plot_{self.input_file_name}',
             xaxis_title=index_column,
-            yaxis_title='Value',
+            height=1000,
+            yaxis=dict(title='Primary Y-Axis', showgrid=False),
+            yaxis2=dict(title='Secondary Y-Axis', overlaying='y', side='right', showgrid=False),  # Overlay for secondary axis
+            # yaxis3=dict(title='Tertiary Y-Axis', overlaying='y', side='right', position=0.85),  # Add third axis at a different position
             updatemenus=[
                 {
                     'buttons': [
                         {
                             'args': [{'opacity': 0.2}],  # Low opacity
-                            'label': '20%',
+                            'label': 'Clarity- 20%',
                             'method': 'restyle'
                         },
                         {
@@ -237,7 +253,8 @@ class PlotApp:
 
         # Save the plot as an HTML file
         os.makedirs(save_path, exist_ok=True)
-        graph_path = os.path.join(save_path, 'Generated_Plot.html')
+        # graph_path = os.path.join(save_path, 'Dynamic_plot.html')
+        graph_path = os.path.join(save_path, f'Dynamic_plot_{self.input_file_name}.html')  # Updated file name
         fig.write_html(graph_path)
         print(f"Plot saved at: {graph_path}")
 
