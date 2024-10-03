@@ -238,29 +238,34 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         ##################
         data['Power'] = data['PackCurr [SA: 06]'] * data['PackVol [SA: 06]']
     
-        # # Specify the columns of interest
-        # columns_of_interest = [
-        #     'CellVol01 [SA: 01]', 'CellVol02 [SA: 01]', 'CellVol03 [SA: 01]', 'CellVol04 [SA: 01]',
-        #     'CellVol05 [SA: 02]', 'CellVol06 [SA: 02]', 'CellVol07 [SA: 02]', 'CellVol08 [SA: 02]',
-        #     'CellVol09 [SA: 03]', 'CellVol10 [SA: 03]', 'CellVol11 [SA: 03]', 'CellVol12 [SA: 03]',
-        #     'CellVol13 [SA: 04]', 'CellVol14 [SA: 04]', 'CellVol15 [SA: 04]', 'CellVol16 [SA: 04]'
-        # ]
+        # Specify the columns of interest
+        columns_of_interest = [
+            'CellVol01 [SA: 01]', 'CellVol02 [SA: 01]', 'CellVol03 [SA: 01]', 'CellVol04 [SA: 01]',
+            'CellVol05 [SA: 02]', 'CellVol06 [SA: 02]', 'CellVol07 [SA: 02]', 'CellVol08 [SA: 02]',
+            'CellVol09 [SA: 03]', 'CellVol10 [SA: 03]', 'CellVol11 [SA: 03]', 'CellVol12 [SA: 03]',
+            'CellVol13 [SA: 04]', 'CellVol14 [SA: 04]', 'CellVol15 [SA: 04]', 'CellVol16 [SA: 04]'
+        ]
     
-        # # Create an empty list to store computed differences
-        # differences = []
+        # Create an empty list to store computed differences
+        differences = []
     
-        # # Iterate through each row and compute max, min, and their difference for each row
-        # for index, row in data[columns_of_interest].iterrows():
-        #     max_value = row.max()
-        #     min_value = row.min()
-        #     difference = max_value - min_value
+        # Iterate through each row and compute max, min, and their difference for each row
+        for index, row in data[columns_of_interest].iterrows():
+            max_value = row.max()
+            print("max value---------------->",max_value)
+            min_value = row.min()
+            print("max value---------------->",min_value)
+            difference = max_value - min_value
+            print("difference------------>",difference)
         
-        #     differences.append(difference)  # Append the computed difference to the list
+            differences.append(difference)  # Append the computed difference to the list
     
-        # # Add the differences list as a new column 'CellDifference' in the DataFrame
-        # data['DeltaCellVoltage'] = differences
+        # Add the differences list as a new column 'CellDifference' in the DataFrame
+        data['DeltaCellVoltage'] = differences
     
-    
+
+        cell_voltage_diff = data['DeltaCellVoltage'] .max()
+        print("Cell voltage difference----------->",cell_voltage_diff)
         # plot_ghps(data,subfolder_path,max_column)
     
         # Drop rows with missing values in 'SOCAh [SA: 08]' column
@@ -889,6 +894,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             # "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed,
+            "Max cell voltage difference":cell_voltage_diff
             }
     
         mode_values = data_resampled['Mode_Ack [SA: 02]'].unique() #If Mode_Ack [SA: 02] has values [1, 2, 2, 3, 1], unique() will return array([1, 2, 3]).
