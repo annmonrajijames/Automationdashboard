@@ -252,11 +252,9 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # Iterate through each row and compute max, min, and their difference for each row
         for index, row in data[columns_of_interest].iterrows():
             max_value = row.max()
-            print("max value---------------->",max_value)
             min_value = row.min()
-            print("max value---------------->",min_value)
             difference = max_value - min_value
-            print("difference------------>",difference)
+            
         
             differences.append(difference)  # Append the computed difference to the list
     
@@ -448,7 +446,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
                 total_distance_with_RPM_discharge += distance_interval
                 
         total_distance_with_RPM_discharge = total_distance_with_RPM_discharge/1000
-        print("---------------------------------------------------------------------------------->",total_distance_with_RPM_discharge)
+        
         
         #starting and ending ah
         starting_soc_Ah = data['SOCAh [SA: 08]'].max()
@@ -1003,7 +1001,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # min_temp_id = data_resampled['MinTempId [SA: 07]'].loc[min_temp_index]
         # Calculate the difference in temperature
         temp_difference = max_temp - min_temp
-        print("temp_difference------------------------>",temp_difference)
+        
     
         # # Print the information
         # print("Maximum Temperature:", max_temp, "C, Temperature ID:", max_temp_id)
@@ -1413,10 +1411,9 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
                 
                     # Process the log file if found
                     if log_found:
-                        print(f"Processing log file: {log_file}")
+                        
                         try:
                             data = pd.read_csv(log_file)
-                            print("file_path--------->",log_file)
                             # Process your data here
                         except Exception as e:
                             print(f"Error processing {log_file}: {e}")
