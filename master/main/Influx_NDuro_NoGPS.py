@@ -668,7 +668,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         idling_percentage = (idling_localtime / len(data)) * 100
     
         # Calculate Time_specific speed ranges
-        speed_ranges = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
+        speed_ranges = [(1, 10), (10, 20), (20, 30), (30, 40), (40, 50),(50, 60),(60,70),(70, 80),(80, 90)]
         speed_range_percentages = {}
         speed_range_durations = {}
         total_seconds = total_duration.total_seconds()
