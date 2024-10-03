@@ -252,8 +252,12 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # Iterate through each row and compute max, min, and their difference for each row
         for index, row in data[columns_of_interest].iterrows():
             max_value = row.max()
+            
             min_value = row.min()
-            difference = max_value - min_value
+            if max_value <3.65 and min_value >2.9:
+                difference = max_value - min_value
+            else:
+                difference =0
             
         
             differences.append(difference)  # Append the computed difference to the list
