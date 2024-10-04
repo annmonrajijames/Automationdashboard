@@ -237,6 +237,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
     
         ##################
         data['Power'] = data['PackCurr [SA: 06]'] * data['PackVol [SA: 06]']
+
+        filtered_data_for_cell_balancing = data[(data['SOC [SA: 08]'] < 90) ]
     
         # Specify the columns of interest
         columns_of_interest = [
@@ -250,7 +252,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         differences = []
     
         # Iterate through each row and compute max, min, and their difference for each row
-        for index, row in data[columns_of_interest].iterrows():
+        for index, row in filtered_data_for_cell_balancing[columns_of_interest].iterrows():
             max_value = row.max()
             
             min_value = row.min()
@@ -263,10 +265,13 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             differences.append(difference)  # Append the computed difference to the list
     
         # Add the differences list as a new column 'CellDifference' in the DataFrame
-        data['DeltaCellVoltage'] = differences
+        filtered_data_for_cell_balancing['DeltaCellVoltage'] = differences
     
 
-        cell_voltage_diff = data['DeltaCellVoltage'] .max()
+        cell_voltage_diff = filtered_data_for_cell_balancing['DeltaCellVoltage'] .max()
+        max_soc = filtered_data_for_cell_balancing['SOC [SA: 08]'].max()
+        print()
+        print("Cropped for findnig (Max soc)--------->",max_soc)
         print("Cell voltage difference----------->",cell_voltage_diff)
         # plot_ghps(data,subfolder_path,max_column)
     
@@ -274,7 +279,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
 
         
-        if 'DATETIME' not in data.columns:
+        if 'DATETIME' not in data.columns:                                                                       #if 'DATETIME' not in column Present 
             # start_time_str = '01-08-24 14:16:00'  # Update this with your actual start time
             start_time_str = data['Creation Time'].iloc[0]  # Update this with your actual start time
             # Parse the time, defaulting to ":00" if seconds are missing
@@ -307,8 +312,10 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
 
             data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
+            print("Entered if--------------->")
+
         
-        else:
+        else:                                                                                       #if 'DATETIME' column Present 
             data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
        
             # Drop or handle NaN values
@@ -318,7 +325,11 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
         
             # Print the converted DATETIME column
-            data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+            # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
+            data['DATETIME'] = data['DATETIME'] + pd.to_timedelta('5h30m')
+
+            print("Entered else---------->")
 
 
  
