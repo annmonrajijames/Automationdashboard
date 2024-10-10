@@ -1,0 +1,155 @@
+import tkinter as tk
+from tkinter import filedialog, ttk, messagebox
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import mplcursors
+
+class PlotApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Data Plotter")
+
+        # Create a grid layout
+        self.root.grid_columnconfigure(0, weight=3)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        # Graph Frame
+        self.graph_frame = tk.Frame(root)
+        self.graph_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Control Frame
+        self.control_frame = tk.Frame(root)
+        self.control_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
+        # File Path Input
+        self.label = tk.Label(self.control_frame, text="Select File (CSV or Excel):")
+        self.label.pack(pady=5)
+
+        self.path_entry = tk.Entry(self.control_frame, width=40)
+        self.path_entry.pack(pady=5)
+
+        # Browse Button to select file
+        self.browse_button = tk.Button(self.control_frame, text="Browse", command=self.browse_file)
+        self.browse_button.pack(pady=5)
+
+        # Dropdown for parameter selection
+        self.param_label = tk.Label(self.control_frame, text="Select Parameter:")
+        self.param_label.pack(pady=5)
+        self.param_dropdown = ttk.Combobox(self.control_frame, state="readonly", width=38)
+        self.param_dropdown.pack(pady=5)
+
+        # Dropdown for Index Column Selection
+        self.index_label = tk.Label(self.control_frame, text="Select Index Column:")
+        self.index_label.pack(pady=5)
+        self.index_column_dropdown = ttk.Combobox(self.control_frame, state="readonly", width=38)
+        self.index_column_dropdown.pack(pady=5)
+
+        # Expression Input
+        self.expr_label = tk.Label(self.control_frame, text="Do you want to do any calculations? (optional)")
+        self.expr_label.pack(pady=5)
+        self.expr_entry = tk.Entry(self.control_frame, width=40)
+        self.expr_entry.pack(pady=5)
+
+        # Submit Button
+        self.submit_button = tk.Button(self.control_frame, text="Submit", command=self.submit)
+        self.submit_button.pack(pady=10)
+
+        # To hold the extracted column names
+        self.column_names = []
+        self.data = None
+
+    def browse_file(self):
+        file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        self.path_entry.delete(0, tk.END)
+        self.path_entry.insert(0, file_path)
+        self.load_data_and_columns(file_path)
+
+    def load_data_and_columns(self, file_path):
+        # Clear previous dropdown selections
+        self.param_dropdown.set('')
+        self.index_column_dropdown.set('')
+        self.expr_entry.delete(0, tk.END)
+
+        if file_path.endswith('.csv'):
+            self.data = pd.read_csv(file_path)
+        elif file_path.endswith('.xlsx'):
+            self.data = pd.read_excel(file_path)
+        else:
+            messagebox.showerror("Error", "Unsupported file format.")
+            return
+
+        # Extract column names
+        self.column_names = self.data.columns.tolist()
+
+        # Populate dropdown menus with column names
+        self.param_dropdown['values'] = self.column_names
+        self.index_column_dropdown['values'] = self.column_names
+
+    def submit(self):
+        selected_column = self.param_dropdown.get()
+        selected_index_column = self.index_column_dropdown.get()
+        operation = self.expr_entry.get()
+
+        if self.data is not None and selected_column and selected_index_column:
+            try:
+                # Apply operations if provided
+                if operation:
+                    try:
+                        # Convert the column to a Series for calculation
+                        col_data = self.data[selected_column]
+                        # Use eval() to process the expression on the column values
+                        transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
+                        self.data[selected_column] = transformed_data  # Replace with calculated data
+
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Invalid expression: {e}")
+                        return
+
+                # Plot the modified or original column
+                self.plot_column(selected_column, selected_index_column)
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Error in operation or plotting data: {e}")
+        else:
+            messagebox.showerror("Error", "Please select valid columns and enter an operation.")
+
+    def plot_column(self, selected_column, index_column):
+        try:
+            df = self.data.set_index(index_column)
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+
+            df[selected_column].plot(ax=ax, color='blue', label=selected_column)
+
+            ax.set_title("Data Plot", fontsize=16)
+            ax.set_xlabel(index_column, fontsize=12)
+            ax.set_ylabel("Values", fontsize=12)
+            ax.grid()
+            ax.legend(title="Column", fontsize=10)
+            plt.xticks(rotation=45)
+
+            # Clear previous graphs
+            for widget in self.graph_frame.winfo_children():
+                widget.destroy()
+
+            # Add the plot to the Tkinter frame
+            canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+            # Add Matplotlib toolbar for zoom and pan
+            toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
+            toolbar.update()
+            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+            # Add mplcursors for hover tooltips
+            mplcursors.cursor(ax, hover=True).connect("add", lambda sel: sel.annotation.set_text(f"{selected_column}\n{sel.target[1]:.2f}"))
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Error plotting data: {e}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PlotApp(root)
+    root.mainloop()
