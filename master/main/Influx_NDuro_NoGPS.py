@@ -237,6 +237,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
     
         ##################
         data['Power'] = data['PackCurr [SA: 06]'] * data['PackVol [SA: 06]']
+
+        filtered_data_for_cell_balancing = data[(data['SOC [SA: 08]'] < 90) ]
     
         # Specify the columns of interest
         columns_of_interest = [
@@ -250,7 +252,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         differences = []
     
         # Iterate through each row and compute max, min, and their difference for each row
-        for index, row in data[columns_of_interest].iterrows():
+        for index, row in filtered_data_for_cell_balancing[columns_of_interest].iterrows():
             max_value = row.max()
             
             min_value = row.min()
@@ -263,10 +265,13 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             differences.append(difference)  # Append the computed difference to the list
     
         # Add the differences list as a new column 'CellDifference' in the DataFrame
-        data['DeltaCellVoltage'] = differences
+        filtered_data_for_cell_balancing['DeltaCellVoltage'] = differences
     
 
-        cell_voltage_diff = data['DeltaCellVoltage'] .max()
+        cell_voltage_diff = filtered_data_for_cell_balancing['DeltaCellVoltage'] .max()
+        max_soc = filtered_data_for_cell_balancing['SOC [SA: 08]'].max()
+        print()
+        print("Cropped for findnig (Max soc)--------->",max_soc)
         print("Cell voltage difference----------->",cell_voltage_diff)
         # plot_ghps(data,subfolder_path,max_column)
     
@@ -274,7 +279,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
 
         
-        if 'DATETIME' not in data.columns:
+        if 'DATETIME' not in data.columns:                                                                       #if 'DATETIME' not in column Present 
             # start_time_str = '01-08-24 14:16:00'  # Update this with your actual start time
             start_time_str = data['Creation Time'].iloc[0]  # Update this with your actual start time
             # Parse the time, defaulting to ":00" if seconds are missing
@@ -307,8 +312,10 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
 
             data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
+            print("Entered if--------------->")
+
         
-        else:
+        else:                                                                                       #if 'DATETIME' column Present 
             data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
        
             # Drop or handle NaN values
@@ -318,7 +325,11 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
         
             # Print the converted DATETIME column
-            data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+            # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+
+            data['DATETIME'] = data['DATETIME'] + pd.to_timedelta('5h30m')
+
+            print("Entered else---------->")
 
 
  
@@ -339,6 +350,35 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # print(f"Start Local Time: {start_localtime_formatted}")
         # print(f"End Local Time: {end_localtime_formatted}")
         # ############
+
+        # Create a new DataFrame with only positive current values
+
+
+        #Added the following for PS karthikeyan requirement
+        regen_df = data[(data['PackCurr [SA: 06]'] > 0) & (data['PackCurr [SA: 06]']<40)]
+        # filtered_data_DischargeCurrent = data_resampled[(data_resampled['PackCurr [SA: 06]'] > -200) & (data_resampled['PackCurr [SA: 06]'] < 0)]
+        print("Regen df",regen_df.head())
+        
+
+        output_regen = os.path.join(subfolder_path, 'Only_Regen.csv')
+        regen_df.to_csv(output_regen, index=False)
+
+        max_regen = regen_df['PackCurr [SA: 06]'] .max()
+        min_regen = regen_df['PackCurr [SA: 06]'] .min()
+        avg_regen = regen_df['PackCurr [SA: 06]'] .mean()
+
+        # Find the index of max and min regen values
+        max_regen_index = regen_df['PackCurr [SA: 06]'].idxmax()
+        min_regen_index = regen_df['PackCurr [SA: 06]'].idxmin()
+
+        # Get the formatted timestamp at the max_regen_index
+        max_regen_timestamp = regen_df.loc[max_regen_index, 'DATETIME']
+        min_regen_timestamp = regen_df.loc[min_regen_index, 'DATETIME']
+
+        altitude_max_regen = regen_df.loc[max_regen_index, 'ALTITUDE']
+        latitude_max_regen = regen_df.loc[max_regen_index, 'LATITUDE']
+        longitude_max_regen = regen_df.loc[max_regen_index, 'LONGITUDE']
+                
     
     
         # Calculate the total localtime taken for the ride``
@@ -823,6 +863,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
     
         # Print the maximum speed
         print("The maximum speed is:", peak_speed)
+
+
     
         # total_energy_kwh = actual_ah * batteryVoltage / 1000
         # print("Total energy charged in kWh: {:.2f}".format(total_energy_kwh))
@@ -896,7 +938,14 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             # "cruising_speed (km/hr)":cruise_speed,
             "Maximum Motor speed (RPM)":Max_motor_rpm,
             "Peak speed (Km/hr)":peak_speed,
-            "Max cell voltage difference":cell_voltage_diff
+            "Max cell voltage difference":cell_voltage_diff,
+            "Maximum regen Current (A)":max_regen,
+            "Minimum regen Current (A)":min_regen,
+            "Average_regen current (A)":avg_regen,
+            "Time at Max Regen Happened ":max_regen_timestamp,
+            "Altitude at Max Regen Happened ":altitude_max_regen,
+            "Latitude when max Regen Happened":latitude_max_regen,
+            "Longitude when max Regen Happened":longitude_max_regen,
             }
     
         mode_values = data_resampled['Mode_Ack [SA: 02]'].unique() #If Mode_Ack [SA: 02] has values [1, 2, 2, 3, 1], unique() will return array([1, 2, 3]).
