@@ -4,6 +4,46 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import mplcursors
+import os
+
+class SearchableCombobox(tk.Frame):
+    def __init__(self, master, values, **kwargs):
+        super().__init__(master, **kwargs)
+        self.values = values
+        self.var = tk.StringVar()
+        
+        # Create Entry box for search
+        self.entry = tk.Entry(self, textvariable=self.var)
+        self.entry.pack(fill=tk.X)
+        self.entry.bind("<KeyRelease>", self.update_list)
+        self.entry.bind("<FocusIn>", self.show_list)  # Show list when entry is clicked
+
+        # Create Listbox for options
+        self.listbox = tk.Listbox(self, height=5)
+        self.listbox.pack(fill=tk.X)
+        self.listbox.bind("<<ListboxSelect>>", self.on_select)
+
+        # Initially populate the Listbox
+        self.update_list()
+        
+    def show_list(self, event=None):
+        self.listbox.pack(fill=tk.X)  # Show the listbox
+
+    def update_list(self, event=None):
+        search_term = self.var.get().lower()
+        self.listbox.delete(0, tk.END)
+        
+        for item in self.values:
+            if search_term in item.lower():
+                self.listbox.insert(tk.END, item)
+        
+    def on_select(self, event):
+        selected = self.listbox.get(self.listbox.curselection())
+        self.var.set(selected)
+        # Keep the list visible even after selection, as requested
+
+    def get(self):
+        return self.var.get()
 
 class PlotApp:
     def __init__(self, root):
@@ -29,125 +69,114 @@ class PlotApp:
         self.path_entry = tk.Entry(self.control_frame, width=40)
         self.path_entry.pack(pady=5)
 
-        # Browse Button to select file
-        self.browse_button = tk.Button(self.control_frame, text="Browse", command=self.browse_file)
-        self.browse_button.pack(pady=5)
+        # Lists to hold the dropdowns and file paths for each file loaded
+        self.param_dropdowns = []
+        self.index_dropdowns = []
+        self.file_data = []
+        self.file_paths = []
 
-        # Dropdown for parameter selection
-        self.param_label = tk.Label(self.control_frame, text="Select Parameter:")
-        self.param_label.pack(pady=5)
-        self.param_dropdown = ttk.Combobox(self.control_frame, state="readonly", width=38)
-        self.param_dropdown.pack(pady=5)
-
-        # Dropdown for Index Column Selection
-        self.index_label = tk.Label(self.control_frame, text="Select Index Column:")
-        self.index_label.pack(pady=5)
-        self.index_column_dropdown = ttk.Combobox(self.control_frame, state="readonly", width=38)
-        self.index_column_dropdown.pack(pady=5)
+        # Create a bottom frame for the calculation and submit controls
+        self.bottom_frame = tk.Frame(self.control_frame)
+        self.bottom_frame.pack(side="bottom", pady=10)
 
         # Expression Input
-        self.expr_label = tk.Label(self.control_frame, text="Do you want to do any calculations? (optional)")
+        self.expr_label = tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)")
         self.expr_label.pack(pady=5)
-        self.expr_entry = tk.Entry(self.control_frame, width=40)
+        self.expr_entry = tk.Entry(self.bottom_frame, width=40)
         self.expr_entry.pack(pady=5)
 
-        # Submit Button
-        self.submit_button = tk.Button(self.control_frame, text="Submit", command=self.submit)
-        self.submit_button.pack(pady=10)
+        # Browse Button to select file
+        self.browse_button = tk.Button(self.bottom_frame, text="Browse", command=self.browse_file)
+        self.browse_button.pack(pady=5)
 
-        # To hold the extracted column names
-        self.column_names = []
-        self.data = None
+        # Submit Button
+        self.submit_button = tk.Button(self.bottom_frame, text="Submit", command=self.submit)
+        self.submit_button.pack(pady=10)
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
-        self.path_entry.delete(0, tk.END)
-        self.path_entry.insert(0, file_path)
-        self.load_data_and_columns(file_path)
+        if file_path:
+            current_text = self.path_entry.get()
+            if current_text:
+                self.path_entry.insert(tk.END, f", {file_path}")
+            else:
+                self.path_entry.insert(0, file_path)
+            self.file_paths.append(file_path)
+            self.load_data_and_create_dropdowns(file_path)
 
-    def load_data_and_columns(self, file_path):
-        # Clear previous dropdown selections
-        self.param_dropdown.set('')
-        self.index_column_dropdown.set('')
-        self.expr_entry.delete(0, tk.END)
-
+    def load_data_and_create_dropdowns(self, file_path):
         if file_path.endswith('.csv'):
-            self.data = pd.read_csv(file_path)
+            data = pd.read_csv(file_path)
         elif file_path.endswith('.xlsx'):
-            self.data = pd.read_excel(file_path)
+            data = pd.read_excel(file_path)
         else:
             messagebox.showerror("Error", "Unsupported file format.")
             return
 
-        # Extract column names
-        self.column_names = self.data.columns.tolist()
+        self.file_data.append(data)
+        column_names = data.columns.tolist()
 
-        # Populate dropdown menus with column names
-        self.param_dropdown['values'] = self.column_names
-        self.index_column_dropdown['values'] = self.column_names
+        # Parameter Dropdown
+        param_label = tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:")
+        param_label.pack(pady=5)
+        param_dropdown = SearchableCombobox(self.control_frame, values=column_names)
+        param_dropdown.pack(pady=5)
+        self.param_dropdowns.append(param_dropdown)
+
+        # Index Column Dropdown
+        index_label = tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:")
+        index_label.pack(pady=5)
+        index_dropdown = SearchableCombobox(self.control_frame, values=column_names)
+        index_dropdown.pack(pady=5)
+        self.index_dropdowns.append(index_dropdown)
 
     def submit(self):
-        selected_column = self.param_dropdown.get()
-        selected_index_column = self.index_column_dropdown.get()
         operation = self.expr_entry.get()
+        fig, ax = plt.subplots(figsize=(10, 6))
 
-        if self.data is not None and selected_column and selected_index_column:
-            try:
-                # Apply operations if provided
-                if operation:
-                    try:
-                        # Convert the column to a Series for calculation
-                        col_data = self.data[selected_column]
-                        # Use eval() to process the expression on the column values
-                        transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
-                        self.data[selected_column] = transformed_data  # Replace with calculated data
+        for i, data in enumerate(self.file_data):
+            selected_column = self.param_dropdowns[i].get()
+            selected_index_column = self.index_dropdowns[i].get()
+            file_name = os.path.basename(self.file_paths[i])
 
-                    except Exception as e:
-                        messagebox.showerror("Error", f"Invalid expression: {e}")
-                        return
+            if selected_column and selected_index_column:
+                try:
+                    if operation:
+                        try:
+                            col_data = data[selected_column]
+                            transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
+                            data[selected_column] = transformed_data
+                        except Exception as e:
+                            messagebox.showerror("Error", f"Invalid expression: {e}")
+                            return
 
-                # Plot the modified or original column
-                self.plot_column(selected_column, selected_index_column)
+                    df = data.set_index(selected_index_column)
+                    df[selected_column].plot(ax=ax, label=f"{file_name}: {selected_column}")
 
-            except Exception as e:
-                messagebox.showerror("Error", f"Error in operation or plotting data: {e}")
-        else:
-            messagebox.showerror("Error", "Please select valid columns and enter an operation.")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Error in operation or plotting data for {file_name}: {e}")
+            else:
+                messagebox.showerror("Error", f"Please select valid columns for {file_name}.")
 
-    def plot_column(self, selected_column, index_column):
-        try:
-            df = self.data.set_index(index_column)
+        ax.set_title("Combined Data Plot", fontsize=16)
+        ax.set_xlabel("Index", fontsize=12)
+        ax.set_ylabel("Values", fontsize=12)
+        ax.grid()
+        ax.legend(title="Files", fontsize=10)
+        plt.xticks(rotation=45)
 
-            fig, ax = plt.subplots(figsize=(10, 6))
+        for widget in self.graph_frame.winfo_children():
+            widget.destroy()
 
-            df[selected_column].plot(ax=ax, color='blue', label=selected_column)
+        canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-            ax.set_title("Data Plot", fontsize=16)
-            ax.set_xlabel(index_column, fontsize=12)
-            ax.set_ylabel("Values", fontsize=12)
-            ax.grid()
-            ax.legend(title="Column", fontsize=10)
-            plt.xticks(rotation=45)
+        toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
+        toolbar.update()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-            # Clear previous graphs
-            for widget in self.graph_frame.winfo_children():
-                widget.destroy()
-
-            # Add the plot to the Tkinter frame
-            canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-            # Add Matplotlib toolbar for zoom and pan
-            toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
-            toolbar.update()
-            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-            # Add mplcursors for hover tooltips
-            mplcursors.cursor(ax, hover=True).connect("add", lambda sel: sel.annotation.set_text(f"{selected_column}\n{sel.target[1]:.2f}"))
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Error plotting data: {e}")
+        mplcursors.cursor(ax, hover=True).connect("add", lambda sel: sel.annotation.set_text(f"{sel.artist.get_label()}\n{sel.target[1]:.2f}"))
 
 if __name__ == "__main__":
     root = tk.Tk()
