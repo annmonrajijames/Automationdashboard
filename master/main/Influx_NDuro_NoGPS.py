@@ -563,37 +563,39 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
 
 
 
-        ###########For initial Temperature
-        Starting_soc_rows = data[data['SOC [SA: 08]'] == starting_soc_percentage]
+        # ###########For initial Temperature
+        # Starting_soc_rows = data[data['SOC [SA: 08]'] == starting_soc_percentage]
 
-        if not Starting_soc_rows.empty:
-            # Get the first occurrence of the starting SOC
-            Starting_soc_first_occurrence = Starting_soc_rows.iloc[0]
+        # if not Starting_soc_rows.empty:
+        #     # Get the first occurrence of the starting SOC
+        #     Starting_soc_first_occurrence = Starting_soc_rows.iloc[0]
             
-            # Check if the Motor and MCU temperatures are NaN
-            if pd.isna(Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']) or pd.isna(Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']):
-                # Find the next non-NaN value for MCU and Motor temperatures
-                Initial_MCU_TEMP = Starting_soc_rows['MCU_Temperature [SA: 03]'].dropna().iloc[0]
-                Initial_MOTOR_TEMP = Starting_soc_rows['Motor_Temperature [SA: 03]'].dropna().iloc[0]
-            else:
-                # If they are not NaN, use the values from the first occurrence
-                Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
-                Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
+        #     # Check if the Motor and MCU temperatures are NaN
+        #     if pd.isna(Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']) or pd.isna(Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']):
+        #         # Find the next non-NaN value for MCU and Motor temperatures
+        #         Initial_MCU_TEMP = Starting_soc_rows['MCU_Temperature [SA: 03]'].dropna().iloc[0]
+        #         Initial_MOTOR_TEMP = Starting_soc_rows['Motor_Temperature [SA: 03]'].dropna().iloc[0]
+        #     else:
+        #         # If they are not NaN, use the values from the first occurrence
+        #         Initial_MCU_TEMP = Starting_soc_first_occurrence['MCU_Temperature [SA: 03]']
+        #         Initial_MOTOR_TEMP = Starting_soc_first_occurrence['Motor_Temperature [SA: 03]']
                         
-        else:
-            # If exact starting SOC percentage is not found, find the nearest SOC percentage
-            nearest_soc_index = (data['SOC [SA: 08]'] - starting_soc_percentage).abs().idxmin()
-            nearest_soc_row = data.loc[nearest_soc_index]
+        # else:
+        #     # If exact starting SOC percentage is not found, find the nearest SOC percentage
+        #     nearest_soc_index = (data['SOC [SA: 08]'] - starting_soc_percentage).abs().idxmin()
+        #     nearest_soc_row = data.loc[nearest_soc_index]
 
-            # Handle NaN values for MCU and Motor temperatures
-            if pd.isna(nearest_soc_row['MCU_Temperature [SA: 03]']) or pd.isna(nearest_soc_row['Motor_Temperature [SA: 03]']):
-                # Find the next non-NaN value for MCU and Motor temperatures after the nearest SOC index
-                Initial_MCU_TEMP = data['MCU_Temperature [SA: 03]'].iloc[nearest_soc_index:].dropna().iloc[0]
-                Initial_MOTOR_TEMP = data['Motor_Temperature [SA: 03]'].iloc[nearest_soc_index:].dropna().iloc[0]
-            else:
-                # If they are not NaN, use the values from the nearest SOC row
-                Initial_MCU_TEMP = nearest_soc_row['MCU_Temperature [SA: 03]']
-                Initial_MOTOR_TEMP = nearest_soc_row['Motor_Temperature [SA: 03]']
+        #     # Handle NaN values for MCU and Motor temperatures
+        #     if pd.isna(nearest_soc_row['MCU_Temperature [SA: 03]']) or pd.isna(nearest_soc_row['Motor_Temperature [SA: 03]']):
+        #         # Find the next non-NaN value for MCU and Motor temperatures after the nearest SOC index
+        #         Initial_MCU_TEMP = data['MCU_Temperature [SA: 03]'].iloc[nearest_soc_index:].dropna().iloc[0]
+        #         Initial_MOTOR_TEMP = data['Motor_Temperature [SA: 03]'].iloc[nearest_soc_index:].dropna().iloc[0]
+        #     else:
+        #         # If they are not NaN, use the values from the nearest SOC row
+        #         Initial_MCU_TEMP = nearest_soc_row['MCU_Temperature [SA: 03]']
+        #         Initial_MOTOR_TEMP = nearest_soc_row['Motor_Temperature [SA: 03]']
+
+
 
     
     
@@ -795,11 +797,15 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         max_pcb_temp = data_resampled['PcbTemp [SA: 0C]'].max()
     
         # Get the maximum temperature of MCU_Temperature [SA: 03]
+        Initial_MCU_TEMP = data_resampled['MCU_Temperature [SA: 03]'].min()
         max_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].max()
         avg_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].mean()
 
+
+
     
         # Check for abnormal motor temperature at high RPMs
+        Initial_MOTOR_TEMP = data_resampled['Motor_Temperature [SA: 03]'].min()
         max_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].max()
         avg_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].mean()
     
