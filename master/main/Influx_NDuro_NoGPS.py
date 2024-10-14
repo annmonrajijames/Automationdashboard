@@ -357,12 +357,13 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         #Added the following for PS karthikeyan requirement
         regen_df = data[(data['PackCurr [SA: 06]'] > 0) & (data['PackCurr [SA: 06]']<40)]
         # filtered_data_DischargeCurrent = data_resampled[(data_resampled['PackCurr [SA: 06]'] > -200) & (data_resampled['PackCurr [SA: 06]'] < 0)]
-        print("Regen df",regen_df.head())
+        # print("Regen df",regen_df.head())
         
 
         output_regen = os.path.join(subfolder_path, 'Only_Regen.csv')
         regen_df.to_csv(output_regen, index=False)
 
+        
         max_regen = regen_df['PackCurr [SA: 06]'] .max()
         min_regen = regen_df['PackCurr [SA: 06]'] .min()
         avg_regen = regen_df['PackCurr [SA: 06]'] .mean()
@@ -375,12 +376,17 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         max_regen_timestamp = regen_df.loc[max_regen_index, 'DATETIME']
         min_regen_timestamp = regen_df.loc[min_regen_index, 'DATETIME']
 
-        altitude_max_regen = regen_df.loc[max_regen_index, 'ALTITUDE']
-        latitude_max_regen = regen_df.loc[max_regen_index, 'LATITUDE']
-        longitude_max_regen = regen_df.loc[max_regen_index, 'LONGITUDE']
-                
-    
-    
+        if 'LATITUDE' in data.columns:
+            # Get the altitude, latitude, and longitude at the max regen index
+            altitude_max_regen = regen_df.loc[max_regen_index, 'ALTITUDE']
+            latitude_max_regen = regen_df.loc[max_regen_index, 'LATITUDE']
+            longitude_max_regen = regen_df.loc[max_regen_index, 'LONGITUDE']
+        
+        else:
+            altitude_max_regen = 0
+            latitude_max_regen = 0
+            longitude_max_regen = 0
+                    
         # Calculate the total localtime taken for the ride``
         total_duration = end_localtime - start_localtime
         total_hours = total_duration.seconds // 3600
