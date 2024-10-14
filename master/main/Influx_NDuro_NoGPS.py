@@ -251,17 +251,24 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # Create an empty list to store computed differences
         differences = []
     
-        # Iterate through each row and compute max, min, and their difference for each row
+            # Iterate through each row and compute max, min, and their difference for each row
         for index, row in filtered_data_for_cell_balancing[columns_of_interest].iterrows():
-            max_value = row.max()
+            # Convert values to numeric, forcing non-numeric values to NaN
+            row = pd.to_numeric(row, errors='coerce')
             
-            min_value = row.min()
-            if max_value <3.65 and min_value >2.9:
-                difference = max_value - min_value
+            # Drop NaN values
+            row = row.dropna()
+            
+            if not row.empty:
+                max_value = row.max()
+                min_value = row.min()
+                if max_value < 3.65 and min_value > 2.9:
+                    difference = max_value - min_value
+                else:
+                    difference = 0
             else:
-                difference =0
+                difference = 0
             
-        
             differences.append(difference)  # Append the computed difference to the list
     
         # Add the differences list as a new column 'CellDifference' in the DataFrame
@@ -361,7 +368,7 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         
 
         output_regen = os.path.join(subfolder_path, 'Only_Regen.csv')
-        regen_df.to_csv(output_regen, index=False)
+        # regen_df.to_csv(output_regen, index=False)
 
         
         max_regen = regen_df['PackCurr [SA: 06]'] .max()
@@ -822,27 +829,22 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
     
         #For battery Analysis
         cycleCount= data_resampled['CycleCount [SA: 07]'].max()
-    
-    
-    
+        
+
         # InfluxId= data['id'].iloc[0]
-    
         max_continuous_duration = 0
         # data_resampled = data_resampled.dropna(subset=['MotorSpeed [SA: 02]'])
         # data_resampled['MotorSpeed [SA: 02]'] = data_resampled['MotorSpeed [SA: 02]'].astype(int)
         
-    
         # for speed in range(int(data_resampled['MotorSpeed [SA: 02]'].min()), int(data_resampled['MotorSpeed [SA: 02]'].max()) + 1):
         #     lower_bound = speed - window_size
         #     upper_bound = speed + window_size
         
-    
         #     within_window = data_resampled[(data_resampled['MotorSpeed [SA: 02]'] >= lower_bound) & (data_resampled['MotorSpeed [SA: 02]'] <= upper_bound)].copy()
         #     within_window.loc[:, 'Group'] = (within_window['MotorSpeed [SA: 02]'].diff() > window_size).cumsum()
         #     continuous_durations = within_window.groupby('Group')['localtime_Diff'].sum()
         
         #     current_max_duration = continuous_durations.max() if not continuous_durations.empty else 0
-    
         #     if current_max_duration > max_continuous_duration:
         #         print("max_continuous_duration------->",max_continuous_duration)
         #         max_continuous_duration = current_max_duration
