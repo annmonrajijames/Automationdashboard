@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import mplcursors
 import os
+import itertools
 
 class SearchableCombobox(tk.Frame):
     def __init__(self, master, values, **kwargs):
@@ -12,20 +13,16 @@ class SearchableCombobox(tk.Frame):
         self.values = values
         self.var = tk.StringVar()
 
-        # Create Entry box for search
         self.entry = tk.Entry(self, textvariable=self.var, width=40)
         self.entry.pack(fill=tk.X)
         self.entry.bind("<KeyRelease>", self.update_list)
         self.entry.bind("<FocusIn>", self.show_list)
 
-        # Create Listbox for options
         self.listbox = tk.Listbox(self, height=5, width=25)
         self.listbox.pack(fill=tk.X)
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
-
-        # Initially populate the Listbox
         self.update_list()
-
+        
     def show_list(self, event=None):
         self.listbox.pack(fill=tk.X)
 
@@ -50,11 +47,9 @@ class PlotApp:
         self.root = root
         self.root.title("Data Plotter")
 
-        # Main frame to hold the scrollbar
         self.main_frame = tk.Frame(root)
         self.main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Canvas for scrolling
         self.canvas = tk.Canvas(self.main_frame)
         self.scrollbar = tk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = tk.Frame(self.canvas)
@@ -63,60 +58,58 @@ class PlotApp:
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
-        # Pack canvas and scrollbar
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Create left frame for controls and right frame for graph
         self.control_frame = tk.Frame(self.scrollable_frame)
         self.control_frame.pack(side=tk.LEFT, fill=tk.Y)
 
         self.graph_frame = tk.Frame(self.scrollable_frame)
         self.graph_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        # Create controls
         self.create_controls()
 
     def create_controls(self):
-        # File Path Input
         self.label = tk.Label(self.control_frame, text="Select File (CSV or Excel):")
         self.label.pack(pady=5)
 
         self.path_entry = tk.Entry(self.control_frame, width=40)
         self.path_entry.pack(pady=5)
 
-        # Lists for dropdowns and file data
         self.param_dropdowns = []
         self.index_dropdowns = []
         self.file_data = []
         self.file_paths = []
+        self.selected_params = []
+        self.line_colors = {}
 
-        # Bottom frame for calculations and submit controls
+        self.selected_params_label = tk.Label(self.control_frame, text="Selected Parameters:")
+        self.selected_params_label.pack(pady=5)
+
+        self.selected_params_display = tk.Label(self.control_frame, text="", wraplength=250, justify="left")
+        self.selected_params_display.pack(pady=5)
+
         self.bottom_frame = tk.Frame(self.control_frame)
         self.bottom_frame.pack(side="bottom", pady=10)
 
-        # Expression Input
         self.expr_label = tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)")
         self.expr_label.pack(pady=5)
         self.expr_entry = tk.Entry(self.bottom_frame, width=40)
         self.expr_entry.pack(pady=5)
 
-        # Browse Button to select file
         self.browse_button = tk.Button(self.bottom_frame, text="Browse", command=self.browse_file)
         self.browse_button.pack(pady=5)
 
-        # Submit Button
+        self.add_button = tk.Button(self.bottom_frame, text="Add Parameter", command=self.add_parameter)
+        self.add_button.pack(pady=5)
+
         self.submit_button = tk.Button(self.bottom_frame, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         if file_path:
-            current_text = self.path_entry.get()
-            if current_text:
-                self.path_entry.insert(tk.END, f", {file_path}")
-            else:
-                self.path_entry.insert(0, file_path)
+            self.path_entry.insert(0, file_path)
             self.file_paths.append(file_path)
             self.load_data_and_create_dropdowns(file_path)
 
@@ -131,87 +124,108 @@ class PlotApp:
 
         self.file_data.append(data)
         column_names = data.columns.tolist()
-
-        # Dropdowns for parameters and index columns
+        
+        index_options = ["Serial Number", "Time"]
+        
         param_label = tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:")
         param_label.pack(pady=5)
         param_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)
         param_dropdown.pack(pady=5)
         self.param_dropdowns.append(param_dropdown)
 
-        # Dropdown for 'Serial Number' and 'Time' options only
         index_label = tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:")
         index_label.pack(pady=5)
-        index_dropdown = SearchableCombobox(self.control_frame, values=["Serial Number", "Time"], width=25)
+        index_dropdown = SearchableCombobox(self.control_frame, values=index_options, width=25)
         index_dropdown.pack(pady=5)
         self.index_dropdowns.append(index_dropdown)
+
+    def add_parameter(self):
+        if self.param_dropdowns:
+            selected_param = self.param_dropdowns[-1].get()
+            if selected_param and selected_param not in self.selected_params:
+                self.selected_params.append(selected_param)
+                self.update_selected_params_display()
+
+    def update_selected_params_display(self):
+        params_text = "\n".join(self.selected_params)
+        self.selected_params_display.config(text=params_text)
 
     def submit(self):
         operation = self.expr_entry.get()
         fig, ax = plt.subplots(figsize=(10, 6))
 
+        colors = itertools.cycle(plt.cm.tab10.colors)
+        lines = []
+        line_names = {}
+
         for i, data in enumerate(self.file_data):
-            selected_column = self.param_dropdowns[i].get()
             selected_index_column = self.index_dropdowns[i].get()
             file_name = os.path.basename(self.file_paths[i])
 
-            if selected_column and selected_index_column:
+            if selected_index_column and self.selected_params:
                 try:
-                    # Apply the operation if specified
-                    if operation:
-                        col_data = data[selected_column]
-                        data[selected_column] = col_data.apply(lambda x: eval(f"{x}{operation}"))
-
-                    # Handle 'Serial Number' option
                     if selected_index_column == "Serial Number":
                         data["Serial Number"] = range(1, len(data) + 1)
                         df = data.set_index("Serial Number")
                     elif selected_index_column == "Time":
                         data["Time"] = pd.to_datetime(data["Time"], errors='coerce')
                         df = data.set_index("Time")
+                    else:
+                        df = data.set_index(selected_index_column)
 
-                    # Filter out rows with NaN values in the selected column
-                    df = df[df[selected_column].notna()]
-
-                    # Plotting the data
-                    ax.plot(df.index, df[selected_column], label=f"{file_name}: {selected_column}")
+                    for selected_param in self.selected_params:
+                        if selected_param in data.columns:
+                            col_data = df[selected_param].dropna()
+                            if operation:
+                                try:
+                                    transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
+                                    col_data = transformed_data
+                                except Exception as e:
+                                    messagebox.showerror("Error", f"Invalid expression: {e}")
+                                    return
+                            color = next(colors)
+                            line, = ax.plot(col_data.index, col_data, label=f"{file_name}: {selected_param}", color=color, picker=True)
+                            lines.append(line)
+                            line_names[line] = f"{file_name}: {selected_param}"  # Store reference to parameter
 
                 except Exception as e:
-                    messagebox.showerror("Error", f"Error in operation or plotting data for {file_name}: {e}")
-                    return
-            else:
-                messagebox.showerror("Error", f"Please select valid columns for {file_name}.")
-                return
+                    messagebox.showerror("Error", f"Error plotting data for {file_name}: {e}")
 
-        # Set title and labels
         ax.set_title("Combined Data Plot", fontsize=16)
         ax.set_xlabel(selected_index_column, fontsize=12)
-        ax.set_ylabel(selected_column, fontsize=12)
+        ax.set_ylabel("Parameters", fontsize=12)
         ax.grid()
-        ax.legend(title="Files", fontsize=10)
+        legend = ax.legend(title="Files", fontsize=10)
         plt.xticks(rotation=45)
 
-        # Add cursor for hover functionality
+        # Create a toggle line in the legend for each line
+        for line in lines:
+            legend_line = ax.plot([], [], color=line.get_color(), label="", picker=True, linewidth=6)[0]
+            legend_line.set_visible(True)  # Make sure it's visible
+            legend_line._toggle_line = line  # Store the actual line to toggle
+
+        # Toggle visibility on click in the legend
+        def on_click(event):
+            # Check if the event is on a legend line
+            if event.artist in lines:
+                visible = not event.artist.get_visible()
+                event.artist.set_visible(visible)
+                fig.canvas.draw()
+
+        fig.canvas.mpl_connect("pick_event", on_click)
+
         cursor = mplcursors.cursor(ax, hover=True)
-        cursor.connect("add", lambda sel: sel.annotation.set_text(f"{selected_index_column}: {sel.target[0]:.2f}\n{selected_column}: {sel.target[1]:.2f}"))
+        cursor.connect("add", lambda sel: sel.annotation.set_text(f"{selected_index_column}: {sel.target[0]:.2f}\nValue: {sel.target[1]:.2f}"))
 
-        # Clear previous plot
-        for widget in self.graph_frame.winfo_children():
-            widget.destroy()
-
-        # Create canvas for plot
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        
-        # Add navigation toolbar
+
         toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
         toolbar.update()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-# Create and run the application
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("800x600")
     app = PlotApp(root)
     root.mainloop()
