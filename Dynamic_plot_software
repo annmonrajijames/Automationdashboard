@@ -13,13 +13,13 @@ class SearchableCombobox(tk.Frame):
         self.var = tk.StringVar()
         
         # Create Entry box for search
-        self.entry = tk.Entry(self, textvariable=self.var, width=40)  # Set width to 40 for readability
+        self.entry = tk.Entry(self, textvariable=self.var, width=40)  # Set width for readability
         self.entry.pack(fill=tk.X)
         self.entry.bind("<KeyRelease>", self.update_list)
-        self.entry.bind("<FocusIn>", self.show_list)  # Show list when entry is clicked
+        self.entry.bind("<FocusIn>", self.show_list)
 
         # Create Listbox for options
-        self.listbox = tk.Listbox(self, height=5, width=25)  # Set width to 25 for readability
+        self.listbox = tk.Listbox(self, height=5, width=25)  # Set width for readability
         self.listbox.pack(fill=tk.X)
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
 
@@ -75,40 +75,36 @@ class PlotApp:
         self.graph_frame = tk.Frame(self.scrollable_frame)
         self.graph_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        # Create controls and graph frame inside the control frame
+        # Create controls
         self.create_controls()
 
     def create_controls(self):
         # File Path Input
-        self.label = tk.Label(self.control_frame, text="Select File (CSV or Excel):")
-        self.label.pack(pady=5)
+        tk.Label(self.control_frame, text="Select File (CSV or Excel):").pack(pady=5)
 
         self.path_entry = tk.Entry(self.control_frame, width=40)
         self.path_entry.pack(pady=5)
 
-        # Lists to hold the dropdowns and file paths for each file loaded
+        # Lists to hold the dropdowns and file paths for each loaded file
         self.param_dropdowns = []
         self.index_dropdowns = []
         self.file_data = []
         self.file_paths = []
 
-        # Create a bottom frame for the calculation and submit controls
+        # Create a bottom frame for calculation and submit controls
         self.bottom_frame = tk.Frame(self.control_frame)
         self.bottom_frame.pack(side="bottom", pady=10)
 
         # Expression Input
-        self.expr_label = tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)")
-        self.expr_label.pack(pady=5)
+        tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)").pack(pady=5)
         self.expr_entry = tk.Entry(self.bottom_frame, width=40)
         self.expr_entry.pack(pady=5)
 
         # Browse Button to select file
-        self.browse_button = tk.Button(self.bottom_frame, text="Browse", command=self.browse_file)
-        self.browse_button.pack(pady=5)
+        tk.Button(self.bottom_frame, text="Browse", command=self.browse_file).pack(pady=5)
 
         # Submit Button
-        self.submit_button = tk.Button(self.bottom_frame, text="Submit", command=self.submit)
-        self.submit_button.pack(pady=10)
+        tk.Button(self.bottom_frame, text="Submit", command=self.submit).pack(pady=10)
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
@@ -122,32 +118,27 @@ class PlotApp:
             self.load_data_and_create_dropdowns(file_path)
 
     def load_data_and_create_dropdowns(self, file_path):
-        if file_path.endswith('.csv'):
-            data = pd.read_csv(file_path)
-        elif file_path.endswith('.xlsx'):
-            data = pd.read_excel(file_path)
-        else:
-            messagebox.showerror("Error", "Unsupported file format.")
+        try:
+            data = pd.read_csv(file_path) if file_path.endswith('.csv') else pd.read_excel(file_path)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error loading file: {e}")
             return
 
         self.file_data.append(data)
         column_names = data.columns.tolist()
-        
-        # Adding 'Serial Number' option as the first entry in the dropdown
-        serial_option = "Serial Number"
-        column_names.insert(0, serial_option)
+
+        # Fixed options for index column dropdown
+        index_options = ["Serial Number", "Time"]
 
         # Parameter Dropdown
-        param_label = tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:")
-        param_label.pack(pady=5)
-        param_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)  # Increased width for better readability
+        tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:").pack(pady=5)
+        param_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)
         param_dropdown.pack(pady=5)
         self.param_dropdowns.append(param_dropdown)
 
         # Index Column Dropdown
-        index_label = tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:")
-        index_label.pack(pady=5)
-        index_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)  # Increased width for better readability
+        tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:").pack(pady=5)
+        index_dropdown = SearchableCombobox(self.control_frame, values=index_options, width=25)
         index_dropdown.pack(pady=5)
         self.index_dropdowns.append(index_dropdown)
 
@@ -164,35 +155,33 @@ class PlotApp:
                 try:
                     # Apply the operation if specified
                     if operation:
-                        try:
-                            col_data = data[selected_column]
-                            transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
-                            data[selected_column] = transformed_data
-                        except Exception as e:
-                            messagebox.showerror("Error", f"Invalid expression: {e}")
-                            return
+                        col_data = data[selected_column]
+                        data[selected_column] = col_data.apply(lambda x: eval(f"{x}{operation}"))
 
                     # Handle 'Serial Number' option
                     if selected_index_column == "Serial Number":
-                        data["Serial Number"] = range(1, len(data) + 1)  # Generate serial numbers based on row count
+                        data["Serial Number"] = range(1, len(data) + 1)
                         df = data.set_index("Serial Number")
                     elif selected_index_column == "Time":
-                        data["Time"] = pd.to_datetime(data["Time"], errors='coerce')  # Convert Time to datetime
+                        data["Time"] = pd.to_datetime(data["Time"], errors='coerce')
                         df = data.set_index("Time")
                     else:
-                        df = data.set_index(selected_index_column)
+                        messagebox.showerror("Error", f"Invalid index column selected for {file_name}.")
+                        return
 
                     # Check for missing values
                     if df[selected_column].isnull().any():
                         messagebox.showwarning("Warning", f"Missing values in {file_name} for column {selected_column}. They will be ignored.")
 
                     # Plotting the data
-                    line, = ax.plot(df.index, df[selected_column], label=f"{file_name}: {selected_column}")
+                    ax.plot(df.index, df[selected_column], label=f"{file_name}: {selected_column}")
 
                 except Exception as e:
                     messagebox.showerror("Error", f"Error in operation or plotting data for {file_name}: {e}")
+                    return
             else:
                 messagebox.showerror("Error", f"Please select valid columns for {file_name}.")
+                return
 
         # Set the title and labels directly on the plot
         ax.set_title("Combined Data Plot", fontsize=16)
@@ -223,6 +212,5 @@ class PlotApp:
 # Create and run the application
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("800x600")  # Set initial window size
     app = PlotApp(root)
     root.mainloop()
