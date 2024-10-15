@@ -11,23 +11,23 @@ class SearchableCombobox(tk.Frame):
         super().__init__(master, **kwargs)
         self.values = values
         self.var = tk.StringVar()
-        
+
         # Create Entry box for search
-        self.entry = tk.Entry(self, textvariable=self.var, width=40)  # Set width for readability
+        self.entry = tk.Entry(self, textvariable=self.var, width=40)
         self.entry.pack(fill=tk.X)
         self.entry.bind("<KeyRelease>", self.update_list)
         self.entry.bind("<FocusIn>", self.show_list)
 
         # Create Listbox for options
-        self.listbox = tk.Listbox(self, height=5, width=25)  # Set width for readability
+        self.listbox = tk.Listbox(self, height=5, width=25)
         self.listbox.pack(fill=tk.X)
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
 
         # Initially populate the Listbox
         self.update_list()
-        
+
     def show_list(self, event=None):
-        self.listbox.pack(fill=tk.X)  # Show the listbox
+        self.listbox.pack(fill=tk.X)
 
     def update_list(self, event=None):
         search_term = self.var.get().lower()
@@ -38,7 +38,7 @@ class SearchableCombobox(tk.Frame):
                 self.listbox.insert(tk.END, item)
         
     def on_select(self, event):
-        if self.listbox.curselection():  # Check if there is a valid selection
+        if self.listbox.curselection():
             selected = self.listbox.get(self.listbox.curselection())
             self.var.set(selected)
 
@@ -50,17 +50,16 @@ class PlotApp:
         self.root = root
         self.root.title("Data Plotter")
 
-        # Create a main frame to hold the scrollbar
+        # Main frame to hold the scrollbar
         self.main_frame = tk.Frame(root)
         self.main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Create a canvas for scrolling
+        # Canvas for scrolling
         self.canvas = tk.Canvas(self.main_frame)
         self.scrollbar = tk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = tk.Frame(self.canvas)
 
         self.scrollable_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
@@ -68,7 +67,7 @@ class PlotApp:
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Create left frame for controls and right frame for graph within the scrollable frame
+        # Create left frame for controls and right frame for graph
         self.control_frame = tk.Frame(self.scrollable_frame)
         self.control_frame.pack(side=tk.LEFT, fill=tk.Y)
 
@@ -80,31 +79,35 @@ class PlotApp:
 
     def create_controls(self):
         # File Path Input
-        tk.Label(self.control_frame, text="Select File (CSV or Excel):").pack(pady=5)
+        self.label = tk.Label(self.control_frame, text="Select File (CSV or Excel):")
+        self.label.pack(pady=5)
 
         self.path_entry = tk.Entry(self.control_frame, width=40)
         self.path_entry.pack(pady=5)
 
-        # Lists to hold the dropdowns and file paths for each loaded file
+        # Lists for dropdowns and file data
         self.param_dropdowns = []
         self.index_dropdowns = []
         self.file_data = []
         self.file_paths = []
 
-        # Create a bottom frame for calculation and submit controls
+        # Bottom frame for calculations and submit controls
         self.bottom_frame = tk.Frame(self.control_frame)
         self.bottom_frame.pack(side="bottom", pady=10)
 
         # Expression Input
-        tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)").pack(pady=5)
+        self.expr_label = tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)")
+        self.expr_label.pack(pady=5)
         self.expr_entry = tk.Entry(self.bottom_frame, width=40)
         self.expr_entry.pack(pady=5)
 
         # Browse Button to select file
-        tk.Button(self.bottom_frame, text="Browse", command=self.browse_file).pack(pady=5)
+        self.browse_button = tk.Button(self.bottom_frame, text="Browse", command=self.browse_file)
+        self.browse_button.pack(pady=5)
 
         # Submit Button
-        tk.Button(self.bottom_frame, text="Submit", command=self.submit).pack(pady=10)
+        self.submit_button = tk.Button(self.bottom_frame, text="Submit", command=self.submit)
+        self.submit_button.pack(pady=10)
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
@@ -118,27 +121,28 @@ class PlotApp:
             self.load_data_and_create_dropdowns(file_path)
 
     def load_data_and_create_dropdowns(self, file_path):
-        try:
-            data = pd.read_csv(file_path) if file_path.endswith('.csv') else pd.read_excel(file_path)
-        except Exception as e:
-            messagebox.showerror("Error", f"Error loading file: {e}")
+        if file_path.endswith('.csv'):
+            data = pd.read_csv(file_path)
+        elif file_path.endswith('.xlsx'):
+            data = pd.read_excel(file_path)
+        else:
+            messagebox.showerror("Error", "Unsupported file format.")
             return
 
         self.file_data.append(data)
         column_names = data.columns.tolist()
 
-        # Fixed options for index column dropdown
-        index_options = ["Serial Number", "Time"]
-
-        # Parameter Dropdown
-        tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:").pack(pady=5)
+        # Dropdowns for parameters and index columns
+        param_label = tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:")
+        param_label.pack(pady=5)
         param_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)
         param_dropdown.pack(pady=5)
         self.param_dropdowns.append(param_dropdown)
 
-        # Index Column Dropdown
-        tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:").pack(pady=5)
-        index_dropdown = SearchableCombobox(self.control_frame, values=index_options, width=25)
+        # Dropdown for 'Serial Number' and 'Time' options only
+        index_label = tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:")
+        index_label.pack(pady=5)
+        index_dropdown = SearchableCombobox(self.control_frame, values=["Serial Number", "Time"], width=25)
         index_dropdown.pack(pady=5)
         self.index_dropdowns.append(index_dropdown)
 
@@ -165,13 +169,9 @@ class PlotApp:
                     elif selected_index_column == "Time":
                         data["Time"] = pd.to_datetime(data["Time"], errors='coerce')
                         df = data.set_index("Time")
-                    else:
-                        messagebox.showerror("Error", f"Invalid index column selected for {file_name}.")
-                        return
 
-                    # Check for missing values
-                    if df[selected_column].isnull().any():
-                        messagebox.showwarning("Warning", f"Missing values in {file_name} for column {selected_column}. They will be ignored.")
+                    # Filter out rows with NaN values in the selected column
+                    df = df[df[selected_column].notna()]
 
                     # Plotting the data
                     ax.plot(df.index, df[selected_column], label=f"{file_name}: {selected_column}")
@@ -183,10 +183,10 @@ class PlotApp:
                 messagebox.showerror("Error", f"Please select valid columns for {file_name}.")
                 return
 
-        # Set the title and labels directly on the plot
+        # Set title and labels
         ax.set_title("Combined Data Plot", fontsize=16)
-        ax.set_xlabel(selected_index_column, fontsize=12)  # Use the selected index column for x-axis
-        ax.set_ylabel(selected_column, fontsize=12)        # Use the selected parameter for y-axis
+        ax.set_xlabel(selected_index_column, fontsize=12)
+        ax.set_ylabel(selected_column, fontsize=12)
         ax.grid()
         ax.legend(title="Files", fontsize=10)
         plt.xticks(rotation=45)
@@ -195,11 +195,11 @@ class PlotApp:
         cursor = mplcursors.cursor(ax, hover=True)
         cursor.connect("add", lambda sel: sel.annotation.set_text(f"{selected_index_column}: {sel.target[0]:.2f}\n{selected_column}: {sel.target[1]:.2f}"))
 
-        # Clear the previous plot
+        # Clear previous plot
         for widget in self.graph_frame.winfo_children():
             widget.destroy()
 
-        # Create the canvas for the plot
+        # Create canvas for plot
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
@@ -212,5 +212,6 @@ class PlotApp:
 # Create and run the application
 if __name__ == "__main__":
     root = tk.Tk()
+    root.geometry("800x600")
     app = PlotApp(root)
     root.mainloop()
