@@ -13,13 +13,13 @@ class SearchableCombobox(tk.Frame):
         self.var = tk.StringVar()
         
         # Create Entry box for search
-        self.entry = tk.Entry(self, textvariable=self.var)
+        self.entry = tk.Entry(self, textvariable=self.var, width=40)  # Set width to 25 for readability
         self.entry.pack(fill=tk.X)
         self.entry.bind("<KeyRelease>", self.update_list)
         self.entry.bind("<FocusIn>", self.show_list)  # Show list when entry is clicked
 
         # Create Listbox for options
-        self.listbox = tk.Listbox(self, height=5)
+        self.listbox = tk.Listbox(self, height=5, width=25)  # Set width to 25 for readability
         self.listbox.pack(fill=tk.X)
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
 
@@ -115,18 +115,22 @@ class PlotApp:
 
         self.file_data.append(data)
         column_names = data.columns.tolist()
+        
+        # Adding 'Serial Number' option as the first entry in the dropdown
+        serial_option = "Serial Number"
+        column_names.insert(0, serial_option)
 
         # Parameter Dropdown
         param_label = tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:")
         param_label.pack(pady=5)
-        param_dropdown = SearchableCombobox(self.control_frame, values=column_names)
+        param_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)  # Increased width for better readability
         param_dropdown.pack(pady=5)
         self.param_dropdowns.append(param_dropdown)
 
         # Index Column Dropdown
         index_label = tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:")
         index_label.pack(pady=5)
-        index_dropdown = SearchableCombobox(self.control_frame, values=column_names)
+        index_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)  # Increased width for better readability
         index_dropdown.pack(pady=5)
         self.index_dropdowns.append(index_dropdown)
 
@@ -141,6 +145,7 @@ class PlotApp:
 
             if selected_column and selected_index_column:
                 try:
+                    # Apply the operation if specified
                     if operation:
                         try:
                             col_data = data[selected_column]
@@ -150,7 +155,13 @@ class PlotApp:
                             messagebox.showerror("Error", f"Invalid expression: {e}")
                             return
 
-                    df = data.set_index(selected_index_column)
+                    # Handle 'Serial Number' option
+                    if selected_index_column == "Serial Number":
+                        data["Serial Number"] = range(1, len(data) + 1)  # Generate serial numbers based on row count
+                        df = data.set_index("Serial Number")
+                    else:
+                        df = data.set_index(selected_index_column)
+
                     df[selected_column].plot(ax=ax, label=f"{file_name}: {selected_column}")
 
                 except Exception as e:
