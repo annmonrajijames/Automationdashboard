@@ -41,7 +41,6 @@ class SearchableCombobox(tk.Frame):
         if self.listbox.curselection():  # Check if there is a valid selection
             selected = self.listbox.get(self.listbox.curselection())
             self.var.set(selected)
-            # Keep the list visible even after selection, as requested
 
     def get(self):
         return self.var.get()
@@ -51,18 +50,35 @@ class PlotApp:
         self.root = root
         self.root.title("Data Plotter")
 
-        # Create a grid layout
-        self.root.grid_columnconfigure(0, weight=3)
-        self.root.grid_columnconfigure(1, weight=1)
+        # Create a main frame to hold the scrollbar
+        self.main_frame = tk.Frame(root)
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Graph Frame
-        self.graph_frame = tk.Frame(root)
-        self.graph_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        # Create a canvas for scrolling
+        self.canvas = tk.Canvas(self.main_frame)
+        self.scrollbar = tk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
 
-        # Control Frame
-        self.control_frame = tk.Frame(root)
-        self.control_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.scrollable_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
+        # Pack canvas and scrollbar
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Create left frame for controls and right frame for graph within the scrollable frame
+        self.control_frame = tk.Frame(self.scrollable_frame)
+        self.control_frame.pack(side=tk.LEFT, fill=tk.Y)
+
+        self.graph_frame = tk.Frame(self.scrollable_frame)
+        self.graph_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+        # Create controls and graph frame inside the control frame
+        self.create_controls()
+
+    def create_controls(self):
         # File Path Input
         self.label = tk.Label(self.control_frame, text="Select File (CSV or Excel):")
         self.label.pack(pady=5)
@@ -190,18 +206,23 @@ class PlotApp:
         cursor = mplcursors.cursor(ax, hover=True)
         cursor.connect("add", lambda sel: sel.annotation.set_text(f"{selected_index_column}: {sel.target[0]:.2f}\n{selected_column}: {sel.target[1]:.2f}"))
 
+        # Clear the previous plot
         for widget in self.graph_frame.winfo_children():
             widget.destroy()
 
+        # Create the canvas for the plot
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
+        
+        # Add navigation toolbar
         toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
         toolbar.update()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
+# Create and run the application
 if __name__ == "__main__":
     root = tk.Tk()
+    root.geometry("800x600")  # Set initial window size
     app = PlotApp(root)
     root.mainloop()
