@@ -13,7 +13,7 @@ class SearchableCombobox(tk.Frame):
         self.var = tk.StringVar()
         
         # Create Entry box for search
-        self.entry = tk.Entry(self, textvariable=self.var, width=40)  # Set width to 25 for readability
+        self.entry = tk.Entry(self, textvariable=self.var, width=40)  # Set width to 40 for readability
         self.entry.pack(fill=tk.X)
         self.entry.bind("<KeyRelease>", self.update_list)
         self.entry.bind("<FocusIn>", self.show_list)  # Show list when entry is clicked
@@ -38,9 +38,10 @@ class SearchableCombobox(tk.Frame):
                 self.listbox.insert(tk.END, item)
         
     def on_select(self, event):
-        selected = self.listbox.get(self.listbox.curselection())
-        self.var.set(selected)
-        # Keep the list visible even after selection, as requested
+        if self.listbox.curselection():  # Check if there is a valid selection
+            selected = self.listbox.get(self.listbox.curselection())
+            self.var.set(selected)
+            # Keep the list visible even after selection, as requested
 
     def get(self):
         return self.var.get()
@@ -159,22 +160,35 @@ class PlotApp:
                     if selected_index_column == "Serial Number":
                         data["Serial Number"] = range(1, len(data) + 1)  # Generate serial numbers based on row count
                         df = data.set_index("Serial Number")
+                    elif selected_index_column == "Time":
+                        data["Time"] = pd.to_datetime(data["Time"], errors='coerce')  # Convert Time to datetime
+                        df = data.set_index("Time")
                     else:
                         df = data.set_index(selected_index_column)
 
-                    df[selected_column].plot(ax=ax, label=f"{file_name}: {selected_column}")
+                    # Check for missing values
+                    if df[selected_column].isnull().any():
+                        messagebox.showwarning("Warning", f"Missing values in {file_name} for column {selected_column}. They will be ignored.")
+
+                    # Plotting the data
+                    line, = ax.plot(df.index, df[selected_column], label=f"{file_name}: {selected_column}")
 
                 except Exception as e:
                     messagebox.showerror("Error", f"Error in operation or plotting data for {file_name}: {e}")
             else:
                 messagebox.showerror("Error", f"Please select valid columns for {file_name}.")
 
+        # Set the title and labels directly on the plot
         ax.set_title("Combined Data Plot", fontsize=16)
-        ax.set_xlabel("Index", fontsize=12)
-        ax.set_ylabel("Values", fontsize=12)
+        ax.set_xlabel(selected_index_column, fontsize=12)  # Use the selected index column for x-axis
+        ax.set_ylabel(selected_column, fontsize=12)        # Use the selected parameter for y-axis
         ax.grid()
         ax.legend(title="Files", fontsize=10)
         plt.xticks(rotation=45)
+
+        # Add cursor for hover functionality
+        cursor = mplcursors.cursor(ax, hover=True)
+        cursor.connect("add", lambda sel: sel.annotation.set_text(f"{selected_index_column}: {sel.target[0]:.2f}\n{selected_column}: {sel.target[1]:.2f}"))
 
         for widget in self.graph_frame.winfo_children():
             widget.destroy()
@@ -186,8 +200,6 @@ class PlotApp:
         toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
         toolbar.update()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-        mplcursors.cursor(ax, hover=True).connect("add", lambda sel: sel.annotation.set_text(f"{sel.artist.get_label()}\n{sel.target[1]:.2f}"))
 
 if __name__ == "__main__":
     root = tk.Tk()
