@@ -273,6 +273,15 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
     
         # Add the differences list as a new column 'CellDifference' in the DataFrame
         filtered_data_for_cell_balancing['DeltaCellVoltage'] = differences
+
+                # Select only the 'DeltaCellVoltage' column
+        delta_cell_voltage_df = filtered_data_for_cell_balancing[['DeltaCellVoltage']]
+
+        # Define the path for the new CSV file
+        cell_balance_calculation = os.path.join(subfolder_path, 'Cell_balance_data.csv')
+
+        # Save the 'DeltaCellVoltage' column to the new CSV file
+        delta_cell_voltage_df.to_csv(cell_balance_calculation, index=False)
     
 
         cell_voltage_diff = filtered_data_for_cell_balancing['DeltaCellVoltage'] .max()
@@ -804,17 +813,19 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         max_pcb_temp = data_resampled['PcbTemp [SA: 0C]'].max()
     
         # Get the maximum temperature of MCU_Temperature [SA: 03]
-        Initial_MCU_TEMP = data_resampled['MCU_Temperature [SA: 03]'].min()
-        max_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].max()
-        avg_mcu_temp = data_resampled['MCU_Temperature [SA: 03]'].mean()
+        filter_MCU_temp_spikes = data[(data['MCU_Temperature [SA: 03]']<200)]
+
+        Initial_MCU_TEMP = filter_MCU_temp_spikes['MCU_Temperature [SA: 03]'].min()
+        max_mcu_temp = filter_MCU_temp_spikes['MCU_Temperature [SA: 03]'].max()
+        avg_mcu_temp = filter_MCU_temp_spikes['MCU_Temperature [SA: 03]'].mean()
 
 
-
+        filter_Motor_temp_spikes = data[(data['Motor_Temperature [SA: 03]']<200)]
     
         # Check for abnormal motor temperature at high RPMs
-        Initial_MOTOR_TEMP = data_resampled['Motor_Temperature [SA: 03]'].min()
-        max_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].max()
-        avg_motor_temp = data_resampled['Motor_Temperature [SA: 03]'].mean()
+        Initial_MOTOR_TEMP = filter_Motor_temp_spikes['Motor_Temperature [SA: 03]'].min()
+        max_motor_temp = filter_Motor_temp_spikes['Motor_Temperature [SA: 03]'].max()
+        avg_motor_temp = filter_Motor_temp_spikes['Motor_Temperature [SA: 03]'].mean()
     
         # Find the battery voltage
         batteryVoltage = (data_resampled['PackVol [SA: 06]'].max()) 
