@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 import pandas as pd
@@ -81,7 +82,7 @@ class PlotApp:
         self.file_data = []
         self.file_paths = []
         self.selected_params = []
-        self.line_colors = {}
+        self.line_colors = []
 
         self.selected_params_label = tk.Label(self.control_frame, text="Selected Parameters:")
         self.selected_params_label.pack(pady=5)
@@ -89,29 +90,43 @@ class PlotApp:
         self.selected_params_display = tk.Label(self.control_frame, text="", wraplength=250, justify="left")
         self.selected_params_display.pack(pady=5)
 
-        self.bottom_frame = tk.Frame(self.control_frame)
-        self.bottom_frame.pack(side="bottom", pady=10)
+        self.dropdown_frame = tk.Frame(self.control_frame)
+        self.dropdown_frame.pack(pady=5)
 
-        self.expr_label = tk.Label(self.bottom_frame, text="Do you want to do any calculations? (optional)")
-        self.expr_label.pack(pady=5)
-        self.expr_entry = tk.Entry(self.bottom_frame, width=40)
-        self.expr_entry.pack(pady=5)
+        self.file_dropdown = ttk.Combobox(self.dropdown_frame, values=[], state="readonly")
+        self.file_dropdown.bind("<<ComboboxSelected>>", self.update_selected_file)
+        self.file_dropdown.pack(pady=5)
 
-        self.browse_button = tk.Button(self.bottom_frame, text="Browse", command=self.browse_file)
+        self.browse_button = tk.Button(self.control_frame, text="Browse", command=self.browse_file)
         self.browse_button.pack(pady=5)
 
-        self.add_button = tk.Button(self.bottom_frame, text="Add Parameter", command=self.add_parameter)
+        self.param_frame = tk.Frame(self.control_frame)
+        self.param_frame.pack(pady=5)
+
+        self.expr_label = tk.Label(self.param_frame, text="Do you want to do any calculations? (optional)")
+        self.expr_label.pack(pady=5)
+        self.expr_entry = tk.Entry(self.param_frame, width=40)
+        self.expr_entry.pack(pady=5)
+
+        self.add_button = tk.Button(self.param_frame, text="Add Parameter", command=self.add_parameter)
         self.add_button.pack(pady=5)
 
-        self.submit_button = tk.Button(self.bottom_frame, text="Submit", command=self.submit)
+        self.submit_button = tk.Button(self.param_frame, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
+
+        self.param_frame.pack_forget()  # Initially hide parameter frame
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*"), ("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         if file_path:
             self.path_entry.insert(0, file_path)
             self.file_paths.append(file_path)
+            self.file_dropdown['values'] = self.file_paths
+            self.file_dropdown.set(os.path.basename(file_path))
             self.load_data_and_create_dropdowns(file_path)
+
+            # Show the parameter frame after selecting a file
+            self.param_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
     def load_data_and_create_dropdowns(self, file_path):
         if file_path.endswith('.csv'):
@@ -126,22 +141,48 @@ class PlotApp:
         column_names = data.columns.tolist()
         
         index_options = ["Serial Number", "Time"]
-        
-        param_label = tk.Label(self.control_frame, text=f"Select Parameter for File {len(self.file_data)}:")
-        param_label.pack(pady=5)
-        param_dropdown = SearchableCombobox(self.control_frame, values=column_names, width=25)
-        param_dropdown.pack(pady=5)
-        self.param_dropdowns.append(param_dropdown)
 
-        index_label = tk.Label(self.control_frame, text=f"Select Index Column for File {len(self.file_data)}:")
-        index_label.pack(pady=5)
-        index_dropdown = SearchableCombobox(self.control_frame, values=index_options, width=25)
-        index_dropdown.pack(pady=5)
-        self.index_dropdowns.append(index_dropdown)
+        # Clear previously selected parameters
+        self.selected_params = []
+        self.update_selected_params_display()
+
+        # Clear existing dropdowns and create new ones
+        for dropdown in self.param_dropdowns:
+            dropdown.destroy()
+        self.param_dropdowns.clear()
+
+        for dropdown in self.index_dropdowns:
+            dropdown.destroy()
+        self.index_dropdowns.clear()
+
+        # Create parameter dropdown
+        self.param_label = tk.Label(self.param_frame, text=f"Select Parameter for {os.path.basename(file_path)}:")
+        self.param_label.pack(pady=5)
+        self.param_dropdown = SearchableCombobox(self.param_frame, values=column_names, width=25)
+        self.param_dropdown.pack(pady=5)
+        self.param_dropdowns.append(self.param_dropdown)
+
+        # Create index dropdown
+        self.index_label = tk.Label(self.param_frame, text=f"Select Index Column for {os.path.basename(file_path)}:")
+        self.index_label.pack(pady=5)
+        self.index_dropdown = SearchableCombobox(self.param_frame, values=index_options, width=25)
+        self.index_dropdown.pack(pady=5)
+        self.index_dropdowns.append(self.index_dropdown)
+
+    def update_selected_file(self, event):
+        selected_file = self.file_dropdown.get()
+        if selected_file:
+            # Clear previously selected parameters and dropdowns
+            self.selected_params = []
+            self.update_selected_params_display()
+
+            # Load new parameters from the selected file
+            file_index = self.file_paths.index(selected_file)
+            self.load_data_and_create_dropdowns(self.file_paths[file_index])
 
     def add_parameter(self):
         if self.param_dropdowns:
-            selected_param = self.param_dropdowns[-1].get()
+            selected_param = self.param_dropdown.get()
             if selected_param and selected_param not in self.selected_params:
                 self.selected_params.append(selected_param)
                 self.update_selected_params_display()
@@ -156,66 +197,64 @@ class PlotApp:
 
         colors = itertools.cycle(plt.cm.tab10.colors)
         lines = []
-        line_names = {}
 
-        for i, data in enumerate(self.file_data):
-            selected_index_column = self.index_dropdowns[i].get()
-            file_name = os.path.basename(self.file_paths[i])
+        # Use the number of file_data and index_dropdowns instead of i
+        for i in range(len(self.file_data)):
+            if i < len(self.index_dropdowns):  # Check if index_dropdown exists
+                selected_index_column = self.index_dropdowns[i].get()
+                file_name = os.path.basename(self.file_paths[i])
 
-            if selected_index_column and self.selected_params:
-                try:
-                    if selected_index_column == "Serial Number":
-                        data["Serial Number"] = range(1, len(data) + 1)
-                        df = data.set_index("Serial Number")
-                    elif selected_index_column == "Time":
-                        data["Time"] = pd.to_datetime(data["Time"], errors='coerce')
-                        df = data.set_index("Time")
-                    else:
-                        df = data.set_index(selected_index_column)
+                if selected_index_column and self.selected_params:
+                    try:
+                        data = self.file_data[i]
+                        if selected_index_column == "Serial Number":
+                            data["Serial Number"] = range(1, len(data) + 1)
+                            df = data.set_index("Serial Number")
+                        elif selected_index_column == "Time":
+                            data["Time"] = pd.to_datetime(data["Time"], errors='coerce')
+                            df = data.set_index("Time")
+                        else:
+                            df = data.set_index(selected_index_column)
 
-                    for selected_param in self.selected_params:
-                        if selected_param in data.columns:
-                            col_data = df[selected_param].dropna()
-                            if operation:
-                                try:
-                                    transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
-                                    col_data = transformed_data
-                                except Exception as e:
-                                    messagebox.showerror("Error", f"Invalid expression: {e}")
-                                    return
-                            color = next(colors)
-                            line, = ax.plot(col_data.index, col_data, label=f"{file_name}: {selected_param}", color=color, picker=True)
-                            lines.append(line)
-                            line_names[line] = f"{file_name}: {selected_param}"  # Store reference to parameter
+                        for selected_param in self.selected_params:
+                            if selected_param in data.columns:
+                                col_data = df[selected_param].dropna()
+                                if operation:
+                                    try:
+                                        transformed_data = col_data.apply(lambda x: eval(f"{x}{operation}"))
+                                        col_data = transformed_data
+                                    except Exception as e:
+                                        messagebox.showerror("Error", f"Invalid expression: {e}")
+                                        return
+                                color = next(colors)
+                                line, = ax.plot(col_data.index, col_data, label=f"{file_name}: {selected_param}", color=color, picker=True)
+                                lines.append(line)
 
-                except Exception as e:
-                    messagebox.showerror("Error", f"Error plotting data for {file_name}: {e}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Error processing file {file_name}: {e}")
 
-        ax.set_title("Combined Data Plot", fontsize=16)
-        ax.set_xlabel(selected_index_column, fontsize=12)
-        ax.set_ylabel("Parameters", fontsize=12)
-        ax.grid()
-        legend = ax.legend(title="Files", fontsize=10)
-        plt.xticks(rotation=45)
+        ax.set_xlabel('Index')
+        ax.set_ylabel('Value')
+        ax.set_title('Dynamic Plot')
+        ax.legend()
+        fig.tight_layout()
 
-        # Create a toggle line in the legend for each line
-        for line in lines:
-            legend_line = ax.plot([], [], color=line.get_color(), label="", picker=True, linewidth=6)[0]
-            legend_line.set_visible(True)  # Make sure it's visible
-            legend_line._toggle_line = line  # Store the actual line to toggle
+        # Connect pick event for toggling lines
+        mplcursors.cursor(lines).connect("add", lambda sel: sel.annotation.set_text(sel.artist.get_label()))
 
-        # Toggle visibility on click in the legend
-        def on_click(event):
-            # Check if the event is on a legend line
+        def toggle_lines(event):
             if event.artist in lines:
                 visible = not event.artist.get_visible()
                 event.artist.set_visible(visible)
-                fig.canvas.draw()
+                self.plot(fig)  # Pass the figure to the plot function
 
-        fig.canvas.mpl_connect("pick_event", on_click)
+        fig.canvas.mpl_connect("pick_event", toggle_lines)
 
-        cursor = mplcursors.cursor(ax, hover=True)
-        cursor.connect("add", lambda sel: sel.annotation.set_text(f"{selected_index_column}: {sel.target[0]:.2f}\nValue: {sel.target[1]:.2f}"))
+        self.plot(fig)
+
+    def plot(self, fig):
+        for widget in self.graph_frame.winfo_children():
+            widget.destroy()
 
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
@@ -223,7 +262,7 @@ class PlotApp:
 
         toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
         toolbar.update()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)
 
 if __name__ == "__main__":
     root = tk.Tk()
