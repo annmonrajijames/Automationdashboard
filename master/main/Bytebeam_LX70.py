@@ -880,9 +880,15 @@ def Bytebeam_LX70_input(input_folder_path):
                 "Highest Cell Voltage(V)": max_cell_voltage,
                 "Lowest Cell Voltage(V)": min_cell_voltage,
                 "Difference in Cell Voltage(V)": voltage_difference,
-                "Minimum Temperature(C)": min_temp,
-                "Maximum Temperature(C)": max_temp,
-                "Difference in Temperature(C)": max_temp- min_temp,
+                "Initial Battery Temperature(C)": min_temp,
+                "Maximum Battery Temperature(C)": max_temp,
+                "Delta (Battery Temperature(C))": max_temp- min_temp,
+                "Initial MCU Temperature (at 100 SOC):":Initial_MCU_TEMP,
+                "Maximum MCU Temperature(C)": max_mcu_temp,
+                "Delta (MCU Temperature(C))":max_mcu_temp-Initial_MCU_TEMP,
+                "Initial Motor Temperature (at 100 SOC)":Initial_MOTOR_TEMP,
+                "Maximum Motor Temperature(C)": max_motor_temp,
+                "Delta (Motor Temperature(C))":max_motor_temp-Initial_MOTOR_TEMP,
                 "Maximum Fet Temperature-BMS(C)": max_fet_temp,
                 "Maximum Afe Temperature-BMS(C)": max_afe_temp,
                 "Maximum PCB Temperature-BMS(C)": max_pcb_temp,
@@ -1029,12 +1035,28 @@ def Bytebeam_LX70_input(input_folder_path):
             max_mcu_temp = data_resampled['MCU_Temperature_408094979'].max()
             print("Maximum MCU Temperature:", max_mcu_temp, "C")
         
+            
             # Check for abnormal motor temperature at high RPMs
             max_motor_temp = data_resampled['Motor_Temperature_408094979'].max()
         
         
             print("Maximum Motor Temperature:", max_motor_temp, "C")
         
+            #initial and Maximum Motor Temperature and MCU temperature
+            # Get the maximum temperature of MCU_Temperature_408094979
+            filter_MCU_temp_spikes = data[(data['MCU_Temperature_408094979']<200)]
+
+            Initial_MCU_TEMP = filter_MCU_temp_spikes['MCU_Temperature_408094979'].min()
+            max_mcu_temp = filter_MCU_temp_spikes['MCU_Temperature_408094979'].max()
+            avg_mcu_temp = filter_MCU_temp_spikes['MCU_Temperature_408094979'].mean()
+
+
+            filter_Motor_temp_spikes = data[(data['Motor_Temperature_408094979']<200)]
+        
+            # Check for abnormal motor temperature at high RPMs
+            Initial_MOTOR_TEMP = filter_Motor_temp_spikes['Motor_Temperature_408094979'].min()
+            max_motor_temp = filter_Motor_temp_spikes['Motor_Temperature_408094979'].max()
+            avg_motor_temp = filter_Motor_temp_spikes['Motor_Temperature_408094979'].mean()
         
             # Check for abnormal motor temperature at high RPMs for at least 15 seconds
             abnormal_motor_temp = (data_resampled['Motor_Temperature_408094979'] < 10) & (data_resampled['MotorSpeed_340920578'] > 3500)
