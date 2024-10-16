@@ -294,6 +294,8 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         # Drop rows with missing values in 'SOCAh [SA: 08]' column
         data.dropna(subset=['SOCAh [SA: 08]'], inplace=True)
 
+        # print("Column names in the input file:", data.columns.tolist())
+
         
         if 'DATETIME' not in data.columns:                                                                       #if 'DATETIME' not in column Present 
             # start_time_str = '01-08-24 14:16:00'  # Update this with your actual start time
@@ -328,30 +330,28 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
 
             data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
-            print("Entered if--------------->")
+            print("<------------------Time calculted based on Creation Time---------->")
+            
 
         
         else:                                                                                       #if 'DATETIME' column Present 
-            data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
+            # data['DATETIME'] = pd.to_numeric(data['DATETIME'], errors='coerce')
        
-            # Drop or handle NaN values
-            data = data.dropna(subset=['DATETIME'])
+            # # Drop or handle NaN values
+            # data = data.dropna(subset=['DATETIME'])
         
-            # Convert the Unix timestamps to datetime
-            data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
+            # # Convert the Unix timestamps to datetime
+            # data['DATETIME'] = pd.to_datetime(data['DATETIME'], unit='s')
         
-            # Print the converted DATETIME column
-            # data['DATETIME'] = pd.to_datetime(data['DATETIME'])
+            # # Print the converted DATETIME column
+            data['DATETIME'] = pd.to_datetime(data['DATETIME'])
 
-            data['DATETIME'] = data['DATETIME'] + pd.to_timedelta('5h30m')
+            # data['DATETIME'] = data['DATETIME'] + pd.to_timedelta('5h30m')
 
-            print("Entered else---------->")
+            print("<------------------Time Calculated based on GPS--------------->")
 
-
- 
-        
-
-
+            
+        print("Time-------->",data['DATETIME'])
 
         start_localtime = data['DATETIME'].min()
         end_localtime = data['DATETIME'].max()
@@ -384,24 +384,24 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         min_regen = regen_df['PackCurr [SA: 06]'] .min()
         avg_regen = regen_df['PackCurr [SA: 06]'] .mean()
 
-        # Find the index of max and min regen values
-        max_regen_index = regen_df['PackCurr [SA: 06]'].idxmax()
-        min_regen_index = regen_df['PackCurr [SA: 06]'].idxmin()
+        # # Find the index of max and min regen values
+        # max_regen_index = regen_df['PackCurr [SA: 06]'].idxmax()
+        # min_regen_index = regen_df['PackCurr [SA: 06]'].idxmin()
 
-        # Get the formatted timestamp at the max_regen_index
-        max_regen_timestamp = regen_df.loc[max_regen_index, 'DATETIME']
-        min_regen_timestamp = regen_df.loc[min_regen_index, 'DATETIME']
+        # # Get the formatted timestamp at the max_regen_index
+        # max_regen_timestamp = regen_df.loc[max_regen_index, 'DATETIME']
+        # min_regen_timestamp = regen_df.loc[min_regen_index, 'DATETIME']
 
-        if 'LATITUDE' in data.columns:
-            # Get the altitude, latitude, and longitude at the max regen index
-            altitude_max_regen = regen_df.loc[max_regen_index, 'ALTITUDE']
-            latitude_max_regen = regen_df.loc[max_regen_index, 'LATITUDE']
-            longitude_max_regen = regen_df.loc[max_regen_index, 'LONGITUDE']
+        # if 'LATITUDE' in data.columns:
+        #     # Get the altitude, latitude, and longitude at the max regen index
+        #     altitude_max_regen = regen_df.loc[max_regen_index, 'ALTITUDE']
+        #     latitude_max_regen = regen_df.loc[max_regen_index, 'LATITUDE']
+        #     longitude_max_regen = regen_df.loc[max_regen_index, 'LONGITUDE']
         
-        else:
-            altitude_max_regen = 0
-            latitude_max_regen = 0
-            longitude_max_regen = 0
+        # else:
+        #     altitude_max_regen = 0
+        #     latitude_max_regen = 0
+        #     longitude_max_regen = 0
                     
         # Calculate the total localtime taken for the ride``
         total_duration = end_localtime - start_localtime
@@ -744,11 +744,18 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
         for range_ in speed_ranges:
             speed_range_localtime = ((data['MotorSpeed [SA: 02]'] * 0.0836 > range_[0]) & (data['MotorSpeed [SA: 02]'] * 0.0836 < range_[1])).sum()
             speed_range_percentage = (speed_range_localtime / len(data)) * 100
+            print("speed_range_localtime:",speed_range_localtime)
+            print("speed_range_percentage:",speed_range_percentage)
+
+            
             speed_range_percentages[f"Time spent in {range_[0]}-{range_[1]} km/h (in %)"] = speed_range_percentage
             # print(f"Time spent in {range_[0]}-{range_[1]} km/h (in %): {speed_range_percentage:.2f}%")
 
               # Calculate the actual duration spent in the current speed range
             speed_range_duration_seconds = (speed_range_percentage / 100) * total_seconds
+            print("total_seconds:", total_seconds)
+            print("speed range percentage:", speed_range_percentage)
+            print("Speed range duration in seconds:", speed_range_duration_seconds)
             speed_range_duration = str(timedelta(seconds=int(speed_range_duration_seconds)))
 
             speed_range_durations[f"Time spent in {range_[0]}-{range_[1]} km/h (HH:MM:SS)"] = speed_range_duration #for displaying the time spent in each speed limit
@@ -967,10 +974,10 @@ def Influx_NDuro_NoGPS_input(input_folder_path):
             "Maximum regen Current (A)":max_regen,
             "Minimum regen Current (A)":min_regen,
             "Average_regen current (A)":avg_regen,
-            "Time at Max Regen Happened ":max_regen_timestamp,
-            "Altitude at Max Regen Happened ":altitude_max_regen,
-            "Latitude when max Regen Happened":latitude_max_regen,
-            "Longitude when max Regen Happened":longitude_max_regen,
+            # "Time at Max Regen Happened ":max_regen_timestamp,
+            # "Altitude at Max Regen Happened ":altitude_max_regen,
+            # "Latitude when max Regen Happened":latitude_max_regen,
+            # "Longitude when max Regen Happened":longitude_max_regen,
             }
     
         mode_values = data_resampled['Mode_Ack [SA: 02]'].unique() #If Mode_Ack [SA: 02] has values [1, 2, 2, 3, 1], unique() will return array([1, 2, 3]).
