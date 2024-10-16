@@ -102,14 +102,14 @@ class PlotApp:
 
         self.param_frame = tk.Frame(self.control_frame)
         self.param_frame.pack(pady=5)
+        
+        self.add_button = tk.Button(self.param_frame, text="Add Parameter", command=self.add_parameter)
+        self.add_button.pack(pady=5)
 
         self.expr_label = tk.Label(self.param_frame, text="Do you want to do any calculations? (optional)")
         self.expr_label.pack(pady=5)
         self.expr_entry = tk.Entry(self.param_frame, width=40)
         self.expr_entry.pack(pady=5)
-
-        self.add_button = tk.Button(self.param_frame, text="Add Parameter", command=self.add_parameter)
-        self.add_button.pack(pady=5)
 
         self.submit_button = tk.Button(self.param_frame, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
