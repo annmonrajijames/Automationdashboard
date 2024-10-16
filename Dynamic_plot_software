@@ -106,6 +106,10 @@ class PlotApp:
         self.add_button = tk.Button(self.param_frame, text="Add Parameter", command=self.add_parameter)
         self.add_button.pack(pady=5)
 
+        # New Remove Parameter Button
+        self.remove_button = tk.Button(self.param_frame, text="Remove Parameter", command=self.remove_parameter)
+        self.remove_button.pack(padx=5)
+
         self.expr_label = tk.Label(self.param_frame, text="Do you want to do any calculations? (optional)")
         self.expr_label.pack(pady=5)
         self.expr_entry = tk.Entry(self.param_frame, width=40)
@@ -186,6 +190,15 @@ class PlotApp:
             if selected_param and selected_param not in self.selected_params:
                 self.selected_params.append(selected_param)
                 self.update_selected_params_display()
+
+    def remove_parameter(self):
+        if self.selected_params:
+            selected_param = self.param_dropdown.get()  # Get the currently selected parameter
+            if selected_param in self.selected_params:
+                self.selected_params.remove(selected_param)
+                self.update_selected_params_display()
+            else:
+                messagebox.showwarning("Warning", "Parameter not selected or not in the list.")
 
     def update_selected_params_display(self):
         params_text = "\n".join(self.selected_params)
