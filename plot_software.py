@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
-import pandas as pd 
+import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import numpy as np 
+import numpy as np
+import mplcursors  # Import mplcursors
 
 # Tkinter GUI Setup
 class PlotApp:
@@ -97,7 +98,7 @@ class PlotApp:
 
             # Clear the current listbox
             self.file_listbox.delete(0, tk.END)
-            
+           
             for file_path in file_paths:
                 self.file_listbox.insert(tk.END, os.path.basename(file_path))
                 self.load_data_and_columns(file_path)
@@ -105,7 +106,7 @@ class PlotApp:
     def load_data_and_columns(self, file_path):
         # Clear previous selections
         self.index_column_dropdown.set('')
-        
+       
         # Define a function to detect valid header row
         def detect_header_row(df):
             # Check the first two rows to determine which contains the headers
@@ -174,12 +175,6 @@ class PlotApp:
             except Exception as e:
                 print(f"Error loading data: {e}")
 
-
-
-
-
-
-
     def update_checkboxes(self, event=None):
         # Get the search query
         search_query = self.search_entry.get().lower()
@@ -217,29 +212,100 @@ class PlotApp:
                 self.plot_columns(selected_columns, selected_index_column, self.file_directory)
 
     def plot_columns(self, columns, index_column, save_path):
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax_primary = plt.subplots(figsize=(10, 6))
 
-        # List to store the original x-values (to apply shifts later)
-        original_x_values = []
+        # Create secondary and tertiary y-axes
+        ax_secondary = ax_primary.twinx()
+        ax_tertiary = ax_primary.twinx()
+        ax_tertiary.spines["right"].set_position(("outward", 25))  # Move it outward
 
-        # Loop through each dataframe (for each file)
+        ax_primary.set_ylabel("Primary Axis (Y1)", color='b')
+        ax_secondary.set_ylabel("Secondary Axis (Y2)", color='g')
+        ax_tertiary.set_ylabel("Tertiary Axis (Y3)", color='r')
+
+        # Define a color palette
+        color_palette = plt.cm.get_cmap('tab10', len(columns))  # Use a colormap with a specific number of colors
+
+        # Store the lines for toggling later
+        all_lines = []
+
+        # Loop through each dataframe (file)
         for i, data in enumerate(self.data_frames):
-            # Create a relative x-axis (just use the row number as index)
-            relative_x = np.arange(len(data))  # Use the row index (0, 1, 2, ...) for comparison
-            
-            # Store original x-values for shifting purposes (row indices)
-            original_x_values.append(relative_x)
+            # Determine the x-axis based on the selected index column
+            if index_column == 'Serial Number':
+                x_axis = np.arange(len(data))  # Use row numbers as the x-axis
+                ax_primary.set_xlabel("Serial Number")
+            elif index_column == 'Time':
+                if not pd.api.types.is_datetime64_any_dtype(data['Time']):
+                    data['Time'] = pd.to_datetime(data['Time'], errors='coerce')
+                x_axis = data['Time']
+                ax_primary.set_xlabel("Time")
+            else:
+                raise ValueError(f"Unknown index column: {index_column}")
 
-            # Add trace for each selected column from the corresponding file
-            for col in columns:
-                trace_name = f"File {i + 1}: {col}"
-                line, = ax.plot(relative_x, data[col], label=trace_name)
-                line.set_picker(True)  # Enable picking for the line
+            # Assign columns to the different y-axes
+            for j, col in enumerate(columns):
+                if col in data.columns:
+                    numeric_data = pd.to_numeric(data[col], errors='coerce')
 
-        ax.set_xlabel("Relative Position (Index)")
-        ax.set_ylabel("Values")
-        ax.set_title("Comparison Plot")
-        legend = ax.legend()
+                    # Check if there are valid numeric values to plot
+                    if numeric_data.notna().any():
+                        trace_name = f"File {i + 1}: {col}"
+
+                        # Get a unique color for each parameter
+                        color = color_palette(j % len(color_palette.colors))
+
+                        # Plot on the primary, secondary, or tertiary y-axis based on index
+                        if j % 3 == 0:  # First column goes on the primary y-axis
+                            line, = ax_primary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
+                        elif j % 3 == 1:  # Second column goes on the secondary y-axis
+                            line, = ax_secondary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
+                        elif j % 3 == 2:  # Third column goes on the tertiary y-axis
+                            line, = ax_tertiary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
+                       
+                        all_lines.append(line)  # Store the line for toggling later
+
+                    else:
+                        print(f"Column '{col}' contains no valid numeric data after conversion.")
+                else:
+                    print(f"Column '{col}' not found in file {i + 1}")
+
+        ax_primary.set_title("Comparison Plot with Multiple Y-Axes")
+
+        # Combine legends from all axes
+        lines, labels = ax_primary.get_legend_handles_labels()
+        lines2, labels2 = ax_secondary.get_legend_handles_labels()
+        lines3, labels3 = ax_tertiary.get_legend_handles_labels()
+        legend = ax_primary.legend(lines + lines2 + lines3, labels + labels2 + labels3)
+
+        # Set the picker on the legend's text and line (to make them clickable)
+        for legline in legend.get_lines():
+            legline.set_picker(True)  # Enable picker on legend lines
+       
+        for legtext in legend.get_texts():
+            legtext.set_picker(True)  # Enable picker on legend text
+
+        # Function to toggle the line visibility when legend is clicked
+        def on_pick(event):
+            # Check if the picked object is a legend line or legend text
+            for legend_line in legend.get_lines():
+                if event.artist == legend_line:
+                    # Find the corresponding plot line by matching labels
+                    label = legend_line.get_label()
+                    for line in all_lines:
+                        if line.get_label() == label:
+                            # Toggle the line's visibility
+                            visible = not line.get_visible()
+                            line.set_visible(visible)
+                            # Adjust the legend line's transparency
+                            legend_line.set_alpha(1.0 if visible else 0.2)
+                            fig.canvas.draw()
+
+        # Connect the pick event to the toggle function
+        fig.canvas.mpl_connect('pick_event', on_pick)
+
+        # Add mplcursors for interactive annotations
+        mplcursors.cursor(hover=True)
 
         # Save the plot as an image file
         os.makedirs(save_path, exist_ok=True)
@@ -248,7 +314,7 @@ class PlotApp:
         print(f"Plot saved at: {graph_path}")
 
         # Display the plot in the Tkinter application
-        self.display_plot(fig, legend)
+        self.display_plot(fig, ax_primary)
 
     def display_plot(self, fig, legend):
         for widget in self.plot_frame.winfo_children():
