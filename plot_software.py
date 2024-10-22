@@ -331,6 +331,7 @@ class PlotApp:
         # Connect the pick event to toggle visibility
         fig.canvas.mpl_connect('pick_event', self.toggle_visibility)
 
+
         # Connect the legend click event to toggle visibility
         for legend_line, original_line in zip(legend.get_lines(), fig.axes[0].get_lines()):
             legend_line.set_picker(True)
@@ -344,6 +345,7 @@ class PlotApp:
         visible = not line.get_visible()
         line.set_visible(visible)
         line.figure.canvas.draw()
+        print("Toggle")
 
     def toggle_legend_visibility(self, event):
         legend_line = event.artist
@@ -352,6 +354,7 @@ class PlotApp:
         original_line.set_visible(visible)
         legend_line.set_alpha(1.0 if visible else 0.2)
         original_line.figure.canvas.draw()
+        print("Toggle Legend")
 
 if __name__ == "__main__":
     root = tk.Tk()
