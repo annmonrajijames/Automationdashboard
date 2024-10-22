@@ -174,12 +174,6 @@ class PlotApp:
             except Exception as e:
                 print(f"Error loading data: {e}")
 
-
-
-
-
-
-
     def update_checkboxes(self, event=None):
         # Get the search query
         search_query = self.search_entry.get().lower()
@@ -217,29 +211,65 @@ class PlotApp:
                 self.plot_columns(selected_columns, selected_index_column, self.file_directory)
 
     def plot_columns(self, columns, index_column, save_path):
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax_primary = plt.subplots(figsize=(10, 6))
 
-        # List to store the original x-values (to apply shifts later)
-        original_x_values = []
+        # Create secondary and tertiary y-axes
+        ax_secondary = ax_primary.twinx()
+        ax_tertiary = ax_primary.twinx()
+        ax_tertiary.spines["right"].set_position(("outward", 60))  # Move it outward
 
-        # Loop through each dataframe (for each file)
+        ax_primary.set_ylabel("Primary Axis (Y1)", color='b')
+        ax_secondary.set_ylabel("Secondary Axis (Y2)", color='g')
+        ax_tertiary.set_ylabel("Tertiary Axis (Y3)", color='r')
+
+        # Define a color palette
+        color_palette = plt.cm.get_cmap('tab10', len(columns))  # Use a colormap with a specific number of colors
+
+        # Loop through each dataframe (file)
         for i, data in enumerate(self.data_frames):
-            # Create a relative x-axis (just use the row number as index)
-            relative_x = np.arange(len(data))  # Use the row index (0, 1, 2, ...) for comparison
-            
-            # Store original x-values for shifting purposes (row indices)
-            original_x_values.append(relative_x)
+            # Determine the x-axis based on the selected index column
+            if index_column == 'Serial Number':
+                x_axis = np.arange(len(data))  # Use row numbers as the x-axis
+                ax_primary.set_xlabel("Serial Number")
+            elif index_column == 'Time':
+                if not pd.api.types.is_datetime64_any_dtype(data['Time']):
+                    data['Time'] = pd.to_datetime(data['Time'], errors='coerce')
+                x_axis = data['Time']
+                ax_primary.set_xlabel("Time")
+            else:
+                raise ValueError(f"Unknown index column: {index_column}")
 
-            # Add trace for each selected column from the corresponding file
-            for col in columns:
-                trace_name = f"File {i + 1}: {col}"
-                line, = ax.plot(relative_x, data[col], label=trace_name)
-                line.set_picker(True)  # Enable picking for the line
+            # Assign columns to the different y-axes
+            for j, col in enumerate(columns):
+                if col in data.columns:
+                    numeric_data = pd.to_numeric(data[col], errors='coerce')
 
-        ax.set_xlabel("Relative Position (Index)")
-        ax.set_ylabel("Values")
-        ax.set_title("Comparison Plot")
-        legend = ax.legend()
+                    # Check if there are valid numeric values to plot
+                    if numeric_data.notna().any():
+                        trace_name = f"File {i + 1}: {col}"
+
+                        # Get a unique color for each parameter
+                        color = color_palette(j % len(color_palette.colors))
+
+                        # Plot on the primary, secondary, or tertiary y-axis based on index
+                        if j % 3 == 0:  # First column goes on the primary y-axis
+                            line, = ax_primary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
+                        elif j % 3 == 1:  # Second column goes on the secondary y-axis
+                            line, = ax_secondary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
+                        elif j % 3 == 2:  # Third column goes on the tertiary y-axis
+                            line, = ax_tertiary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
+                    else:
+                        print(f"Column '{col}' contains no valid numeric data after conversion.")
+                else:
+                    print(f"Column '{col}' not found in file {i + 1}")
+
+        ax_primary.set_title("Comparison Plot with Multiple Y-Axes")
+
+        # Combine legends from all axes
+        lines, labels = ax_primary.get_legend_handles_labels()
+        lines2, labels2 = ax_secondary.get_legend_handles_labels()
+        lines3, labels3 = ax_tertiary.get_legend_handles_labels()
+        ax_primary.legend(lines + lines2 + lines3, labels + labels2 + labels3)
 
         # Save the plot as an image file
         os.makedirs(save_path, exist_ok=True)
@@ -248,7 +278,8 @@ class PlotApp:
         print(f"Plot saved at: {graph_path}")
 
         # Display the plot in the Tkinter application
-        self.display_plot(fig, legend)
+        self.display_plot(fig, ax_primary)
+
 
     def display_plot(self, fig, legend):
         for widget in self.plot_frame.winfo_children():
@@ -265,6 +296,7 @@ class PlotApp:
         # Connect the pick event to toggle visibility
         fig.canvas.mpl_connect('pick_event', self.toggle_visibility)
 
+
         # Connect the legend click event to toggle visibility
         for legend_line, original_line in zip(legend.get_lines(), fig.axes[0].get_lines()):
             legend_line.set_picker(True)
@@ -278,6 +310,7 @@ class PlotApp:
         visible = not line.get_visible()
         line.set_visible(visible)
         line.figure.canvas.draw()
+        print("Toggle")
 
     def toggle_legend_visibility(self, event):
         legend_line = event.artist
@@ -286,6 +319,7 @@ class PlotApp:
         original_line.set_visible(visible)
         legend_line.set_alpha(1.0 if visible else 0.2)
         original_line.figure.canvas.draw()
+        print("Toggle Legend")
 
 if __name__ == "__main__":
     root = tk.Tk()
