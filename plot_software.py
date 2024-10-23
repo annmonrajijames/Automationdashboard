@@ -5,17 +5,31 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
-import mplcursors  # Import mplcursors
+import mplcursors
 
 # Tkinter GUI Setup
 class PlotApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Data Plotter")
+        
+        # Create a canvas and a vertical scrollbar
+        self.canvas = tk.Canvas(root)
+        self.scrollbar = tk.Scrollbar(root, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
-        # Main frame
-        self.main_frame = tk.Frame(root)
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Create a frame inside the canvas to hold all the content
+        self.main_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.main_frame, anchor="nw")
+
+        # Bind the scrollbar to adjust the canvas scrolling region
+        self.main_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        # Optional: Bind mousewheel to scroll
+        self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
 
         # Control frame on the left
         self.control_frame = tk.Frame(self.main_frame)
@@ -52,20 +66,20 @@ class PlotApp:
         self.checkbox_frame.pack(pady=5)
 
         # Add a canvas with scrollbar for the checkboxes
-        self.canvas = tk.Canvas(self.checkbox_frame)
-        self.scrollbar = tk.Scrollbar(self.checkbox_frame, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = tk.Frame(self.canvas)
+        self.canvas_inner = tk.Canvas(self.checkbox_frame)
+        self.scrollbar_inner = tk.Scrollbar(self.checkbox_frame, orient="vertical", command=self.canvas_inner.yview)
+        self.scrollable_frame = tk.Frame(self.canvas_inner)
 
         self.scrollable_frame.bind(
             "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            lambda e: self.canvas_inner.configure(scrollregion=self.canvas_inner.bbox("all"))
         )
 
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas_inner.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas_inner.configure(yscrollcommand=self.scrollbar_inner.set)
 
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
+        self.canvas_inner.pack(side="left", fill="both", expand=True)
+        self.scrollbar_inner.pack(side="right", fill="y")
 
         # Dropdown for Index Column Selection
         self.index_label = tk.Label(self.control_frame, text="Select Index Column:")
@@ -106,69 +120,43 @@ class PlotApp:
     def load_data_and_columns(self, file_path):
         # Clear previous selections
         self.index_column_dropdown.set('')
-       
-        # Define a function to detect valid header row
+
         def detect_header_row(df):
-            # Check the first two rows to determine which contains the headers
             for i in range(2):
                 row = df.iloc[i]
-                if all(isinstance(x, str) for x in row):  # Check if all entries are strings (likely headers)
-                    return i  # Return the index of the row containing headers
-            return 0  # Default to first row if no string-based header is found
+                if all(isinstance(x, str) for x in row):
+                    return i
+            return 0
 
-        # Load the file based on its extension
         if os.path.isfile(file_path):
             try:
                 if file_path.endswith('.csv'):
-                    # Load the first few rows to check for header location
                     df = pd.read_csv(file_path, nrows=5, skip_blank_lines=True)
-
-                    # Detect where the header row is
                     header_row = detect_header_row(df)
-
-                    # Reload the CSV using the detected header row
                     self.data = pd.read_csv(file_path, header=header_row, skip_blank_lines=True)
-
                 elif file_path.endswith('.xlsx'):
-                    # Load the first few rows to check for header location
                     df = pd.read_excel(file_path, nrows=5, skip_blank_lines=True)
-
-                    # Detect where the header row is
                     header_row = detect_header_row(df)
-
-                    # Reload the Excel file using the detected header row
                     self.data = pd.read_excel(file_path, header=header_row, skip_blank_lines=True)
-
                 else:
                     raise ValueError("Unsupported file format")
 
-                # Drop any fully empty rows
                 self.data.dropna(how='all', inplace=True)
 
-                # Handle Serial Number addition if missing
                 if 'Serial Number' not in self.data.columns:
                     self.data['Serial Number'] = range(1, len(self.data) + 1)
 
-                # Handle Time conversion if present
                 if 'Time' in self.data.columns:
                     try:
                         self.data['Time'] = pd.to_datetime(self.data['Time'], errors='coerce')
                     except Exception as e:
                         print(f"Error parsing Time column: {e}")
 
-                # Store data for each file in the list
                 self.data_frames.append(self.data)
-
-                # Extract the column names
                 self.column_names = self.data.columns.tolist()
-
-                # Update the checkboxes with the full list of columns
                 self.update_checkboxes()
 
-                # Filter only 'Serial Number' and 'Time' columns for index selection
                 filtered_index_columns = [col for col in self.column_names if col.lower() in ['serial number', 'time']]
-
-                # Populate the dropdown with filtered column names for index selection
                 self.index_column_dropdown['values'] = filtered_index_columns
 
                 print("Columns available for plotting:", self.column_names)
@@ -176,19 +164,13 @@ class PlotApp:
                 print(f"Error loading data: {e}")
 
     def update_checkboxes(self, event=None):
-        # Get the search query
         search_query = self.search_entry.get().lower()
-
-        # Filter the column names based on the search query
         filtered_columns = [col for col in self.column_names if search_query in col.lower()]
 
-        # Clear the current checkboxes
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        # Add checkboxes for the filtered columns
         for col in filtered_columns:
-            # Retain the checkbox state using self.checkbox_vars
             if col not in self.checkbox_vars:
                 self.checkbox_vars[col] = tk.BooleanVar()
 
@@ -196,20 +178,15 @@ class PlotApp:
             cb.pack(anchor='w')
 
     def submit(self):
-        # Get the columns that are checked
         selected_columns = [col for col, var in self.checkbox_vars.items() if var.get()]
-
-        # Get the selected index column from the dropdown
         selected_index_column = self.index_column_dropdown.get()
 
         if self.data_frames and selected_columns and selected_index_column:
-            # Display selected columns for verification
             self.selected_columns_display.config(text="\n".join(selected_columns))
 
-            # Ask for confirmation before plotting
             if messagebox.askyesno("Confirm Plot", "Do you want to plot the selected columns?"):
-                # Plot the selected columns with the selected index
                 self.plot_columns(selected_columns, selected_index_column, self.file_directory)
+
 
     def plot_columns(self, columns, index_column, save_path):
         fig, ax_primary = plt.subplots(figsize=(10, 6))
@@ -355,6 +332,9 @@ class PlotApp:
         legend_line.set_alpha(1.0 if visible else 0.2)
         original_line.figure.canvas.draw()
         print("Toggle Legend")
+
+    def on_mouse_wheel(self, event):
+        self.canvas.yview_scroll(-1 * (event.delta // 120), "units")
 
 if __name__ == "__main__":
     root = tk.Tk()
