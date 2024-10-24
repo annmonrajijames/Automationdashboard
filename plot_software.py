@@ -82,6 +82,11 @@ class PlotApp:
         self.checkbox_canvas.pack(side="left", fill="both", expand=True)
         self.checkbox_scrollbar.pack(side="right", fill="y")
 
+        # Checkbox for Select All
+        self.select_all_var = tk.IntVar()
+        self.select_all_checkbox = tk.Checkbutton(self.control_frame, text="Select All", variable=self.select_all_var, command=self.toggle_select_all)
+        self.select_all_checkbox.pack(pady=5)
+
         # Dropdown for Index Column Selection
         self.index_label = tk.Label(self.control_frame, text="Select Index Column:")
         self.index_label.pack(pady=5)
@@ -107,7 +112,7 @@ class PlotApp:
         self.checkbox_vars = {}  # To store the checkbox variables for each column
         self.data_frames = []  # List to store data from multiple files
         self.file_directory = ""  # Directory of the files
-        self.zoomed_dataframe = None  # To store the zoomed data
+        self.zoomed_dataframe = None
 
     def on_frame_configure(self, event=None):
         """Update the scroll region of the canvas when the frame is resized."""
@@ -202,26 +207,48 @@ class PlotApp:
                 print("Columns available for plotting:", self.column_names)
             except Exception as e:
                 print(f"Error loading data: {e}")
+
+    def toggle_select_all(self):
+        """Toggle all checkboxes that are currently visible (filtered)."""
+        select_all = self.select_all_var.get()
+        search_term = self.search_entry.get().lower()
+
+        # Iterate only over the checkboxes that are currently visible (i.e., filtered)
+        for col, var in self.checkbox_vars.items():
+            if search_term in col.lower():  # Only toggle those that match the search
+                var.set(select_all)
  
     def update_checkboxes(self, event=None):
-        # Get the search query
-        search_query = self.search_entry.get().lower()
- 
-        # Filter the column names based on the search query
-        filtered_columns = [col for col in self.column_names if search_query in col.lower()]
- 
-        # Clear the current checkboxes
+        """Update checkboxes based on the filtered column names."""
+        search_term = self.search_entry.get().lower()
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
- 
-        # Add checkboxes for the filtered columns
-        for col in filtered_columns:
-            # Retain the checkbox state using self.checkbox_vars
-            if col not in self.checkbox_vars:
-                self.checkbox_vars[col] = tk.BooleanVar()
- 
-            cb = tk.Checkbutton(self.scrollable_frame, text=col, variable=self.checkbox_vars[col])
-            cb.pack(anchor='w')
+
+        # Re-create checkboxes based on the filtered columns
+        for column_name in self.column_names:
+            if search_term in column_name.lower():
+                var = self.checkbox_vars.get(column_name, tk.IntVar())
+                checkbox = tk.Checkbutton(self.scrollable_frame, text=column_name, variable=var, command=self.update_select_all_checkbox)
+                checkbox.pack(anchor="w")
+                self.checkbox_vars[column_name] = var
+
+        # Update the "Select All" checkbox state based on the visible checkboxes
+        self.update_select_all_checkbox()
+
+    def update_select_all_checkbox(self):
+        """Update the state of the Select All checkbox based on filtered checkboxes."""
+        search_term = self.search_entry.get().lower()
+        all_selected = True
+
+        # Only check the visible (filtered) checkboxes
+        for col, var in self.checkbox_vars.items():
+            if search_term in col.lower():
+                if var.get() == 0:  # If any visible checkbox is unchecked, all_selected becomes False
+                    all_selected = False
+                    break
+
+        # Update the Select All checkbox based on the state of the visible checkboxes
+        self.select_all_var.set(1 if all_selected else 0)
  
     def submit(self):
         selected_columns = [col for col, var in self.checkbox_vars.items() if var.get()]
