@@ -126,7 +126,7 @@ class PlotApp:
         self.submit_button.pack(pady=10)
 
         # Final Submit Button
-        self.final_submit_button = tk.Button(self.control_frame, text="Filtered Submit", command=self.final_submit)
+        self.final_submit_button = tk.Button(self.control_frame, text="Final Submit", command=self.final_submit)
         self.final_submit_button.pack(pady=10)
 
         # To hold the extracted column names and their corresponding checkboxes
@@ -148,18 +148,18 @@ class PlotApp:
         if file_paths:
             # Store the directory path
             self.file_directory = os.path.dirname(file_paths[0])
- 
+
             # Clear the current listbox
             self.file_listbox.delete(0, tk.END)
-           
+
             for file_path in file_paths:
                 self.file_listbox.insert(tk.END, os.path.basename(file_path))
                 self.load_data_and_columns(file_path)
- 
+
     def load_data_and_columns(self, file_path):
         # Clear previous selections
         self.index_column_dropdown.set('')
-       
+
         # Define a function to detect valid header row
         def detect_header_row(df):
             # Check the first two rows to determine which contains the headers
@@ -168,62 +168,62 @@ class PlotApp:
                 if all(isinstance(x, str) for x in row):  # Check if all entries are strings (likely headers)
                     return i  # Return the index of the row containing headers
             return 0  # Default to first row if no string-based header is found
- 
+
         # Load the file based on its extension
         if os.path.isfile(file_path):
             try:
                 if file_path.endswith('.csv'):
                     # Load the first few rows to check for header location
                     df = pd.read_csv(file_path, nrows=5, skip_blank_lines=True)
- 
+
                     # Detect where the header row is
                     header_row = detect_header_row(df)
- 
+
                     # Reload the CSV using the detected header row
                     self.data = pd.read_csv(file_path, header=header_row, skip_blank_lines=True)
- 
+
                 elif file_path.endswith('.xlsx'):
                     # Load the first few rows to check for header location
                     df = pd.read_excel(file_path, nrows=5, skip_blank_lines=True)
- 
+
                     # Detect where the header row is
                     header_row = detect_header_row(df)
- 
+
                     # Reload the Excel file using the detected header row
                     self.data = pd.read_excel(file_path, header=header_row, skip_blank_lines=True)
- 
+
                 else:
                     raise ValueError("Unsupported file format")
- 
+
                 # Drop any fully empty rows
                 self.data.dropna(how='all', inplace=True)
- 
+
                 # Handle Serial Number addition if missing
                 if 'Serial Number' not in self.data.columns:
                     self.data['Serial Number'] = range(1, len(self.data) + 1)
- 
+
                 # Handle Time conversion if present
                 if 'Time' in self.data.columns:
                     try:
                         self.data['Time'] = pd.to_datetime(self.data['Time'], errors='coerce')
                     except Exception as e:
                         print(f"Error parsing Time column: {e}")
- 
+
                 # Store data for each file in the list
                 self.data_frames.append(self.data)
- 
+
                 # Extract the column names
                 self.column_names = self.data.columns.tolist()
- 
+
                 # Update the checkboxes with the full list of columns
                 self.update_checkboxes()
- 
+
                 # Filter only 'Serial Number' and 'Time' columns for index selection
                 filtered_index_columns = [col for col in self.column_names if col.lower() in ['serial number', 'time']]
- 
+
                 # Populate the dropdown with filtered column names for index selection
                 self.index_column_dropdown['values'] = filtered_index_columns
- 
+
                 print("Columns available for plotting:", self.column_names)
             except Exception as e:
                 print(f"Error loading data: {e}")
@@ -237,7 +237,7 @@ class PlotApp:
         for col, var in self.checkbox_vars.items():
             if search_term in col.lower():  # Only toggle those that match the search
                 var.set(select_all)
- 
+
     def update_checkboxes(self, event=None):
         """Update checkboxes based on the filtered column names."""
         search_term = self.search_entry.get().lower()
@@ -269,7 +269,7 @@ class PlotApp:
 
         # Update the Select All checkbox based on the state of the visible checkboxes
         self.select_all_var.set(1 if all_selected else 0)
- 
+
     def submit(self):
         # Get the columns that are checked
         selected_columns = [col for col, var in self.checkbox_vars.items() if var.get()]
@@ -332,7 +332,6 @@ class PlotApp:
         else:
             messagebox.showerror("Error", "Please select at least one column.")
 
- 
     def plot_columns(self, selected_columns, index_column, file_directory):
         # Clear previous plots if necessary
         if self.fig:
@@ -429,8 +428,6 @@ class PlotApp:
         self.fig.canvas.draw_idle()
 
 
-
- 
 # Create the application window
 if __name__ == "__main__":
     root = tk.Tk()
