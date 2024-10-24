@@ -249,20 +249,19 @@ class PlotApp:
         for i, col in enumerate(selected_columns):
             for df in self.data_frames:
                 # Ensure that index_column is numeric and usable for plotting
-                if df[index_column].dtype.kind in 'iuf':
-                    x = df[index_column]
-                    y = df[col]
-                    if i == 0:  # Primary Y-axis
-                        self.ax_primary.plot(x, y, label=col, color='blue')  # Primary line color
-                        self.ax_primary.set_ylabel("Primary Y-axis Values")
-                    elif i == 1:  # Secondary Y-axis
-                        self.ax_secondary = self.ax_primary.twinx()
-                        self.ax_secondary.plot(x, y, label=col, color='orange')  # Secondary line color
-                        self.ax_secondary.set_ylabel("Secondary Y-axis Values")
-                    elif i == 2:  # Tertiary Y-axis
-                        self.ax_tertiary = self.ax_primary.twinx()
-                        self.ax_tertiary.spines['right'].set_position(('outward', 60))  # Offset the tertiary axis
-                        self.ax_tertiary.plot(x, y, label=col, color='green')  # Tertiary line color
+                x = df[index_column]  # Use the selected index column here
+                y = df[col]
+                if i == 0:  # Primary Y-axis
+                    self.ax_primary.plot(x, y, label=col, color='blue')  # Primary line color
+                    self.ax_primary.set_ylabel("Primary Y-axis Values")
+                elif i == 1:  # Secondary Y-axis
+                    self.ax_secondary = self.ax_primary.twinx()
+                    self.ax_secondary.plot(x, y, label=col, color='orange')  # Secondary line color
+                    self.ax_secondary.set_ylabel("Secondary Y-axis Values")
+                elif i == 2:  # Tertiary Y-axis
+                    self.ax_tertiary = self.ax_primary.twinx()
+                    self.ax_tertiary.spines['right'].set_position(('outward', 60))  # Offset the tertiary axis
+                    self.ax_tertiary.plot(x, y, label=col, color='green')  # Tertiary line color
 
         # Set labels and title
         self.ax_primary.set_xlabel(index_column)
@@ -293,7 +292,6 @@ class PlotApp:
                                 self.ax_secondary.set_ylim(None) if self.ax_secondary else None,
                                 self.ax_tertiary.set_ylim(None) if self.ax_tertiary else None)
 
- 
     def update_plot(self, selected_columns):
         # Clear the current plot without resetting the figure
         self.ax_primary.cla()
@@ -305,23 +303,22 @@ class PlotApp:
         # Loop through selected columns and update existing plot
         for i, col in enumerate(selected_columns):
             for df in self.data_frames:
-                # Ensure that index_column is numeric and usable for plotting
-                if df[self.index_column_dropdown.get()].dtype.kind in 'iuf':
-                    x = df[self.index_column_dropdown.get()]
-                    y = df[col]
-                    if i == 0:  # Primary Y-axis
-                        self.ax_primary.plot(x, y, label=col, color='blue')  # Primary line color
-                        self.ax_primary.set_ylabel("Primary Y-axis Values")
-                    elif i == 1:  # Secondary Y-axis
-                        if self.ax_secondary is None:
-                            self.ax_secondary = self.ax_primary.twinx()
-                        self.ax_secondary.plot(x, y, label=col, color='orange')  # Secondary line color
-                        self.ax_secondary.set_ylabel("Secondary Y-axis Values")
-                    elif i == 2:  # Tertiary Y-axis
-                        if self.ax_tertiary is None:
-                            self.ax_tertiary = self.ax_primary.twinx()
-                            self.ax_tertiary.spines['right'].set_position(('outward', 60))  # Offset the tertiary axis
-                        self.ax_tertiary.plot(x, y, label=col, color='green')  # Tertiary line color
+                # Ensure that the selected index column is usable for plotting
+                x = df[self.index_column_dropdown.get()]  # Use the selected index column here
+                y = df[col]
+                if i == 0:  # Primary Y-axis
+                    self.ax_primary.plot(x, y, label=col, color='blue')  # Primary line color
+                    self.ax_primary.set_ylabel("Primary Y-axis Values")
+                elif i == 1:  # Secondary Y-axis
+                    if self.ax_secondary is None:
+                        self.ax_secondary = self.ax_primary.twinx()
+                    self.ax_secondary.plot(x, y, label=col, color='orange')  # Secondary line color
+                    self.ax_secondary.set_ylabel("Secondary Y-axis Values")
+                elif i == 2:  # Tertiary Y-axis
+                    if self.ax_tertiary is None:
+                        self.ax_tertiary = self.ax_primary.twinx()
+                        self.ax_tertiary.spines['right'].set_position(('outward', 60))  # Offset the tertiary axis
+                    self.ax_tertiary.plot(x, y, label=col, color='green')  # Tertiary line color
 
         # Set labels and title
         self.ax_primary.set_xlabel(self.index_column_dropdown.get())
@@ -334,6 +331,7 @@ class PlotApp:
 
         # Redraw the canvas without affecting the zoom level
         self.fig.canvas.draw_idle()
+
 
 
  
