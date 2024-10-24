@@ -6,94 +6,126 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
 import mplcursors  # Import mplcursors
- 
+
 # Tkinter GUI Setup
 class PlotApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Data Plotter")
- 
-        # Main frame
-        self.main_frame = tk.Frame(root)
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
- 
+
+        # Create a main canvas for the entire page
+        self.main_canvas = tk.Canvas(root)
+        self.main_canvas.pack(side="left", fill=tk.BOTH, expand=True)
+
+        # Add scrollbar to the canvas
+        self.main_scrollbar = tk.Scrollbar(root, orient="vertical", command=self.main_canvas.yview)
+        self.main_scrollbar.pack(side="right", fill="y")
+        self.main_canvas.configure(yscrollcommand=self.main_scrollbar.set)
+
+        # Create a frame inside the canvas to hold the actual content
+        self.page_frame = tk.Frame(self.main_canvas)
+
+        # Bind the frame configuration to update the scroll region
+        self.page_frame.bind(
+            "<Configure>",
+            lambda e: self.main_canvas.configure(scrollregion=self.main_canvas.bbox("all"))
+        )
+
+        # Create a window within the canvas to contain the frame
+        self.main_canvas.create_window((0, 0), window=self.page_frame, anchor="nw")
+
+        # Bind mouse wheel scrolling to the entire canvas
+        self.page_frame.bind_all("<MouseWheel>", self._on_mousewheel)
+
+        # Main content inside the frame
+        self.build_ui()
+
+    def _on_mousewheel(self, event):
+        """Enable scrolling the entire page with mouse wheel."""
+        self.main_canvas.yview_scroll(-1 * int((event.delta / 120)), "units")
+
+    def build_ui(self):
+        """Build the UI inside the scrollable page_frame."""
         # Control frame on the left
-        self.control_frame = tk.Frame(self.main_frame)
-        self.control_frame.grid(row=0, column=0, sticky="ns")
- 
+        self.control_frame = tk.Frame(self.page_frame)
+        self.control_frame.grid(row=0, column=0, sticky="ns", padx=10, pady=10)
+
         # Plot frame on the right
-        self.plot_frame = tk.Frame(self.main_frame)
-        self.plot_frame.grid(row=0, column=1, sticky="nsew")
- 
+        self.plot_frame = tk.Frame(self.page_frame)
+        self.plot_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+
         # Make the plot frame expand more
-        self.main_frame.columnconfigure(1, weight=1)
-        self.main_frame.rowconfigure(0, weight=1)
- 
+        self.page_frame.columnconfigure(1, weight=1)
+        self.page_frame.rowconfigure(0, weight=1)
+
         # File Path Input
         self.label = tk.Label(self.control_frame, text="Select Files:")
         self.label.pack(pady=5)
- 
+
         self.file_listbox = tk.Listbox(self.control_frame, width=60, height=4)
         self.file_listbox.pack(pady=5)
- 
+
         # Browse Button to select file
         self.browse_button = tk.Button(self.control_frame, text="Browse", command=self.browse_file)
         self.browse_button.pack(pady=5)
- 
+
         # Search Box for filtering columns
         self.search_label = tk.Label(self.control_frame, text="Search Columns:")
         self.search_label.pack(pady=5)
         self.search_entry = tk.Entry(self.control_frame, width=50)
         self.search_entry.pack(pady=5)
         self.search_entry.bind("<KeyRelease>", self.update_checkboxes)
- 
+
         # Scrollable Frame for checkboxes
         self.checkbox_frame = tk.Frame(self.control_frame)
         self.checkbox_frame.pack(pady=5)
- 
+
         # Add a canvas with scrollbar for the checkboxes
         self.canvas = tk.Canvas(self.checkbox_frame)
         self.scrollbar = tk.Scrollbar(self.checkbox_frame, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = tk.Frame(self.canvas)
- 
+
         self.scrollable_frame.bind(
             "<Configure>",
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         )
- 
+
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
- 
+
         self.canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
+
+        # Bind mouse wheel scrolling to the checkboxes
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
         # Checkbox for Select All
         self.select_all_var = tk.IntVar()
         self.select_all_checkbox = tk.Checkbutton(self.control_frame, text="Select All", variable=self.select_all_var, command=self.toggle_select_all)
         self.select_all_checkbox.pack(pady=5)
- 
+
         # Dropdown for Index Column Selection
         self.index_label = tk.Label(self.control_frame, text="Select Index Column:")
         self.index_label.pack(pady=5)
         self.index_column_dropdown = ttk.Combobox(self.control_frame, state="readonly")
         self.index_column_dropdown.pack(pady=5)
- 
+
         # Display Selected Columns
         self.selected_columns_label = tk.Label(self.control_frame, text="Selected Columns:")
         self.selected_columns_label.pack(pady=5)
         self.selected_columns_display = tk.Label(self.control_frame, text="", wraplength=400, justify="left")
         self.selected_columns_display.pack(pady=5)
- 
+
         # Submit Button
         self.submit_button = tk.Button(self.control_frame, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
- 
+
         # To hold the extracted column names and their corresponding checkboxes
         self.column_names = []
         self.checkbox_vars = {}  # To store the checkbox variables for each column
         self.data_frames = []  # List to store data from multiple files
         self.file_directory = ""  # Directory of the files
-       
+
         # Variables for plot management
         self.fig = None
         self.ax_primary = None
