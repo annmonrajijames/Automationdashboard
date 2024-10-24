@@ -6,122 +6,96 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
 import mplcursors  # Import mplcursors
-
+ 
 # Tkinter GUI Setup
 class PlotApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Data Plotter")
-        
-        # Create a canvas that will hold everything, enabling scrollable area
-        self.canvas = tk.Canvas(root)
-        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        # Add vertical scrollbar
-        self.scrollbar = tk.Scrollbar(root, orient="vertical", command=self.canvas.yview)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-        
-        # Create a frame inside the canvas that will contain all the widgets
-        self.main_frame = tk.Frame(self.canvas)
-        self.canvas.create_window((0, 0), window=self.main_frame, anchor="nw")
-
-        self.main_frame.bind("<Configure>", self.on_frame_configure)  # Update scroll region
-
-        # Enable mouse wheel scrolling
-        self.main_frame.bind_all("<MouseWheel>", self._on_mousewheel)
-
+ 
+        # Main frame
+        self.main_frame = tk.Frame(root)
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+ 
         # Control frame on the left
         self.control_frame = tk.Frame(self.main_frame)
         self.control_frame.grid(row=0, column=0, sticky="ns")
-
+ 
         # Plot frame on the right
         self.plot_frame = tk.Frame(self.main_frame)
         self.plot_frame.grid(row=0, column=1, sticky="nsew")
-
+ 
         # Make the plot frame expand more
         self.main_frame.columnconfigure(1, weight=1)
         self.main_frame.rowconfigure(0, weight=1)
-
+ 
         # File Path Input
         self.label = tk.Label(self.control_frame, text="Select Files:")
         self.label.pack(pady=5)
-
+ 
         self.file_listbox = tk.Listbox(self.control_frame, width=60, height=4)
         self.file_listbox.pack(pady=5)
-
+ 
         # Browse Button to select file
         self.browse_button = tk.Button(self.control_frame, text="Browse", command=self.browse_file)
         self.browse_button.pack(pady=5)
-
+ 
         # Search Box for filtering columns
         self.search_label = tk.Label(self.control_frame, text="Search Columns:")
         self.search_label.pack(pady=5)
         self.search_entry = tk.Entry(self.control_frame, width=50)
         self.search_entry.pack(pady=5)
         self.search_entry.bind("<KeyRelease>", self.update_checkboxes)
-
+ 
         # Scrollable Frame for checkboxes
         self.checkbox_frame = tk.Frame(self.control_frame)
         self.checkbox_frame.pack(pady=5)
-
+ 
         # Add a canvas with scrollbar for the checkboxes
-        self.checkbox_canvas = tk.Canvas(self.checkbox_frame)
-        self.checkbox_scrollbar = tk.Scrollbar(self.checkbox_frame, orient="vertical", command=self.checkbox_canvas.yview)
-        self.scrollable_frame = tk.Frame(self.checkbox_canvas)
-
+        self.canvas = tk.Canvas(self.checkbox_frame)
+        self.scrollbar = tk.Scrollbar(self.checkbox_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
+ 
         self.scrollable_frame.bind(
             "<Configure>",
-            lambda e: self.checkbox_canvas.configure(scrollregion=self.checkbox_canvas.bbox("all"))
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         )
-
-        self.checkbox_canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.checkbox_canvas.configure(yscrollcommand=self.checkbox_scrollbar.set)
-
-        self.checkbox_canvas.pack(side="left", fill="both", expand=True)
-        self.checkbox_scrollbar.pack(side="right", fill="y")
-
-        # Checkbox for Select All
-        self.select_all_var = tk.IntVar()
-        self.select_all_checkbox = tk.Checkbutton(self.control_frame, text="Select All", variable=self.select_all_var, command=self.toggle_select_all)
-        self.select_all_checkbox.pack(pady=5)
-
+ 
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+ 
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+ 
         # Dropdown for Index Column Selection
         self.index_label = tk.Label(self.control_frame, text="Select Index Column:")
         self.index_label.pack(pady=5)
         self.index_column_dropdown = ttk.Combobox(self.control_frame, state="readonly")
         self.index_column_dropdown.pack(pady=5)
-
+ 
         # Display Selected Columns
         self.selected_columns_label = tk.Label(self.control_frame, text="Selected Columns:")
         self.selected_columns_label.pack(pady=5)
         self.selected_columns_display = tk.Label(self.control_frame, text="", wraplength=400, justify="left")
         self.selected_columns_display.pack(pady=5)
-
+ 
         # Submit Button
         self.submit_button = tk.Button(self.control_frame, text="Submit", command=self.submit)
         self.submit_button.pack(pady=10)
-
-        # Reset Button
-        self.reset_button = tk.Button(self.control_frame, text="Reset View", command=self.reset_view)
-        self.reset_button.pack(pady=10)
-
+ 
         # To hold the extracted column names and their corresponding checkboxes
         self.column_names = []
         self.checkbox_vars = {}  # To store the checkbox variables for each column
         self.data_frames = []  # List to store data from multiple files
         self.file_directory = ""  # Directory of the files
-        self.zoomed_dataframe = None
-
-    def on_frame_configure(self, event=None):
-        """Update the scroll region of the canvas when the frame is resized."""
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def _on_mousewheel(self, event):
-        """Enable scrolling using the mouse wheel."""
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-
+       
+        # Variables for plot management
+        self.fig = None
+        self.ax_primary = None
+        self.ax_secondary = None
+        self.ax_tertiary = None
+        self.plot_initialized = False
+ 
     def browse_file(self):
         # Allow the user to select any file type
         file_paths = filedialog.askopenfilenames(filetypes=[("All files", "*.*")])
@@ -207,245 +181,163 @@ class PlotApp:
                 print("Columns available for plotting:", self.column_names)
             except Exception as e:
                 print(f"Error loading data: {e}")
-
-    def toggle_select_all(self):
-        """Toggle all checkboxes that are currently visible (filtered)."""
-        select_all = self.select_all_var.get()
-        search_term = self.search_entry.get().lower()
-
-        # Iterate only over the checkboxes that are currently visible (i.e., filtered)
-        for col, var in self.checkbox_vars.items():
-            if search_term in col.lower():  # Only toggle those that match the search
-                var.set(select_all)
  
     def update_checkboxes(self, event=None):
-        """Update checkboxes based on the filtered column names."""
-        search_term = self.search_entry.get().lower()
+        # Get the search query
+        search_query = self.search_entry.get().lower()
+ 
+        # Filter the column names based on the search query
+        filtered_columns = [col for col in self.column_names if search_query in col.lower()]
+ 
+        # Clear the current checkboxes
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-
-        # Re-create checkboxes based on the filtered columns
-        for column_name in self.column_names:
-            if search_term in column_name.lower():
-                var = self.checkbox_vars.get(column_name, tk.IntVar())
-                checkbox = tk.Checkbutton(self.scrollable_frame, text=column_name, variable=var, command=self.update_select_all_checkbox)
-                checkbox.pack(anchor="w")
-                self.checkbox_vars[column_name] = var
-
-        # Update the "Select All" checkbox state based on the visible checkboxes
-        self.update_select_all_checkbox()
-
-    def update_select_all_checkbox(self):
-        """Update the state of the Select All checkbox based on filtered checkboxes."""
-        search_term = self.search_entry.get().lower()
-        all_selected = True
-
-        # Only check the visible (filtered) checkboxes
-        for col, var in self.checkbox_vars.items():
-            if search_term in col.lower():
-                if var.get() == 0:  # If any visible checkbox is unchecked, all_selected becomes False
-                    all_selected = False
-                    break
-
-        # Update the Select All checkbox based on the state of the visible checkboxes
-        self.select_all_var.set(1 if all_selected else 0)
+ 
+        # Add checkboxes for the filtered columns
+        for col in filtered_columns:
+            # Retain the checkbox state using self.checkbox_vars
+            if col not in self.checkbox_vars:
+                self.checkbox_vars[col] = tk.BooleanVar()
+ 
+            cb = tk.Checkbutton(self.scrollable_frame, text=col, variable=self.checkbox_vars[col])
+            cb.pack(anchor='w')
  
     def submit(self):
+        # Get the columns that are checked
         selected_columns = [col for col, var in self.checkbox_vars.items() if var.get()]
-   
+
         # Get the selected index column from the dropdown
         selected_index_column = self.index_column_dropdown.get()
-   
+
         if self.data_frames and selected_columns and selected_index_column:
             # Display selected columns for verification
             self.selected_columns_display.config(text="\n".join(selected_columns))
-   
+
             # Ask for confirmation before plotting
             if messagebox.askyesno("Confirm Plot", "Do you want to plot the selected columns?"):
-                # Use zoomed_dataframe if it exists, otherwise use the original data
-                if self.zoomed_dataframe is not None:
-                    data_to_plot = self.zoomed_dataframe
-                    print("Using zoomed_dataframe for plotting.")
+                # If this is the first submission, initialize the plot
+                if not self.plot_initialized:
+                    self.plot_columns(selected_columns, selected_index_column, self.file_directory)
+                    self.plot_initialized = True
                 else:
-                    data_to_plot = self.data_frames[0]
-                    print("Using original data for plotting.")
-   
-                # Plot the selected columns with the selected index
-                self.plot_columns(data_to_plot, selected_columns, selected_index_column, self.file_directory)
- 
-    def plot_columns(self, data, columns, index_column, save_path):
-        fig, ax_primary = plt.subplots(figsize=(10, 6))
- 
-        # Create secondary and tertiary y-axes
-        ax_secondary = ax_primary.twinx()
-        ax_tertiary = ax_primary.twinx()
-        ax_tertiary.spines["right"].set_position(("outward", 25))  # Move it outward
- 
-        ax_primary.set_ylabel("Primary Axis (Y1)", color='b')
-        ax_secondary.set_ylabel("Secondary Axis (Y2)", color='g')
-        ax_tertiary.set_ylabel("Tertiary Axis (Y3)", color='r')
- 
-        # Define a color palette
-        color_palette = plt.cm.get_cmap('tab10', len(columns))  # Use a colormap with a specific number of colors
- 
-        # Store the lines for toggling later
-        all_lines = []
- 
-        # Determine the x-axis based on the selected index column
-        if index_column == 'Serial Number':
-            x_axis = np.arange(len(data))  # Use row numbers as the x-axis
-            ax_primary.set_xlabel("Serial Number")
-        elif index_column == 'Time':
-            if not pd.api.types.is_datetime64_any_dtype(data['Time']):
-                data['Time'] = pd.to_datetime(data['Time'], errors='coerce')
-            x_axis = data['Time']
-            ax_primary.set_xlabel("Time")
+                    # Store current zoom limits if they exist
+                    current_xlim = self.ax_primary.get_xlim()
+                    current_ylim = self.ax_primary.get_ylim()
+
+                    # Update the plot with new parameters
+                    self.update_plot(selected_columns)
+
+                    # Restore the zoom limits if the user has zoomed in
+                    if current_xlim != self.ax_primary.get_xlim() or current_ylim != self.ax_primary.get_ylim():
+                        self.ax_primary.set_xlim(current_xlim)
+                        self.ax_primary.set_ylim(current_ylim)
+
+                    self.fig.canvas.draw_idle()  # Refresh the canvas
         else:
-            raise ValueError(f"Unknown index column: {index_column}")
+            messagebox.showerror("Error", "Please select columns and an index column.")
+
  
-        # Assign columns to the different y-axes
-        for j, col in enumerate(columns):
-            if col in data.columns:
-                numeric_data = pd.to_numeric(data[col], errors='coerce')
- 
-                # Check if there are valid numeric values to plot
-                if numeric_data.notna().any():
-                    trace_name = f"{col}"
- 
-                    # Get a unique color for each parameter
-                    color = color_palette(j % len(color_palette.colors))
- 
-                    # Plot on the primary, secondary, or tertiary y-axis based on index
-                    if j % 3 == 0:  # First column goes on the primary y-axis
-                        line, = ax_primary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
-                    elif j % 3 == 1:  # Second column goes on the secondary y-axis
-                        line, = ax_secondary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
-                    elif j % 3 == 2:  # Third column goes on the tertiary y-axis
-                        line, = ax_tertiary.plot(x_axis, numeric_data, label=trace_name, color=color, picker=True)
-                   
-                    all_lines.append(line)  # Store the line for toggling later
- 
-                else:
-                    print(f"Column '{col}' contains no valid numeric data after conversion.")
-            else:
-                print(f"Column '{col}' not found in data")
- 
-        ax_primary.set_title("Comparison Plot with Multiple Y-Axes")
- 
-        # Combine legends from all axes
-        lines, labels = ax_primary.get_legend_handles_labels()
-        lines2, labels2 = ax_secondary.get_legend_handles_labels()
-        lines3, labels3 = ax_tertiary.get_legend_handles_labels()
-        legend = ax_primary.legend(lines + lines2 + lines3, labels + labels2 + labels3)
- 
-        # Set the picker on the legend's text and line (to make them clickable)
-        for legline in legend.get_lines():
-            legline.set_picker(True)  # Enable picker on legend lines
-       
-        for legtext in legend.get_texts():
-            legtext.set_picker(True)  # Enable picker on legend text
- 
-        # Function to toggle the line visibility when legend is clicked
-        def on_pick(event):
-            # Check if the picked object is a legend line or legend text
-            for legend_line in legend.get_lines():
-                if event.artist == legend_line:
-                    # Find the corresponding plot line by matching labels
-                    label = legend_line.get_label()
-                    for line in all_lines:
-                        if line.get_label() == label:
-                            # Toggle the line's visibility
-                            visible = not line.get_visible()
-                            line.set_visible(visible)
-                            # Adjust the legend line's transparency
-                            legend_line.set_alpha(1.0 if visible else 0.2)
-                            fig.canvas.draw()
- 
-        # Connect the pick event to the toggle function
-        fig.canvas.mpl_connect('pick_event', on_pick)
- 
-        # Add mplcursors for interactive annotations
+    def plot_columns(self, selected_columns, index_column, file_directory):
+        # Clear previous plots if necessary
+        if self.fig:
+            plt.close(self.fig)
+
+        # Create a new figure and axes
+        self.fig, self.ax_primary = plt.subplots(figsize=(10, 6))
+
+        # Loop through selected columns and plot each
+        for i, col in enumerate(selected_columns):
+            for df in self.data_frames:
+                # Ensure that index_column is numeric and usable for plotting
+                if df[index_column].dtype.kind in 'iuf':
+                    x = df[index_column]
+                    y = df[col]
+                    if i == 0:  # Primary Y-axis
+                        self.ax_primary.plot(x, y, label=col, color='blue')  # Primary line color
+                        self.ax_primary.set_ylabel("Primary Y-axis Values")
+                    elif i == 1:  # Secondary Y-axis
+                        self.ax_secondary = self.ax_primary.twinx()
+                        self.ax_secondary.plot(x, y, label=col, color='orange')  # Secondary line color
+                        self.ax_secondary.set_ylabel("Secondary Y-axis Values")
+                    elif i == 2:  # Tertiary Y-axis
+                        self.ax_tertiary = self.ax_primary.twinx()
+                        self.ax_tertiary.spines['right'].set_position(('outward', 60))  # Offset the tertiary axis
+                        self.ax_tertiary.plot(x, y, label=col, color='green')  # Tertiary line color
+
+        # Set labels and title
+        self.ax_primary.set_xlabel(index_column)
+        self.ax_primary.set_title("Data Plot")
+        self.ax_primary.legend(loc='upper left')
+        if self.ax_secondary:
+            self.ax_secondary.legend(loc='upper right')
+        if self.ax_tertiary:
+            self.ax_tertiary.legend(loc='lower right')
+
+        # Add interactive data cursors
         mplcursors.cursor(hover=True)
- 
-        # Save the plot as an image file
-        os.makedirs(save_path, exist_ok=True)
-        graph_path = os.path.join(save_path, 'Generated_Plot.png')
-        plt.savefig(graph_path)
-        print(f"Plot saved at: {graph_path}")
- 
-        # Display the plot in the Tkinter application
-        self.display_plot(fig, ax_primary)
- 
-    def display_plot(self, fig, legend):
-        print("<-----------------kamal--------------->")
-        for widget in self.plot_frame.winfo_children():
-            widget.destroy()
- 
-        canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
-        canvas.draw()
+
+        # Create a canvas for the plot and pack it into the plot frame
+        canvas = FigureCanvasTkAgg(self.fig, master=self.plot_frame)
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
- 
+
+        # Create a navigation toolbar for the plot
         toolbar = NavigationToolbar2Tk(canvas, self.plot_frame)
         toolbar.update()
-        canvas._tkcanvas.pack(fill=tk.BOTH, expand=True)
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Draw the canvas
+        canvas.draw()
+
+        # Connect the toolbar's 'home' button to reset zoom
+        toolbar.home = lambda: (self.ax_primary.set_xlim(None), self.ax_primary.set_ylim(None),
+                                self.ax_secondary.set_ylim(None) if self.ax_secondary else None,
+                                self.ax_tertiary.set_ylim(None) if self.ax_tertiary else None)
+
  
-        # Connect the pick event to toggle visibility
-        print("1")
-        fig.canvas.mpl_connect('pick_event', self.toggle_visibility)
+    def update_plot(self, selected_columns):
+        # Clear the current plot without resetting the figure
+        self.ax_primary.cla()
+        if self.ax_secondary:
+            self.ax_secondary.cla()
+        if self.ax_tertiary:
+            self.ax_tertiary.cla()
+
+        # Loop through selected columns and update existing plot
+        for i, col in enumerate(selected_columns):
+            for df in self.data_frames:
+                # Ensure that index_column is numeric and usable for plotting
+                if df[self.index_column_dropdown.get()].dtype.kind in 'iuf':
+                    x = df[self.index_column_dropdown.get()]
+                    y = df[col]
+                    if i == 0:  # Primary Y-axis
+                        self.ax_primary.plot(x, y, label=col, color='blue')  # Primary line color
+                        self.ax_primary.set_ylabel("Primary Y-axis Values")
+                    elif i == 1:  # Secondary Y-axis
+                        if self.ax_secondary is None:
+                            self.ax_secondary = self.ax_primary.twinx()
+                        self.ax_secondary.plot(x, y, label=col, color='orange')  # Secondary line color
+                        self.ax_secondary.set_ylabel("Secondary Y-axis Values")
+                    elif i == 2:  # Tertiary Y-axis
+                        if self.ax_tertiary is None:
+                            self.ax_tertiary = self.ax_primary.twinx()
+                            self.ax_tertiary.spines['right'].set_position(('outward', 60))  # Offset the tertiary axis
+                        self.ax_tertiary.plot(x, y, label=col, color='green')  # Tertiary line color
+
+        # Set labels and title
+        self.ax_primary.set_xlabel(self.index_column_dropdown.get())
+        self.ax_primary.set_title("Updated Data Plot")
+        self.ax_primary.legend(loc='upper left')
+        if self.ax_secondary:
+            self.ax_secondary.legend(loc='upper right')
+        if self.ax_tertiary:
+            self.ax_tertiary.legend(loc='lower right')
+
+        # Redraw the canvas without affecting the zoom level
+        self.fig.canvas.draw_idle()
+
+
  
-        # Connect the zoom event to capture the zoomed area
-        print("2")
-        fig.canvas.mpl_connect('button_release_event', self.on_zoom)
- 
-        print("3")
-        # Connect the legend click event to toggle visibility
-        for legend_line, original_line in zip(legend.get_lines(), fig.axes[0].get_lines()):
-            legend_line.set_picker(True)
-            legend_line.set_pickradius(5)
-            legend_line.original_line = original_line
- 
-        fig.canvas.mpl_connect('pick_event', self.toggle_legend_visibility)
- 
-    def toggle_visibility(self, event):
-        line = event.artist
-        visible = not line.get_visible()
-        line.set_visible(visible)
-        line.figure.canvas.draw()
-        # print("Toggle")
- 
-    def toggle_legend_visibility(self, event):
-        legend_line = event.artist
-        original_line = legend_line.original_line
-        visible = not original_line.get_visible()
-        original_line.set_visible(visible)
-        legend_line.set_alpha(1.0 if visible else 0.2)
-        original_line.figure.canvas.draw()
-        print("Toggle Legend")
- 
-    def on_zoom(self, event):
-        print("on_1")
-        if event.button == 1:  # Left mouse button
-            print("on_2")
-            ax = event.inaxes
-            if ax is not None:
-                xlim = ax.get_xlim()
-                ylim = ax.get_ylim()
- 
-                print(f"Zoom limits: xlim={xlim}, ylim={ylim}")
- 
-                # Filter the data based on the zoomed area
-                if self.index_column_dropdown.get() == 'Serial Number':
-                    self.zoomed_dataframe = self.data_frames[0][(self.data_frames[0]['Serial Number'] >= xlim[0]) & (self.data_frames[0]['Serial Number'] <= xlim[1])]
-                elif self.index_column_dropdown.get() == 'Time':
-                    self.zoomed_dataframe = self.data_frames[0][(self.data_frames[0]['Time'] >= pd.to_datetime(xlim[0])) & (self.data_frames[0]['Time'] <= pd.to_datetime(xlim[1]))]
- 
-                print("Zoomed DataFrame:")
-                print(self.zoomed_dataframe)
- 
-    def reset_view(self):
-        self.zoomed_dataframe = None
-        self.submit()
- 
+# Create the application window
 if __name__ == "__main__":
     root = tk.Tk()
     app = PlotApp(root)
